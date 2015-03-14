@@ -1,0 +1,73 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+	/* identification */
+	part-number = "brecH";
+	version = "00A0";
+
+	/* state the resources this cape uses */
+	exclusive-use =
+		/* the pin header uses */
+		"P8.46",	/* pru1_r31_1  */
+		"P8.45",	/* pru1_r31_0  */
+		"P8.44",	/* pru1_r31_3  */
+		"P8.43",	/* pru1_r31_2  */
+		"P8.42",	/* pru1_r31_5  */
+		"P8.41",	/* pru1_r31_4  */
+		"P8.40",	/* pru1_r31_7  */
+		"P8.39",	/* pru1_r31_6  */
+		"P8.30",	/* pru1_r31_11  */
+		"P8.29",	/* pru1_r31_9  */
+		"P8.28",	/* pru1_r31_10 */
+		"P8.27",	/* pru1_r31_8  */
+                /* Hw uses */
+		"pru1_r31_1",
+		"pru1_r31_0",
+		"pru1_r31_3",
+		"pru1_r31_2",
+		"pru1_r31_5",
+		"pru1_r31_4", 
+		"pru1_r31_11", 
+		"pru1_r31_9",
+		"pru1_r31_10", 
+		"pru1_r31_8" 
+                ;
+
+	fragment@1 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+
+		pru_pru_pins: pinmux_pru_pru_pins {
+				pinctrl-single,pins = <
+         0x0A4 0x26 /* P8.46  MODE6 | RCVEN | PRU See spruh73h pag 748*/
+         0x0A0 0x26 /* P8.45  MODE6 | RCVEN | PRU */
+         0x0AC 0x26 /* P8.44  MODE6 | RCVEN | PRU */
+         0x0A8 0x26 /* P8.43  MODE6 | RCVEN | PRU */
+         0x0B4 0x26 /* P8.42  MODE6 | RCVEN | PRU */
+         0x0B0 0x26 /* P8.41  MODE6 | RCVEN | PRU */
+         0x0BC 0x26 /* P8.40  MODE6 | RCVEN | PRU */
+         0x0B8 0x26 /* P8.39  MODE6 | RCVEN | PRU */
+         0x0EC 0x26 /* P8.30  MODE6 | RCVEN | PRU */
+         0x0E4 0x26 /* P8.29  MODE6 | RCVEN | PRU */
+         0x0E8 0x26 /* P8.28  MODE6 | RCVEN | PRU */
+         0x0E0 0x26 /* P8.27  MODE6 | RCVEN | PRU */
+         0x180 0x26 /* P9.26  MODE6 | RCVEN | PRU */
+				>;
+		    };
+                };
+        };
+
+	fragment@2 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pru_pru_pins>;
+		};
+
+	};
+
+};

@@ -1,0 +1,214 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+	/* identification */
+	part-number = "brecA";
+	version = "00A0";
+
+	/* state the resources this cape uses */
+	exclusive-use =
+		/* the pin header uses */
+		"P8.7",	        /* gpio2_2  */
+		"P8.8",	        /* gpio2_3  */
+		"P8.9",	        /* gpio2_5  */
+		"P8.10",	/* gpio2_4  */
+		"P8.12",	/* gpio1_12 */
+		"P8.11",	/* gpio1_13 */
+              /* P9.1              gnd   */
+              /* P9.2              gnd   */
+              /* P9.3              3.3V  */
+              /* P9.4              3.3V  */
+              /* P9.5              VDD5V */
+              /* P9.6              VDD5V */
+              /* P9.7              SYS5V */
+              /* P9.8              SYS5V */
+              /* P9.9              BTN   */
+              /* P9.10             RST   */
+		"P9.11",	/* gpio0_30 */
+		"P9.12",	/* gpio1_28 */
+		"P9.13",	/* gpio0_31 */
+		"P9.14",	/* pwm: ehrpwm1a */
+		"P9.15",	/* gpio1_16 */
+		"P9.16",	/* gpio/ehrpwm1B */
+		"P9.17",	/* gpio0_5 */
+		"P9.18",	/* gpio0_4 */
+              /* P9.19           i2c2 scl */
+              /* P9.20           i2c2 sda */
+		"P9.21",	/* gpio0_3 */
+		"P9.22",	/* gpio0_2 */
+		"P9.23",	/* gpio1_17 */
+		"P9.24",	/* pru0: pr1_pru0_pru_r31_16  */
+		"P9.25",	/* pru0: pr1_pru0_pru_r30_7   */
+		"P9.26",	/* gpio0_14 */
+		"P9.27",	/* pru0: pr1_pru0_pru_r30_5  */
+		"P9.28",	/* gpio3_17 */
+		"P9.29",	/* gpio3_15 */
+		"P9.30",	/* pru0: pr1_pru0_pru_r31_2  */
+		/* the hardware IP uses */
+                "gpio0_2",      /* gpio 2   */
+                "gpio0_3",      /* gpio 3   */
+                "gpio0_4",      /* gpio 4   */
+                "gpio0_5",      /* gpio 5   */
+                "gpio0_14",     /* gpio 14  */
+                "gpio0_28",     /* gpio 28  */
+                "gpio0_30",     /* gpio 30  */
+                "gpio0_31",     /* gpio 31  */
+                "gpio1_12",     /* gpio 34  */ 
+                "gpio1_13",     /* gpio 35  */ 
+                "gpio1_16",     /* gpio 48  */ 
+                "gpio1_17",     /* gpio 49  */ 
+                "gpio1_28",     /* gpio 60  */ 
+                "gpio2_2",      /* gpio 66  */ 
+                "gpio2_3",      /* gpio 67  */ 
+                "gpio2_4",      /* gpio 68  */ 
+                "gpio2_5",      /* gpio 69  */ 
+                "gpio3_15",     /* gpio 111 */ 
+                "gpio3_17",     /* gpio 113 */ 
+		"pru0";
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+                       gpio_helper_pins: pinmux_gpio_helper_pins {
+                                pinctrl-single,pins = <
+        /* See pad control registers section spruh73h p747 */
+        0x030 0x2f      /* P8.12 GPIO1_12  MODE7 | INPUT  */
+        0x034 0x2f      /* P8.11 GPIO1_13  MODE7 | INPUT  */
+        0x090 0x0f      /* P8.7  GPIO2_2   MODE7 | OUTPUT */
+        0x094 0x0f      /* P8.8  GPIO2_3   MODE7 | OUTPUT */
+        0x098 0x0f      /* P8.10 GPIO2_4   MODE7 | OUTPUT */
+        0x09C 0x0f      /* P8.9  GPIO2_5   MODE7 | OUTPUT */
+        0x070 0x0f      /* P9.11 GPIO0_30  MODE7 | OUTPUT */
+        0x074 0x0f      /* P9.13 GPIO0_31  MODE7 | OUTPUT */
+        0x194 0x0f      /* P9.29 GPIO3_15  MODE7 | OUTPUT */
+        0x19c 0x0f      /* P9.28 GPIO3_17  MODE7 | OUTPUT */
+        0x150 0x0f      /* P9.22 GPIO0_2   MODE7 | OUTPUT */
+        0x154 0x0f      /* P9.21 GPIO0_3   MODE7 | OUTPUT */
+        0x158 0x0f      /* P9.17 GPIO0_5   MODE7 | OUTPUT */
+        0x15C 0x0f      /* P9.18 GPIO0_4   MODE7 | OUTPUT */
+                                >;
+                        };
+
+			pru_pru_pins: pinmux_pru_pru_pins {
+				pinctrl-single,pins = <
+         0x184 0x26 /* P9.24  MODE6 | RCVEN | PRU See spruh73h pag 748*/
+         0x1ac 0x25 /* P9.25  MODE5 | RCVEN | PRU */
+         0x1a4 0x25 /* P9.27  MODE5 | RCVEN | PRU */
+         0x198 0x26 /* P9.30  MODE6 | RCVEN | PRU */
+				>;
+			};
+		};	
+	};
+
+	fragment@2 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pru_pru_pins>;
+		};
+	};
+
+
+	fragment@3 {
+		target = <&ocp>;
+		__overlay__ {
+
+			gpio_helper {
+				compatible      = "gpio-of-helper";
+				status          = "okay";
+				pinctrl-names   = "default";
+				pinctrl-0       = <&gpio_helper_pins>;
+
+				/* declare your gpios */
+				test_g0 {
+					gpio-name = "test_g0";
+                                        // gpio reg = dev gpio reg + 1
+					gpio      = <&gpio1 30 0x00>;	
+					output;
+					init-high;
+				};
+				test_g1 {
+					gpio-name = "test_g1";
+					gpio      = <&gpio1 31 0x00>;	
+					output;
+					init-high;
+				};
+				test_f0 {
+					gpio-name = "test_f0";
+					gpio      = <&gpio4 17 0x00>;	
+					output;
+					init-high;
+				};
+				test_f1 {
+					gpio-name = "test_f1";
+					gpio      = <&gpio4 15 0x00>;	
+					output;
+					init-high;
+				};
+				test_s0 {
+					gpio-name = "test_s0";
+					gpio      = <&gpio3 2 0x00>;	
+					output;
+					init-high;
+				};
+				test_s1 {
+					gpio-name = "test_s1";
+					gpio      = <&gpio3 3 0x00>;	
+					output;
+					init-high;
+				};
+				test_s3 {
+					gpio-name = "test_s3";
+					gpio      = <&gpio1 2 0x00>;	
+					output;
+					init-high;
+				};
+				test_s4 {
+					gpio-name = "test_s4";
+					gpio      = <&gpio1 3 0x00>;	
+					output;
+					init-high;
+				};
+				test_s5 {
+					gpio-name = "test_s5";
+					gpio      = <&gpio2 12 0x00>;	
+					input;
+				};
+				test_s6 {
+					gpio-name = "test_s6";
+					gpio      = <&gpio2 13 0x00>;	
+					input;
+				};
+
+				test_s7 {
+					gpio-name = "test_s7";
+					gpio      = <&gpio1 4 0x00>;	
+					output;
+					init-high;
+				};
+				test_s8 {
+					gpio-name = "test_s8";
+					gpio      = <&gpio1 5 0x00>;	
+					output;
+					init-high;
+				};
+				test_s9 {
+					gpio-name = "test_s9";
+					gpio      = <&gpio3 4 0x00>;	
+					output;
+					init-high;
+				};
+				test_sa {
+					gpio-name = "test_sa";
+					gpio      = <&gpio3 5 0x00>;	
+					output;
+					init-high;
+				};
+			};
+		};
+	};
+};

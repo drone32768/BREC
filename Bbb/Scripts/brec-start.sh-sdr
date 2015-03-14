@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Based on brec/Scripts/brec-start.sh
+
+###############################################################################
+# 
+# Start of Script
+#
+echo "BREC start beginning" > /tmp/brec.log
+
+########################################
+#
+# Install device tree
+#
+echo "Install Dt - Start " >> /tmp/brec.log
+/home/root/Bbb/Aboard/Dt/dt-install
+
+########################################
+#
+# Start application(s)
+#
+
+echo "Starting sdr server" >> /tmp/brec.log
+# NOTE: pruss init fails if we start immediately (???)
+while  !  [ -e "/dev/uio0" ]; do
+    echo "Waiting for pruss" >> /tmp/brec.log
+    sleep 1
+done
+/home/root/Bbb/SdrSvr/arm/SdrSvr  &
+
+echo "BREC start exiting" >> /tmp/brec.log
+
+# Signal success 
+exit 0

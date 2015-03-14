@@ -1,0 +1,8 @@
+rootfs               /                    auto       ro                    1  1
+proc                 /proc                proc       defaults              0  0
+devpts               /dev/pts             devpts     mode=0620,gid=5       0  0
+tmpfs                /tmp                 tmpfs      defaults              0  0
+tmpfs                /var/tmp             tmpfs      defaults,noatime,mode=1777 0 0 
+tmpfs                /var/log             tmpfs      defaults,noatime,mode=0777,size=1m 0 0 
+tmpfs                /var/log/apt         tmpfs      defaults,noatime,mode=0755,size=1m 0 0 
+tmpfs                /var/run             tmpfs      defaults,noatime      0 0 

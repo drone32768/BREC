@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#
+# This script manipulates the amplifier gpio pins for Prj123
+#
+
+echo "Configuring Prj123 gains "
+GN=0; 
+if [ "$1" = "1" ]; then
+    GN=1; 
+fi
+echo "G = " $GN
+
+
+# 32*bbb_gpioN+bbb_gpioN_bitM
+
+# GN = bbb_gpio0_30 = gpio30
+if [ ! -d /sys/class/gpio/gpio30 ]; then  echo 30 > /sys/class/gpio/export; fi
+#echo  out > /sys/class/gpio/gpio30/direction
+echo  $GN > /sys/class/gpio/gpio30/value
+
+# Show final values
+echo "GN "
+cat   /sys/class/gpio/gpio30/value

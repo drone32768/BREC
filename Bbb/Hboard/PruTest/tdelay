@@ -1,0 +1,7 @@
+#arm/pructl   -load0 -load1 -spin 1
+#arm/follower  -stream -delay 42
+
+arm/pructl   -load0 -load1 -spin 5
+arm/follower  -stream -delay 118
+
+arm/pructl   -stop

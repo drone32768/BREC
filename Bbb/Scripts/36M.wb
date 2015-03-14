@@ -1,0 +1,15 @@
+#!/bin/bash
+telnet localhost 6790 << EndOfScript
+
+# wb-dbg 0xffff
+# help
+
+wb-syn-freq-hz    0 36000000
+wb-syn-aux-enable 0 1
+wb-syn-aux-power  0 0 
+
+wb-syn-freq-hz    1 36000000
+wb-syn-aux-enable 1 1
+wb-syn-aux-power  1 0 
+
+EndOfScript

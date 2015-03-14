@@ -1,0 +1,3 @@
+arm/pructl   -load0 -load1 -spin 5
+arm/follower -stream
+arm/pructl   -stop

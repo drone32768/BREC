@@ -1,0 +1,38 @@
+Note and steps in recovering a BBB distribution image.  Many of these
+steps are custom to how I use BBB and the development environment and
+preferences.
+
+1.0 EMMC Flash
+a) Use the "flasher" SDC (power on, hold button, wait)
+
+2.0 Accounts
+a) Set the root password (passwd)
+b) Set the root shell to bash (edit /etc/passwd)
+
+3.0 Networking
+a) Get the ethernet name with connman
+     /usr/lib/connman/test/get-services | grep cable
+
+b) Set the IP address to Windows shared network
+    /usr/lib/connman/test/set-ipv4-method \
+         ethernet_9059af4ec0df_cable manual 
+         192.168.0.2 255.255.255.0 192.168.0.1
+b) Set DNS 
+    /usr/lib/connman/test/set-nameservers \
+         ethernet_9059af4ec0df_cable 8.8.8.8
+
+4.0 Tools/Scripts
+a) Copy over .bash_profile and .bash_rc
+b) Copy over the Lin/Bin scripts
+
+5.0 Software Packages
+a) Install NFS client
+   opkg updates
+   opkg install nfs-utils-client
+b) Copy pre-build PRU package
+   cp -r /mnt/pc/am335x_pru_package-master/ ~
+c) Install fftw from existing build of package
+   cd /mnt/pc/fftw-3.3.3; make install
+d) Install libmicrohttp from existing build of package
+   cd /mnt/pc/libmicrohttpd-0.9.37; make install
+ 

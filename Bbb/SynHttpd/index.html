@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script>
+
+var stateUpdatedOk;
+
+function SetFrequency()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+             ;
+         }
+      }
+      xmlhttp.open("GET",
+                 "setfreq?f="+document.getElementsByName("SetFreqHz")[0].value, 
+                  true);
+      xmlhttp.send();
+}
+
+function SetSwRestart()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            ;
+         }
+      }
+      xmlhttp.open("GET","swrestart",true);
+      xmlhttp.send();
+}
+
+function SetHwRestart()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            ;
+         }
+      }
+      xmlhttp.open("GET","hwrestart",true);
+      xmlhttp.send();
+}
+
+function SetShutdown()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            ;
+         }
+      }
+      xmlhttp.open("GET","shutdown",true);
+      xmlhttp.send();
+}
+
+function SetSaveCfg()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            ;
+         }
+      }
+      xmlhttp.open("GET","savecfg",true);
+      xmlhttp.send();
+}
+
+function SetSwRestart()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            ;
+         }
+      }
+      xmlhttp.open("GET","swrestart",true);
+      xmlhttp.send();
+}
+
+function UpdateStatus()
+{
+    if( stateUpdatedOk!=0 ){
+       document.getElementById("statusDiv").innerHTML=
+                       "<font color=gree>OK</font>";
+    }
+    else{
+       document.getElementById("statusDiv").innerHTML=
+                       "<font color=red>DISCONNECTED</font>";
+    }
+    stateUpdatedOk = 0;
+}
+
+function UpdateState()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+             document.getElementById("freqDiv").innerHTML=xmlhttp.responseText;
+             unitState = JSON.parse( xmlhttp.responseText );
+
+             document.getElementById("freqDiv").innerHTML=unitState.freq;
+             document.getElementById("lockDiv").innerHTML=unitState.lock;
+             document.getElementById("timeDiv").innerHTML=unitState.time;
+             stateUpdatedOk = 1;
+         }
+      }
+      xmlhttp.open("GET","getstate",true);
+      xmlhttp.send();
+}
+
+function OneSecond()
+{
+      UpdateStatus();
+
+      UpdateState();
+}
+
+ setInterval(OneSecond,1000);
+
+</script>
+</head>
+
+<body>
+
+<table  
+   height=100%
+   width=100%
+   border="1"
+>
+<td
+   align="center" valign="center"
+>
+
+<button onclick="SetSaveCfg()">Save Config</button>
+<button onclick="SetSwRestart()">Software Restart</button>
+<button onclick="SetHwRestart()">Hardware Restart</button>
+<button onclick="SetShutdown()">Shutdown</button>
+
+<table border="1" 
+   style="
+      border:1px solid black; 
+      border-collapse: collapse;
+      text-align:center;
+      width:500px;
+   ">
+<tr>
+  <td>Device Connection</td>
+  <td><div id="statusDiv"></div></td> 
+</tr>
+<tr>
+  <td>Device Time</td>
+  <td> <div id="timeDiv"></div></td> 
+</tr>
+<tr>
+  <td>Freq(Hz)</td>
+  <td> <div id="freqDiv"></div></td> 
+</tr>
+<tr>
+  <td>Lock Status</td>
+  <td> <div id="lockDiv"></div></td> 
+</tr>
+</table>
+
+<button onclick="SetFrequency()">Set Frequency (Hz)</button>
+<input type="text" name="SetFreqHz">
+<br> 
+
+</td>
+</table>
+</body>
+</html>

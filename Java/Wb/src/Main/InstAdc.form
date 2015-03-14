@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.5" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,1,-10,0,0,2,121"/>
+  </AuxValues>
+
+  <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
+  <SubComponents>
+    <Container class="javax.swing.JPanel" name="mPanelLeftControls">
+      <Properties>
+        <Property name="alignmentY" type="float" value="0.0"/>
+      </Properties>
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+        <Property name="axis" type="int" value="1"/>
+      </Layout>
+      <SubComponents>
+        <Container class="javax.swing.JPanel" name="mPanelSgControl">
+          <Properties>
+            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+              <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                <TitledBorder title="Instrument Control"/>
+              </Border>
+            </Property>
+            <Property name="alignmentX" type="float" value="0.0"/>
+            <Property name="alignmentY" type="float" value="0.0"/>
+          </Properties>
+
+          <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+            <Property name="axis" type="int" value="1"/>
+          </Layout>
+          <SubComponents>
+            <Container class="javax.swing.JPanel" name="mPanelCtl">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Control"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+                <Property name="axis" type="int" value="1"/>
+              </Layout>
+              <SubComponents>
+                <Component class="Widgets.InstButton" name="panelInstBtnSgState">
+                  <Properties>
+                    <Property name="label" type="java.lang.String" value="State"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="2">
+                        <StringItem index="0" value="ON"/>
+                        <StringItem index="1" value="OFF"/>
+                      </StringArray>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="OFF"/>
+                    <Property name="valueName" type="java.lang.String" value="adc-StateStr"/>
+                  </Properties>
+                </Component>
+                <Component class="Widgets.InstButton" name="panelInstBtnSgStatus">
+                  <Properties>
+                    <Property name="label" type="java.lang.String" value="Status"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="OK"/>
+                    <Property name="valueName" type="java.lang.String" value="adc-StatusStr"/>
+                  </Properties>
+                </Component>
+                <Component class="Widgets.InstButton" name="panelInstBtnSgDevAddr">
+                  <Properties>
+                    <Property name="dialogInput" type="java.lang.String" value="DialogString"/>
+                    <Property name="label" type="java.lang.String" value="Device"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="192.168.0.2:8000"/>
+                    <Property name="valueName" type="java.lang.String" value="adc-DevStr"/>
+                  </Properties>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Container class="javax.swing.JPanel" name="mPanelAdcCtl">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Processing"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+                <Property name="axis" type="int" value="1"/>
+              </Layout>
+              <SubComponents>
+                <Component class="Widgets.InstButton" name="panelInstBtnSettleMs">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Reserved"/>
+                    <Property name="dialogInput" type="java.lang.String" value=""/>
+                    <Property name="doubleBuffered" type="boolean" value="false"/>
+                    <Property name="label" type="java.lang.String" value="FftSize"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="9">
+                        <StringItem index="0" value="128"/>
+                        <StringItem index="1" value="256"/>
+                        <StringItem index="2" value="512"/>
+                        <StringItem index="3" value="1024"/>
+                        <StringItem index="4" value="2048"/>
+                        <StringItem index="5" value="4096"/>
+                        <StringItem index="6" value="8192"/>
+                        <StringItem index="7" value="16384"/>
+                        <StringItem index="8" value="32768"/>
+                      </StringArray>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="88"/>
+                    <Property name="valueName" type="java.lang.String" value="adc-FftSizeStr"/>
+                    <Property name="verifyInputWhenFocusTarget" type="boolean" value="false"/>
+                  </Properties>
+                </Component>
+                <Component class="Widgets.InstButton" name="panelInstBtnSgNest">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Nest"/>
+                    <Property name="label" type="java.lang.String" value="Ave"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="4">
+                        <StringItem index="0" value="1"/>
+                        <StringItem index="1" value="2"/>
+                        <StringItem index="2" value="4"/>
+                        <StringItem index="3" value="8"/>
+                      </StringArray>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="99"/>
+                    <Property name="valueName" type="java.lang.String" value="adc-AveSizeStr"/>
+                  </Properties>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Container class="javax.swing.JPanel" name="mPanelFreqDisplayCtl">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Freq Scale"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+                <Property name="axis" type="int" value="1"/>
+              </Layout>
+              <SubComponents>
+                <Component class="Widgets.InstButton" name="panelInstBtnRef">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Reserved"/>
+                    <Property name="dialogInput" type="java.lang.String" value=""/>
+                    <Property name="label" type="java.lang.String" value="Ref(dB)"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="8">
+                        <StringItem index="0" value="0"/>
+                        <StringItem index="1" value="-10"/>
+                        <StringItem index="2" value="-20"/>
+                        <StringItem index="3" value="-30"/>
+                        <StringItem index="4" value="-40"/>
+                        <StringItem index="5" value="-50"/>
+                        <StringItem index="6" value="-60"/>
+                        <StringItem index="7" value="-70"/>
+                      </StringArray>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="0"/>
+                    <Property name="valueName" type="java.lang.String" value="spec-YrefStr"/>
+                  </Properties>
+                </Component>
+                <Component class="Widgets.InstButton" name="panelInstBtnDbPerDiv">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Reserved"/>
+                    <Property name="label" type="java.lang.String" value="dB/Div"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="4">
+                        <StringItem index="0" value="3"/>
+                        <StringItem index="1" value="6"/>
+                        <StringItem index="2" value="10"/>
+                        <StringItem index="3" value="15"/>
+                      </StringArray>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="0"/>
+                    <Property name="valueName" type="java.lang.String" value="spec-YdivStr"/>
+                  </Properties>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Container class="javax.swing.JPanel" name="mPanelTimeDisplayCtl">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Time Scale"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+                <Property name="axis" type="int" value="1"/>
+              </Layout>
+              <SubComponents>
+                <Component class="Widgets.InstButton" name="panelInstBtnTimeYmax">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Reserved"/>
+                    <Property name="dialogInput" type="java.lang.String" value="DialogKeyPad"/>
+                    <Property name="label" type="java.lang.String" value="Ymax"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="0"/>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="4096"/>
+                    <Property name="valueName" type="java.lang.String" value="ts-YmaxStr"/>
+                  </Properties>
+                </Component>
+                <Component class="Widgets.InstButton" name="panelInstBtnTimeYmin">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Reserved"/>
+                    <Property name="dialogInput" type="java.lang.String" value="DialogKeyPad"/>
+                    <Property name="label" type="java.lang.String" value="Ymin"/>
+                    <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="options" type="[Ljava.lang.String;" editor="org.netbeans.beaninfo.editors.StringArrayEditor">
+                      <StringArray count="0"/>
+                    </Property>
+                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[125, 30]"/>
+                    </Property>
+                    <Property name="value" type="java.lang.String" value="0"/>
+                    <Property name="valueName" type="java.lang.String" value="ts-YminStr"/>
+                  </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value=""/>
+                  </AuxValues>
+                </Component>
+              </SubComponents>
+            </Container>
+          </SubComponents>
+        </Container>
+      </SubComponents>
+    </Container>
+    <Container class="javax.swing.JPanel" name="mPanelDisplay">
+      <Properties>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
+            <EtchetBorder/>
+          </Border>
+        </Property>
+      </Properties>
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignGridLayout">
+        <Property name="columns" type="int" value="1"/>
+        <Property name="rows" type="int" value="0"/>
+      </Layout>
+    </Container>
+  </SubComponents>
+</Form>

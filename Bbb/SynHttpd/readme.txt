@@ -1,0 +1,35 @@
+
+--------------------------------------------------------------------------------
+  I. Http Server 
+ II. Browser Application
+III. Instrument - Read Only Filesystem
+ IV. Instrument - Auto start application
+
+--------------------------------------------------------------------------------
+I. Http Server
+   1.0 Install libmicrohttpd-0.9.37 (or equivalent)
+       a) You must build on a BBB (generally from nfs shared fs)
+       b) Thereafter you can just do a "make install" from nfs mounted/built
+   2.0 You must add /usr/local/lib to LD_LIBRARY_PATH
+       a) export LD_LIBRARY_PATH='/usr/local/lib'
+
+--------------------------------------------------------------------------------
+III. Instrument - Readonly Root Filesystem
+   0.0) These notes conducted using 192.168.0.4
+        a) Angstrom v2012.12
+        b) BBB rev B
+
+   1.0 Update /etc/fstab to change root ro and mount others as tmpfs
+       - Based on google forumns (Thanks Dieter W) 
+       - See sample fstab
+       - To write to root remount as rw using:
+           mount -o remount,rw /
+
+   2.0 NOTES:
+       a) Accessing uEnv.txt
+           mount /dev/mmcblk0p1 /mnt/card
+            - Does not appear to be a need to modify this (?)
+       b) sysfs/gpio access on ro root
+            - I had no problem starting Wbsvr on ro root
+            - verified R board leds on channel selection
+       c) Networking setup scripts do not work with ro root

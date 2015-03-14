@@ -1,0 +1,9 @@
+To disable the HDMI pin allocations do the following:
+
+mount /dev/mmcblk0p1 /mnt/card
+edit /mnt/card/uEnv.txt to reflect
+  optargs=quiet capemgr.disable_partno=BB-BONELT-HDMI,BB-BONELT-HDMIN
+shutdown -h now
+cat /sys/devices/bone_capemgr.*/slots
+
+should see no L in the HDMI line now (L=enabled)

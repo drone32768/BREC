@@ -1,0 +1,9 @@
+#
+# Launch a set of pre-configured terminals
+#
+
+xterm -geom +100+100 -bg black -fg green &
+xterm -geom +600+100 -bg black -fg green &
+xterm -geom +600+500 -bg black -fg green &
+xterm -geom +100+500 -bg black -fg green &
+

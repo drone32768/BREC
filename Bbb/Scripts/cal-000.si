@@ -1,0 +1,22 @@
+#!/bin/bash
+# Calibration data
+
+telnet localhost 6789 << EndOfScript 
+
+si-cal-adc     38.000000
+
+si-cal-if  0 -18.000000
+si-cal-if  1 -24.000000
+si-cal-if  2 -29.000000
+si-cal-if  3 -35.000000
+
+si-cal-cnv 0 -2.400000
+si-cal-cnv 1 -15.400000
+si-cal-cnv 2 -22.900000
+
+si-cal-var-reset
+si-cal-var       1.000000 3.000000 
+si-cal-var      10.000000 3.000000 
+si-cal-var    4400.000000 3.000000 
+
+EndOfScript

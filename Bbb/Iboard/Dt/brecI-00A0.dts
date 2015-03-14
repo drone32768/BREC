@@ -1,0 +1,79 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+	/* identification */
+	part-number = "brecH";
+	version     = "00A0";
+
+        /*--------------------------------------------------------------------*/
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+                       gpio_helper_pins: pinmux_gpio_helper_pins {
+                                pinctrl-single,pins = <
+        /* See pad control registers section spruh73h p747 */
+        0x150 0x2f      /* P9.22 GPIO0_2   MODE7 | IO  */
+        0x154 0x2f      /* P9.21 GPIO0_3   MODE7 | IO  */
+        0x158 0x2f      /* P9.18 GPIO0_4   MODE7 | IO   */
+        0x15C 0x2f      /* P9.17 GPIO0_5   MODE7 | IO  */
+        0x184 0x2f      /* P9.24 GPIO0_15  MODE7 | IO  */
+        0x070 0x2f      /* P9.11 GPIO0_30  MODE7 | IO  */
+        0x074 0x2f      /* P9.13 GPIO0_31  MODE7 | IO  */
+        0x040 0x2f      /* P9.15 GPIO1_16  MODE7 | IO  */
+        0x044 0x2f      /* P9.23 GPIO1_17  MODE7 | IO  */
+        0x048 0x2f      /* P9.14 GPIO1_18  MODE7 | IO   */
+        0x04C 0x2f      /* P9.16 GPIO1_19  MODE7 | IO  */
+        0x078 0x2f      /* P9.12 GPIO1_28  MODE7 | IO   */
+        0x090 0x0f      /* P8.7  GPIO2_2   MODE7 | IO  */
+        0x094 0x0f      /* P8.8  GPIO2_3   MODE7 | IO  */
+        0x098 0x0f      /* P8.10 GPIO2_4   MODE7 | IO  */
+        0x190 0x2f      /* P9.31 GPIO3_14  MODE7 | IO  */
+        0x194 0x2f      /* P9.29 GPIO3_15  MODE7 | IO  */
+        0x198 0x2f      /* P9.30 GPIO3_16  MODE7 | IO  */
+        0x19C 0x2f      /* P9.28 GPIO3_17  MODE7 | IO  */
+        0x1A4 0x2f      /* P9.27 GPIO3_19  MODE7 | IO  */
+        0x1AC 0x2f      /* P9.25 GPIO3_21  MODE7 | IO  */
+                                >;
+                        };
+		}; // End of pinumx
+	}; // End of fragment 0
+
+	fragment@3 {
+		target = <&ocp>;
+		__overlay__ {
+
+			gpio_helper {
+				compatible      = "gpio-of-helper";
+				status          = "okay";
+				pinctrl-names   = "default";
+				pinctrl-0       = <&gpio_helper_pins>;
+
+                          enable0 {
+                            gpio-name = "I-board-enable0";
+                            gpio = <&gpio3 2 0x00>; /* gpio3 is gpio2 */
+                            output;
+                            init-high;
+                          };
+
+                          enable1 {
+                            gpio-name = "I-board-enable0";
+                            gpio = <&gpio3 3 0x00>; /* gpio3 is gpio2 */
+                            output;
+                            init-high;
+                          };
+
+                          enable2 {
+                            gpio-name = "I-board-enable0";
+                            gpio = <&gpio3 4 0x00>; /* gpio3 is gpio2 */
+                            output;
+                            init-high;
+                          };
+
+			};
+
+		};
+	};
+};

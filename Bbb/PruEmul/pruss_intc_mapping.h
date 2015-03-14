@@ -1,0 +1,1 @@
+#define PRUSS_INTC_INITDATA {}

@@ -1,0 +1,2 @@
+arm/pructl -load0 -load1 -spin 1
+arm/follower -measure
