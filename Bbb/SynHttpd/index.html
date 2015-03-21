@@ -2,113 +2,134 @@
 <html>
 
 <head>
+
+<!------------------------------------------------------------------------------
+Use a simple internal style sheet to get the look and layout we want    
+  table { border-radius:10px; }
+     width:20em; 
+     border-radius:10px; 
+     background-color:grey;
+------------------------------------------------------------------------------->
+<style>
+  button.narrowButton {
+    width:10em; 
+  }
+
+  button.wideButton { 
+    width:20em; 
+  }
+
+  td.tdTwoCol { 
+  }
+
+  table.OuterTable { 
+     background-color:grey;
+     border-color:blue;
+     border-style:ridge; 
+     border-width:10px; 
+     border-radius:10px; 
+  }
+
+  table.InnerPanel {
+     background-color:white;
+     width:400px;
+     border-color:black;
+     border-style:solid; 
+     border-width:1px; 
+     border-radius:10px; 
+  }
+
+
+</style>
+
+<!----------------------------------------------------------------------------->
 <script>
 
+// Flag indicated state has recently been updated.
 var stateUpdatedOk;
 
-function SetFrequency()
+// Contents of state returned from device
+var unitState;
+
+// This method is given a state variable name and inverts the ON/OFF value.
+// The current value is taken from the most recently reported unit state
+// The new value is set as a single name/value state property at the device
+function ToggleStateVar( aVarStateName )
 {
-      var xmlhttp;
-      xmlhttp=new XMLHttpRequest();
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
 
-      xmlhttp.onreadystatechange=function() 
+   var curValStr;
+   var newValStr;
+
+   curValStr= unitState[ aVarStateName ];
+   console.log("current = " + curValStr);
+
+   if( curValStr.toLowerCase() == "on" ){
+      newValStr = "OFF";
+   }
+   else{
+      newValStr = "ON";
+   }
+
+   console.log("new  = " + newValStr);
+
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
       {
-         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-         {
-             ;
-         }
-      }
-      xmlhttp.open("GET",
-                 "setfreq?f="+document.getElementsByName("SetFreqHz")[0].value, 
-                  true);
-      xmlhttp.send();
-}
-
-function SetSwRestart()
-{
-      var xmlhttp;
-      xmlhttp=new XMLHttpRequest();
-
-      xmlhttp.onreadystatechange=function() 
-      {
-         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-         {
             ;
-         }
       }
-      xmlhttp.open("GET","swrestart",true);
-      xmlhttp.send();
+   }
+ 
+   // need to produce: setstate?v=name:value
+   xmlhttp.open("GET",
+                 "setstate?v=" + 
+                 aVarStateName + 
+                 ":" + 
+                 newValStr,
+                 true);
+   xmlhttp.send();
 }
 
-function SetHwRestart()
+// This method is given a state variable name and a div name.  The
+// State variable is set at the device to the contents of the div name object
+//
+function SetStateVar( aVarStateName, aVarDivName )
 {
-      var xmlhttp;
-      xmlhttp=new XMLHttpRequest();
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
 
-      xmlhttp.onreadystatechange=function() 
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
       {
-         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-         {
             ;
-         }
       }
-      xmlhttp.open("GET","hwrestart",true);
-      xmlhttp.send();
+   }
+ 
+   // need to produce: setstate?v={ name:value }
+   xmlhttp.open("GET",
+                 "setstate?v=" + 
+                 aVarStateName + 
+                 ":" + 
+                 document.getElementsByName(aVarDivName)[0].value,
+                 true);
+   xmlhttp.send();
 }
 
-function SetShutdown()
-{
-      var xmlhttp;
-      xmlhttp=new XMLHttpRequest();
-
-      xmlhttp.onreadystatechange=function() 
-      {
-         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-         {
-            ;
-         }
-      }
-      xmlhttp.open("GET","shutdown",true);
-      xmlhttp.send();
-}
-
-function SetSaveCfg()
-{
-      var xmlhttp;
-      xmlhttp=new XMLHttpRequest();
-
-      xmlhttp.onreadystatechange=function() 
-      {
-         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-         {
-            ;
-         }
-      }
-      xmlhttp.open("GET","savecfg",true);
-      xmlhttp.send();
-}
-
-function SetSwRestart()
-{
-      var xmlhttp;
-      xmlhttp=new XMLHttpRequest();
-
-      xmlhttp.onreadystatechange=function() 
-      {
-         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-         {
-            ;
-         }
-      }
-      xmlhttp.open("GET","swrestart",true);
-      xmlhttp.send();
-}
-
+//
+// This method updates the statusDiv specially.  If we have conducted
+// a successful UpdateState() since this methods last invokation, the
+// status div is updated as ok.  If this has not happened (i.e.
+// a UpdateState() has failed to succeed and the connection to device
+// is not valid) then marke the status as disconnected
+//
 function UpdateStatus()
 {
     if( stateUpdatedOk!=0 ){
        document.getElementById("statusDiv").innerHTML=
-                       "<font color=gree>OK</font>";
+                       "OK";
     }
     else{
        document.getElementById("statusDiv").innerHTML=
@@ -117,6 +138,10 @@ function UpdateStatus()
     stateUpdatedOk = 0;
 }
 
+// This method issues a "getstate" GET request to the server, parses the
+// return JSON data and populates all of the known divs using the device
+// returned state.  If a good response has been received, parsed, and
+// updated then the global variable stateUpdateOk is set to 1.
 function UpdateState()
 {
       var xmlhttp;
@@ -126,77 +151,213 @@ function UpdateState()
       {
          if (xmlhttp.readyState==4 && xmlhttp.status==200) 
          {
-             document.getElementById("freqDiv").innerHTML=xmlhttp.responseText;
-             unitState = JSON.parse( xmlhttp.responseText );
+            unitState = JSON.parse( xmlhttp.responseText );
+            // console.log( xmlhttp.responseText );
 
-             document.getElementById("freqDiv").innerHTML=unitState.freq;
-             document.getElementById("lockDiv").innerHTML=unitState.lock;
-             document.getElementById("timeDiv").innerHTML=unitState.time;
-             stateUpdatedOk = 1;
+            document.getElementById("runDiv").innerHTML=unitState.run;
+            document.getElementById("lockDiv").innerHTML=unitState.lock;
+            document.getElementById("timeDiv").innerHTML=unitState.time;
+            document.getElementById("actHzDiv").innerHTML=
+                              Number(unitState.actHz).toLocaleString();
+            document.getElementById("actDbmDiv").innerHTML=
+                              Number(unitState.actDbm).toLocaleString();
+            document.getElementById("sweepEnableDiv").innerHTML=unitState.sweep;
+            document.getElementById("monEnableDiv").innerHTML=unitState.monitor;
+            document.getElementById("startHzDiv").innerHTML=
+                              Number(unitState.startHz).toLocaleString();
+            document.getElementById("startDbmDiv").innerHTML=
+                              Number(unitState.startDbm).toLocaleString();
+            document.getElementById("stopHzDiv").innerHTML=
+                              Number(unitState.stopHz).toLocaleString();
+            document.getElementById("stopDbmDiv").innerHTML=
+                              Number(unitState.stopDbm).toLocaleString();
+            document.getElementById("stepHzDiv").innerHTML=
+                              Number(unitState.stepHz).toLocaleString();
+            document.getElementById("stepDbmDiv").innerHTML=
+                              Number(unitState.stepDbm).toLocaleString();
+            document.getElementById("dwellTimeDiv").innerHTML=
+                              Number(unitState.dwellMs).toLocaleString();
+            stateUpdatedOk = 1;
          }
       }
       xmlhttp.open("GET","getstate",true);
       xmlhttp.send();
 }
 
-function OneSecond()
+// This method is intended to be invoked periodically to update the display
+// and to query the device for its state (so it can be displayed on the
+// next invokation).
+function PollDevice()
 {
-      UpdateStatus();
+    // Update the status display based on current state
+    UpdateStatus();
 
-      UpdateState();
+    // Issue a state update request to the device
+    UpdateState();
 }
 
- setInterval(OneSecond,1000);
+// This sets the device polling rate.  The display is updated
+// at this rate as well as the device being queried at this rate
+setInterval(PollDevice,100);
 
 </script>
 </head>
 
+<!----------------------------------------------------------------------------->
 <body>
 
-<table  
-   height=100%
-   width=100%
-   border="1"
->
-<td
-   align="center" valign="center"
->
+<!-- Use a top level table to center everything -->
+<table class="OuterTable">
 
-<button onclick="SetSaveCfg()">Save Config</button>
-<button onclick="SetSwRestart()">Software Restart</button>
-<button onclick="SetHwRestart()">Hardware Restart</button>
-<button onclick="SetShutdown()">Shutdown</button>
+  <!------------------------------------------->
+  <tr>
+    <td align="center">
+      <!-- Basic control buttons -->
+      <button onclick="ToggleStateVar( 'savecfg' )">Save Config</button>
+      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
+      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
+      <button onclick="ToggleStateVar( 'shutdown' )">Shutdown</button>
+    </td>
+  </tr>
 
-<table border="1" 
-   style="
-      border:1px solid black; 
-      border-collapse: collapse;
-      text-align:center;
-      width:500px;
-   ">
-<tr>
-  <td>Device Connection</td>
-  <td><div id="statusDiv"></div></td> 
-</tr>
-<tr>
-  <td>Device Time</td>
-  <td> <div id="timeDiv"></div></td> 
-</tr>
-<tr>
-  <td>Freq(Hz)</td>
-  <td> <div id="freqDiv"></div></td> 
-</tr>
-<tr>
-  <td>Lock Status</td>
-  <td> <div id="lockDiv"></div></td> 
-</tr>
-</table>
+  <!------------------------------------------->
+  <tr>
+    <td align="center">
+        <table class="InnerPanel" >
+            <tr>
+              <td class="tdTwoCol">Connect</td>
+              <td class="tdTwoCol"><div id="statusDiv"></div></td> 
+            </tr>
+            <tr>
+              <td>Device</td>
+              <td><div id="timeDiv"></div></td> 
+            </tr>
+            <tr>
+              <td>Lock Status</td>
+              <td> <div id="lockDiv"></div></td> 
+            </tr>
+            <tr>
+              <td>Freq(Hz)</td>
+              <td> <div id="actHzDiv"></div></td> 
+            </tr>
+            <tr>
+              <td>Level(dBm)</td>
+              <td> <div id="actDbmDiv"></div></td> 
+            </tr>
+        </table>
+    </td>
+  </tr>
 
-<button onclick="SetFrequency()">Set Frequency (Hz)</button>
-<input type="text" name="SetFreqHz">
-<br> 
-
-</td>
+  <!------------------------------------------->
+  <tr>
+    <td align="center">
+    <table class="InnerPanel">
+      <tr>
+        <td> 
+          <button  class="wideButton" 
+              onclick="ToggleStateVar( 'run' )">
+              Run 
+          </button> 
+        </td>
+        <td> <div id="runDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button  class="wideButton" 
+              onclick="ToggleStateVar( 'sweep' )">
+              Sweep 
+          </button> 
+        </td>
+        <td> <div id="sweepEnableDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button  class="wideButton" 
+              onclick="ToggleStateVar( 'monitor' )">
+              Monitor
+          </button> 
+        </td>
+        <td> <div id="monEnableDiv"></div></td>
+      </tr>
+    </table>
+    </td>
+  </tr>
+  <!------------------------------------------->
+  <tr>
+    <td align="center">
+    <table class="InnerPanel" >
+      <tr>
+        <td> 
+          <button class="narrowButton" 
+            onclick="SetStateVar( 'startHz', 'startHzInput' )">
+            Start(Hz)
+          </button> 
+        </td>
+        <td> <input type="text" name="startHzInput" value="300000000"></td>
+        <td> <div id="startHzDiv"></div></td> 
+      </tr>
+      <tr>
+        <td> 
+          <button  class="narrowButton" 
+          onclick="SetStateVar( 'startDbm', 'startDbmInput')">
+          Start(dBm)
+          </button> 
+        </td>
+        <td> <input type="text" name="startDbmInput" value="-5"></td>
+        <td> <div id="startDbmDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button  class="narrowButton" 
+          onclick="SetStateVar( 'stopHz', 'stopHzInput')">
+          Stop(Hz)
+          </button> 
+        </td>
+        <td> <input type="text" name="stopHzInput" value="330000000"> </td>
+        <td> <div id="stopHzDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button class="narrowButton" 
+          onclick="SetStateVar( 'stopDbm', 'stopDbmInput')">
+          Stop(dBm)
+          </button> 
+        </td>
+        <td> <input type="text" name="stopDbmInput" value="-25"> </td>
+        <td> <div id="stopDbmDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button class="narrowButton" 
+          onclick="SetStateVar( 'stepHz', 'stepHzInput')">
+          Step(Hz)
+          </button> 
+        </td>
+        <td> <input type="text" name="stepHzInput" value="100000"> </td>
+        <td> <div id="stepHzDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button class="narrowButton" 
+          onclick="SetStateVar( 'stepDbm', 'stepDbmInput')">
+          Step(dBm)
+          </button> 
+        </td>
+        <td> <input type="text" name="stepDbmInput" value="-0.5"> </td>
+        <td> <div id="stepDbmDiv"></div></td>
+      </tr>
+      <tr>
+        <td> 
+          <button class="narrowButton" 
+          onclick="SetStateVar( 'dwellMs', 'dewllMsInput')">
+          DwellTime(mS)
+          </button> 
+        </td>
+        <td> <input type="text" name="dewllMsInput" value="5000"> </td>
+        <td> <div id="dwellTimeDiv"></div></td>
+    </table>
+    </td>
+  </tr>
 </table>
 </body>
 </html>

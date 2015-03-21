@@ -1,8 +1,8 @@
 
 include ../common.mk
 
-UTIL_OBJS=../Util/$(TGT)/mcf.o ../Util/$(TGT)/gpioutil.o
-DEV_OBJS=../Bboard/$(TGT)/Bboard.o ../Adf4351/$(TGT)/Adf4351.o
+UTIL_OBJS=../Util/$(TGT)/mcf.o ../Util/$(TGT)/gpioutil.o ../Util/$(TGT)/SimpleTable.o
+DEV_OBJS=../Iboard/$(TGT)/Iboard.o ../Lboard/$(TGT)/Lboard.o ../Mboard/$(TGT)/Mboard.o ../Adf4351/$(TGT)/Adf4351.o
 LOCAL_OBJS=
 
 
