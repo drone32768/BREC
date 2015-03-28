@@ -70,12 +70,12 @@ void AdcTcpIf::ConfigureHw()
 {
     Dp()->Adc()->SetGain( 0 );
 
-    Dp()->Adc()->SetComplexSampleRate( 500000 );
+    //Dp()->Adc()->SetComplexSampleRate( 500000 );
     // Dp()->Adc()->SetComplexSampleRate( 625000 );
     // Dp()->Adc()->SetComplexSampleRate( 833333 );
-    // Dp()->Adc()->SetComplexSampleRate( 1250000 );
     // Dp()->Adc()->SetComplexSampleRate( 2500000 );
-    // Dp()->Adc()->SetComplexSampleRate( 5000000 );
+    Dp()->Adc()->SetComplexSampleRate( 5000000 );
+    // Dp()->Adc()->SetComplexSampleRate( 1250000 );
 }
 
 //------------------------------------------------------------------------------

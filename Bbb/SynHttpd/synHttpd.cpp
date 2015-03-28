@@ -756,7 +756,7 @@ main (int argc, char **argv)
    // Parse arguments
    idx = 1;
    while( idx< argc ){
-       if( 0==strcmp(argv[idx],"-help") ){ 
+       if( 0==strcmp(argv[idx],"-h") ){ 
           usage(0); 
           idx++;
           continue;
