@@ -42,7 +42,6 @@
 
 #include "../Aboard/Aboard.h"
 #include "../Bboard/Bboard.h"
-#include "../Rboard/Rboard.h"
 
 #include "../Hboard/Hboard.h"
 #include "../Iboard/Iboard.h"
@@ -66,6 +65,8 @@ class Device : public McF {
     Adf4351       *mLo0;
     Adf4351       *mLo1;
     int            mNLO;
+
+    int           TunerSet( long long freqHz );
 
   public:
     Device();

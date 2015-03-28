@@ -42,7 +42,7 @@
 #include "Device.h"
 
 #   define IF0 1575420000
-#   define IF1 10750000
+#   define IF1 10625000
 
 ////////////////////////////////////////////////////////////////////////////////
 // Public Methods
@@ -62,27 +62,19 @@ Device::Device()
         mAdc->StartPrus();
 
         Bboard *bcBoard;
-        Rboard *rBoard;
-
         bcBoard = new Bboard();
         bcBoard->Open();
         mLo0 = bcBoard->GetAdf4351( 0 );
         mLo1 = bcBoard->GetAdf4351( 1 );
-      
-        rBoard = new Rboard();
-        rBoard->SetDev(0);
-        rBoard->Open();
-        rBoard->SetChannel( 3 );
     }
 
     if( FindCapeByName("brecH") ){
         mAdc = new Hboard();
         mAdc->Open();
 
-        // mAdc->SetComplexSampleRate( 500000);
-        // mAdc->SetComplexSampleRate(1250000);
-        // mAdc->SetComplexSampleRate(1000000);
-        mAdc->SetComplexSampleRate(10000000);
+	// NOTE: this is just the default.
+	// actual value will be set by sdr control sw
+        mAdc->SetComplexSampleRate(1250000);
 
         Iboard        *iBoard;
         Gpio6PinGroup *g6pg;
@@ -91,12 +83,12 @@ Device::Device()
         iBoard = new Iboard();
         iBoard->Open();
 
-        g6pg = iBoard->AllocPort( 0 );
-        iBoard->EnablePort( 0, 1 );
+        g6pg = iBoard->AllocPort( 2 );
+        iBoard->EnablePort( 2, 1 );
 
         mBoard = new Mboard();
         mBoard->Open( g6pg );
-        mLo0 = mBoard->GetAdf4351( 0 );
+        mLo0 = mBoard->GetAdf4351( 2 );
 
         g6pg = iBoard->AllocPort( 1 );
         iBoard->EnablePort( 1, 1 );
@@ -116,6 +108,35 @@ Device::Device()
     mLo1->SetMainPower( 2 );
     mLo1->SetCpCurrent( 15 );
 
+    mNLO = 1;
+}
+
+//------------------------------------------------------------------------------
+int Device::TunerSet( long long freqHz )
+{
+
+    switch( mNLO ){
+
+       case 1:{
+          freqHz   = freqHz + IF1;
+          mLo0->SetFrequency( freqHz );
+          mPmTuneMHz = (double)freqHz / 1e6;
+          printf("*** TunerSet *** LO 0 set to %f Hz\n",(double)freqHz);
+	  break;
+       }
+
+       case 2:
+       default:{
+          freqHz   = freqHz + IF1;
+          mLo0->SetFrequency( freqHz );
+          mPmTuneMHz = (double)freqHz / 1e6;
+          printf("LO 0 set to %f Hz\n",(double)freqHz);
+	  break;
+       }
+
+    }// End of switch over mNLO
+
+    return(0);
 }
 
 //------------------------------------------------------------------------------
@@ -152,40 +173,13 @@ void Device::RcvEvent( char *evtStr )
        mDisplayCount =  atoi( argStr );
     }
 
-    if( 0==strcmp("lo-hz",cmdStr) ){
-       long long freq; 	     
-       int       unit;
-
-       argStr = strtok_r(NULL, " ", &tokr);
-       unit   = strtoll( argStr, NULL, 10 );
-
-       argStr = strtok_r(NULL, " ", &tokr);
-       freq   = strtoll( argStr, NULL, 10 );
-
-       if( 0==unit ){
-          mLo0->SetFrequency( freq );
-       }
-       else{
-          mLo1->SetFrequency( freq );
-       }
-       printf("LO %d set to %f Hz\n",unit,(double)freq);
-    }
-
     if( 0==strcmp("tune-hz",cmdStr) ){
        long long freq; 	     
       
        argStr = strtok_r(NULL, " ", &tokr);
        freq   = strtoll( argStr, NULL, 10 );
 
-       // Use this for two stage IF
-       // freq   = freq + IF0;
-
-       // Use this for single stage IF
-       freq   = freq + IF1;
-
-       mLo0->SetFrequency( freq );
-       printf("LO set to %f Hz\n",(double)freq);
-       mPmTuneMHz = (double)freq / 1e6;
+       TunerSet( freq );
     }    
 
 }

@@ -4,7 +4,7 @@ PRU_LIB=/home/root/am335x_pru_package-master/pru_sw/app_loader/lib
 PRU_INC=/home/root/am335x_pru_package-master/pru_sw/app_loader/include 
 
 UTIL_OBJS=../Util/$(TGT)/mcf.o ../Util/$(TGT)/cli.o ../Util/$(TGT)/net.o ../Util/$(TGT)/gpioutil.o
-DEV_OBJS=../Aboard/$(TGT)/Aboard.o ../Bboard/$(TGT)/Bboard.o ../Adf4351/$(TGT)/Adf4351.o ../Rboard/$(TGT)/Rboard.o ../Hboard/$(TGT)/Hboard.o ../Iboard/$(TGT)/Iboard.o ../Mboard/$(TGT)/Mboard.o
+DEV_OBJS=../Aboard/$(TGT)/Aboard.o ../Bboard/$(TGT)/Bboard.o ../Adf4351/$(TGT)/Adf4351.o ../Hboard/$(TGT)/Hboard.o ../Iboard/$(TGT)/Iboard.o ../Mboard/$(TGT)/Mboard.o
 EMUL_OBJS=../PruEmul/$(TGT)/SignalSim.o ../PruEmul/$(TGT)/pruss_emul.o
 LOCAL_OBJS= $(TGT)/AscpUtil.o $(TGT)/AscpCtlIf.o $(TGT)/AscpDatIf.o \
             $(TGT)/AscpDisIf.o $(TGT)/CliCtlIf.o $(TGT)/Fir.o $(TGT)/Device.o 
