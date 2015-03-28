@@ -95,7 +95,7 @@ MAIN1:
     MOV       r4k,   4096
 
 #define rSampMask    r14
-    MOV       rSampMask,   0xffc
+    MOV       rSampMask,   0xfff
     
 
 //

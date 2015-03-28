@@ -1,5 +1,10 @@
 include ../common.mk
 
+
+PRU_LIB=/home/root/am335x_pru_package-master/pru_sw/app_loader/lib
+UTIL_OBJS=../Util/$(TGT)/mcf.o ../Util/$(TGT)/cli.o ../Util/$(TGT)/net.o ../Util/$(TGT)/gpioutil.o
+LOCAL_OBJS=$(TGT)/Hboard.o  
+
 ifeq ($(TGT),arm)
     PRU_INC=/home/root/am335x_pru_package-master/pru_sw/app_loader/include 
     PRU_LIB=/home/root/am335x_pru_package-master/pru_sw/app_loader/lib
@@ -10,11 +15,20 @@ endif
 
 all	:
 	echo target is $(TGT)
+	make $(TGT)/Hutil
 	make $(TGT)/Hboard.o
+
 ifeq ($(TGT),arm)
 	make pru_images.h
 	cd Dt; make all
 endif
+
+
+$(TGT)/Hutil	: Hutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -L$(PRU_LIB) Hutil.cpp \
+                $(LOCAL_OBJS) \
+		$(UTIL_OBJS) \
+                -lm -lprussdrv -lpthread -o $(TGT)/Hutil
 
 $(TGT)/Hboard.o : Hboard.cpp Hboard.h pru_images.h | $(TGT)
 	g++  $(CPPFLAGS) -c -I$(PRU_INC) Hboard.cpp -o $(TGT)/Hboard.o
