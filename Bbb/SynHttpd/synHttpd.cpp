@@ -1,4 +1,4 @@
-//
+
 //
 // This source code is available under the "Simplified BSD license".
 //
@@ -62,7 +62,8 @@
 class HwModel : public McF {
 
 private:
-    int            Lport, Mport;
+    int            mLport; // I board port of L board
+    int            mMport; // I board port of M board
 
     Gpio6PinGroup *mg6pg;  // Pin group for discrete io on I board
     Iboard        *mIbrd;  // I board for interfacing to others
@@ -89,7 +90,11 @@ private:
     double         mStepHz;    // Frequency increment in sweep
     double         mStepDbm;   // Level increment in sweep
     int            mDwellMs;   // Time in mS for a given sweep step
-    int            mDirtySweep; // Flag indicating state has changed
+    int            mParamChange; // Flag indicating state has changed
+    char          *mCfgFname;
+
+    int    ReadCfg();
+    int    WriteCfg();
 
 public:
 
@@ -101,12 +106,12 @@ public:
     // Primary public interface
     int    SetState( char *name, char *value );
     int    GetState( char *resultsStr, int resultsLen );
+    int    SetCfg( const char *fname );
 
     // Internal support routines
     int    HwInit();
     void   HwStop();
     void   ShowState();
-    void   DoMonitorStep();
     void   DoSweepStep();
     void   DoSweepDwellTime();
     double GetPwrEst( int nEst );
@@ -120,8 +125,8 @@ public:
  */
 HwModel::HwModel()
 {
-    Lport       = 0;
-    Mport       = 1;
+    mLport       = 0;
+    mMport       = 2;
 
     mLog        = 0x20; // 0xffffffff;
     mg6pg       = NULL;
@@ -145,7 +150,86 @@ HwModel::HwModel()
     mStepHz     = 300000;
     mStepDbm    = -0.25;
     mDwellMs    = 100;
-    mDirtySweep = 0;
+    mParamChange= 0;
+    mCfgFname   = strdup( "x.cfg" );
+}
+
+int
+HwModel::SetCfg( const char *fname )
+{
+    free(mCfgFname);
+    mCfgFname = strdup( fname ); 
+    return( 0 );
+}
+
+int  HwModel::ReadCfg()
+{
+    FILE *fp;
+    char  *name, *value,*end;
+    char  lineBf[1024];
+
+    // printf("Reading configuration file\n");
+    fp = fopen( mCfgFname, "r" );
+    if( !fp ){
+        fprintf(stderr,"cannot open configuration file\n");
+        return(-1);
+    }
+
+    while( fgets(lineBf,sizeof(lineBf)-1,fp) ){
+        name  = strtok_r( lineBf, " ", &end );
+        value = strtok_r( NULL, " \n",   &end );
+        SetState( name, value ); 
+    }
+
+    fclose(fp);
+    // printf("Configuration file read complete\n");
+
+    return( 0 );
+}
+
+int
+HwModel::WriteCfg()
+{
+    FILE *fp;
+
+    printf("WriteCfg:Enter\n");
+
+    fp = fopen( mCfgFname, "w" );
+    if( !fp ){
+        fprintf(stderr,"cannot open %s\n",mCfgFname);
+        return( -1 );
+    }
+
+    fprintf(fp, 
+                    "run        %s\n"
+                    "actHz      %.0f\n"
+                    "actDbm     %.3f\n"
+                    "sweep      %s\n"
+                    "monitor    %s\n"
+                    "startHz    %.0f\n"
+                    "startDbm   %.3f\n"
+                    "stopHz     %.0f\n"
+                    "stopDbm    %.3f\n"
+                    "stepHz     %.0f\n"
+                    "stepDbm    %.3f\n"
+                    "dwellMs    %d\n",
+                    mRun?"ON":"OFF",            // run
+                    mActHz,                     // actHz
+                    mActDbm,                    // actDbm
+                    mSweep?  "ON":"OFF",        // sweep
+                    mMonitor?"ON":"OFF",        // monitor
+                    mStartHz,                   // startHz
+                    mStartDbm,                  // startDbm
+                    mStopHz,                    // stopHz
+                    mStopDbm,                   // stopDbm
+                    mStepHz,                    // stepHz
+                    mStepDbm,                   // stepDbm
+                    mDwellMs                    // dwellMs
+    );
+
+    fclose(fp);
+    printf("WriteCfg:Exit\n");
+    return(0);
 }
 
 /**
@@ -156,7 +240,12 @@ HwModel::HwModel()
 void  HwModel::Main()
 {
 
+    // Read and restore saved configuration
+    ReadCfg();
 
+// FIXME - we might start here without hw init and run is set ...
+
+    // Main processing loop
     while( !mThreadExit ){
 
         // ShowState();
@@ -170,14 +259,24 @@ void  HwModel::Main()
            SetOutput( mStartHz, mStartDbm );
         }
 
-        if( mMonitor ){  // NOTE: sweeping includes monitoring
-            DoMonitorStep();
-        }
-        else if( mSweep ){
+        if( mSweep ){
             DoSweepStep();
             DoSweepDwellTime();
         }
         else{
+            if( mParamChange ){
+               SetOutput( mStartHz, mStartDbm );
+               mParamChange= 0;
+            }
+
+            // Always update lock since its a discrete
+            mLockStatus = mSyn->GetLock();
+
+            // Update level only if indicated
+            if( mMonitor ){  
+                mActDbm  = GetPwrEst(mNest);
+            }
+
             us_sleep( 50000 );
         }
 
@@ -209,6 +308,12 @@ void HwModel::RcvEvent( char *evtStr )
 int
 HwModel::SetState( char *name, char *value )
 {
+    int   err;
+
+    printf("SetState name=\'%s\',value=\'%s\'\n",name,value);
+
+    // TODO - there really should be a lock around this method as well as
+    //        the param change indicator elsewhere
 
     if( 0==strcmp(name,"run") ){
           if( 0==strcmp(value,"ON") ){
@@ -265,23 +370,40 @@ HwModel::SetState( char *name, char *value )
           mDwellMs=atoi(value);
     }
 
-    else if( 0==strcmp(name,"swreset") ){
+    else if( 0==strcmp(name,"swreset") && 0==strcmp(value,"ON") ){
           exit(0);
     }
 
-    else if( 0==strcmp(name,"savecfg") ){
-          printf("TODO - save current configuration\n");
+    else if( 0==strcmp(name,"savecfg") && 0==strcmp(value,"ON") ){
+
+	  err = system("/bin/mount -o remount,rw /");
+          if( -1 == err ){
+              fprintf(stderr,"system command error [mount rw]\n");
+          }
+
+          WriteCfg();
+
+	  err = system("/bin/mount -o remount,ro /");
+          if( -1 == err ){
+              fprintf(stderr,"system command error [mount ro]\n");
+          }
     }
 
-    else if( 0==strcmp(name,"hwreset") ){
-          printf("TODO - issue shutdown -r now\n");
+    else if( 0==strcmp(name,"hwreset") && 0==strcmp(value,"ON") ){
+	  err = system("/sbin/shutdown -r now");    
+          if( -1 == err ){
+              fprintf(stderr,"system command error [shutdown -r]\n");
+          }
     }
 
-    else if( 0==strcmp(name,"shutdown") ){
-          printf("TODO - issue shutdown -h now\n");
+    else if( 0==strcmp(name,"shutdown") && 0==strcmp(value,"ON") ){
+	  err = system("/sbin/shutdown -h now");    
+          if( -1 == err ){
+              fprintf(stderr,"system command error [shutdown -h]\n");
+          }
     }
 
-    mDirtySweep = 1;
+    mParamChange = 1;
     return( 0 );
 }
 
@@ -339,16 +461,6 @@ HwModel::GetState( char *resultsStr, int resultsLen )
 }
 
 /**
- * This internal method updates the state variables that can be updated
- * without changing device output.  
- */
-void HwModel::DoMonitorStep()
-{
-    mActDbm     = GetPwrEst(mNest);
-    mLockStatus = mSyn->GetLock();
-}
-
-/**
  * This internal method conducts a single step in a sweep.  As part
  * of a sweep step the leve, frequency, and lock status are implicitly 
  * updated.  It checks for sweep resent and resets for both ascending
@@ -358,10 +470,10 @@ void HwModel::DoSweepStep()
 {
     int err;
 
-    if( mDirtySweep ){
+    if( mParamChange ){
         mTargetHz  = mStartHz;
         mTargetDbm = mStartDbm;
-        mDirtySweep= 0;
+        mParamChange= 0;
     }
 
     if( mLog&HWDEVS_LOG_SWEEP ){
@@ -406,7 +518,7 @@ void HwModel::DoSweepDwellTime()
 
     // Longer dwells we break up so we don't get locked into a long dwell
     int ms = 0;
-    while( (ms < mDwellMs) && !mDirtySweep ){
+    while( (ms < mDwellMs) && !mParamChange ){
         us_sleep( 100 * 1000 );
         ms+=100;
     }
@@ -437,8 +549,8 @@ int HwModel::HwInit()
     mIbrd->Open();
 
     // Open L board
-    mg6pg  = mIbrd->AllocPort( Lport );
-    mIbrd->EnablePort( Lport, 1 );
+    mg6pg  = mIbrd->AllocPort( mLport );
+    mIbrd->EnablePort( mLport, 1 );
     mLbrd = new Lboard();
     mLbrd->Open( mg6pg );
     mLbrd->SetLog(0);
@@ -447,8 +559,8 @@ int HwModel::HwInit()
     mLbrd->SetAttenDb( mLbrd->GetMaxAttenDb() );
 
     // Open M board
-    mg6pg  = mIbrd->AllocPort( Mport );
-    mIbrd->EnablePort( Mport, 1 );
+    mg6pg  = mIbrd->AllocPort( mMport );
+    mIbrd->EnablePort( mMport, 1 );
     mMbrd = new Mboard();
     mMbrd->Open( mg6pg );
     mSyn = mMbrd->GetAdf4351( 0 );
@@ -468,8 +580,8 @@ void HwModel::HwStop()
     free( mLbrd );
 
     // Make sure devices are powered down 
-    mIbrd->EnablePort( Lport, 0 );
-    mIbrd->EnablePort( Mport, 0 );
+    mIbrd->EnablePort( mLport, 0 );
+    mIbrd->EnablePort( mMport, 0 );
 
     free( mIbrd );
 }
@@ -520,11 +632,13 @@ HwModel::SetOutput( double targetHz, double targetDbm )
     attenDb  = mLbrd->GetMaxAttenDb();
     mLbrd->SetAttenDb( attenDb );
     mSyn->SetMainPower( mSynPwr );
-    mActHz = (double)( mSyn->SetFrequency( (long long)targetHz ) );
+    mActHz = (double)( 
+                     // Wait for 20,000 uS for lock in increments of 100uS
+                     mSyn->SetFrequencyWithLock((long long)targetHz,100,20000 ) 
+                     );
+
     mLockStatus =  mSyn->GetLock();
 
-    // TODO - error on fail to lock  ??
-    
     mSynPwr = 0;
     delta   = 100;
     while( mSynPwr < 4 ){ // TODO adf4351 should export min/max power method
@@ -738,7 +852,8 @@ void usage( int exit_code )
    fprintf(stderr,
 "This utility implement a simple http based level controlled synthesizer\n"
 "Point a web browser at the platform address and specified port\n"
-"-port <port>    http port to use (8080 default)\n"
+"-port <port>     http port to use (8080 default)\n"
+"-config <fname>  configurtion file name\n"
 );
    exit(0);
 }
@@ -747,11 +862,13 @@ int
 main (int argc, char **argv)
 {
    struct MHD_Daemon *d;
-   int    idx;
-   int    port;
+   int                idx;
+   int                port;
+   const char        *cfgFname;
  
    // Default arguments
-   port = 8080;
+   port     = 8080;
+   cfgFname = "syn.cfg";
 
    // Parse arguments
    idx = 1;
@@ -772,6 +889,12 @@ main (int argc, char **argv)
           idx+=2;
           continue;
        }
+       else if( 0==strcmp(argv[idx],"-config") ){ 
+          if((idx+1)>=argc ) usage(-1);
+          cfgFname = argv[idx+1];
+          idx+=2;
+          continue;
+       }
        else{
           fprintf(stderr,"unrecogized arg %s\n",argv[idx]);
           idx++;
@@ -779,10 +902,12 @@ main (int argc, char **argv)
    }
 
    // Show arguments
-   printf("port = %d\n",port);
+   printf("port   = %d\n",port);
+   printf("config = %s\n",cfgFname);
 
    // Create and start the hardware model
    gHwm = new HwModel();
+   gHwm->SetCfg( cfgFname );
    gHwm->Start();
 
    // Create and start the http server

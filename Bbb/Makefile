@@ -14,6 +14,7 @@ all	:
 	cd PruEmul;    make all
 	cd SdrSvr ;    make all
 	cd WbSvr  ;    make all
+	cd SynHttpd;   make all
 
 clean	:
 	cd Util;       make clean
@@ -29,6 +30,7 @@ clean	:
 	cd PruEmul;    make clean
 	cd SdrSvr ;    make clean
 	cd WbSvr  ;    make clean
+	cd SynHttpd;   make clean
 
 clean_all :
 	find . -name "arm" -exec rm -rf {} ";"

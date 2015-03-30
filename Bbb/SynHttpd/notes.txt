@@ -1,11 +1,7 @@
+The following are summary notes relating to creating a standalone http
+based application.  These were assembled during the creation and installation
+of this application.
 
---------------------------------------------------------------------------------
-  I. Http Server 
- II. Browser Application
-III. Instrument - Read Only Filesystem
- IV. Instrument - Auto start application
-
---------------------------------------------------------------------------------
 I. Http Server
    1.0 Install libmicrohttpd-0.9.37 (or equivalent)
        a) You must build on a BBB (generally from nfs shared fs)
@@ -13,8 +9,7 @@ I. Http Server
    2.0 You must add /usr/local/lib to LD_LIBRARY_PATH
        a) export LD_LIBRARY_PATH='/usr/local/lib'
 
---------------------------------------------------------------------------------
-III. Instrument - Readonly Root Filesystem
+II. Instrument - Readonly Root Filesystem
    0.0) These notes conducted using 192.168.0.4
         a) Angstrom v2012.12
         b) BBB rev B
@@ -33,3 +28,22 @@ III. Instrument - Readonly Root Filesystem
             - I had no problem starting Wbsvr on ro root
             - verified R board leds on channel selection
        c) Networking setup scripts do not work with ro root
+
+III. Auto start as a service
+   1.0 Well documented on web, see Scripts/brec-start.sh files
+
+
+TODO
+1) figure out how to disable existing port 80 server (show BBB material)
+--------------------------------------------------------------------------------
+Disable Existing Web services
+From Element14 tutorial:
+
+systemctl disable cloud9.service
+systemctl disable gateone.service
+systemctl disable bonescript.service
+systemctl disable bonescript.socket
+systemctl disable bonescript-autorun.service
+systemctl disable avahi-daemon.service
+systemctl disable gdm.service
+systemctl disable mpd.service
