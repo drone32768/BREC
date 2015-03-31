@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "BREC service starting"
+
+echo "BREC installing device tree"
+/home/root/Bbb/Iboard/Dt/dt-install
+
+echo "BREC starting synHttpd"
+cd /home/root/Bbb/SynHttpd; ./synHttpd.sh &
+
+echo "BREC start complete"
+
+exit 0

@@ -242,8 +242,10 @@ void  HwModel::Main()
 
     // Read and restore saved configuration
     ReadCfg();
-
-// FIXME - we might start here without hw init and run is set ...
+    if( mRun ){
+        HwInit();
+        SetOutput( mStartHz, mStartDbm );
+    }
 
     // Main processing loop
     while( !mThreadExit ){

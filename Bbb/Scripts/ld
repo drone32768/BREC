@@ -1,5 +1,0 @@
-
-cat /sys/class/gpio/gpio44/value
-
-cat /sys/class/gpio/gpio45/value
-
