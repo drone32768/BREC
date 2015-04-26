@@ -1,0 +1,48 @@
+Notes and steps in setting up a BBB.
+
+1.0 EMMC Flash
+a) see angstrom-notes.txt
+
+2.0 Accounts
+a) set root password (passwd)
+b) /etc/passwd should indicate shell of /bin/bash
+
+3.0 Networking
+a) Set the IP address to windows share network by adding  the following 
+   to /etc/network/interfaces
+
+   allow-hotplug eth0
+   iface eth0 inet static
+      address 192.168.0.5
+      netmask 255.255.255.0
+      network 192.168.0.0
+      gateway 192.168.0.1
+
+b) No additional DNS steps required - should be able to access external hosts
+
+4.0 Install NFS client
+   apt-get install nfs-common
+ 
+5.0 Tools/Scripts
+a) Other packages needed
+   apt-get install xterm 
+
+b) Copy pre-build PRU package
+   cp -r /mnt/pc/am335x_pru_package-master/ ~
+
+   NOTE: need to rebuild this with Debian tool chain
+
+XX c) Install fftw from existing build of package
+
+   cd /mnt/pc/fftw-3.3.3; make install
+
+   If the install fails, try from scratch.
+   cd /mnt/pc/fftw-3.3.3;
+   ./configure
+   make
+   make install
+
+d) Install libmicrohttp from existing build of package
+   cd /mnt/pc/libmicrohttpd-0.9.37; make install
+
+e) symlink /home/root -> /root
