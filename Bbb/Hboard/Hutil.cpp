@@ -12,6 +12,8 @@ void usage( int exit_code )
     printf("This utility collects 64k samples and produces a histogram\n");
     printf("The output is inter mixed.  A csv file can be obtained by\n");
     printf("greping for CSV lines. Similarly, non zero bins have a NZ\n");
+    printf("-histo  output histogram \n");
+    printf("-series output raw time series \n");
     exit( exit_code );
 }
 
@@ -20,8 +22,12 @@ main( int argc, char *argv[] )
 {
     int            idx;	  
     Hboard        *hbrd;
+    int            doHisto;
+    int            doSeries;
 
 
+    doHisto = 0;
+    doSeries= 0;
     idx = 1;
     while( idx < argc ){
 
@@ -31,6 +37,14 @@ main( int argc, char *argv[] )
 
         else if( 0==strcmp(argv[idx], "-h") ){
             usage(0);
+        }
+
+        else if( 0==strcmp(argv[idx], "-histo") ){
+            doHisto = 1;
+        }		 
+
+        else if( 0==strcmp(argv[idx], "-series") ){
+            doSeries = 1;
         }
 
         // Move to next argument for parsing
@@ -63,6 +77,16 @@ main( int argc, char *argv[] )
        samples[idx] = samples[idx] >> 4; 
     }
 
+    if( doSeries ){
+       for( idx=0;idx<65536;idx++){
+          printf("TSV,%d,%d\n",idx,samples[idx]);
+       }
+    }
+
+    if( !doHisto ){
+       return(0);
+    }
+
     printf("clear histogram...\n");
     for( idx=0;idx<4096;idx++){
        histo[idx] =0;
@@ -70,8 +94,8 @@ main( int argc, char *argv[] )
 
     printf("creating histogram...\n");
     for( idx=0;idx<65536;idx++){
-       code = samples[idx];
-       histo[code]++;
+           code = samples[idx];
+           histo[code]++;
     }
 
     printf("output histogram...\n");
@@ -83,5 +107,7 @@ main( int argc, char *argv[] )
          printf("ZE,CSV,%d,%d\n",idx,histo[idx]);	     
        }
     }
+
+    hbrd->SetComplexSampleRate( 0 );
 }
 

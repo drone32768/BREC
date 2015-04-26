@@ -362,6 +362,9 @@ Hboard::StartPrus()
     prussdrv_pru_enable(0);
     prussdrv_pru_enable(1);
 
+    // Enable ADC output
+    mGpioEnable.Set( 1 );
+
     printf("Hboard:StartPrus Exit\n");
 
     return(0);
@@ -402,12 +405,41 @@ Hboard::SetComplexSampleRate( int complexSamplesPerSecond )
 	    printf("Hboard:SetComplexSampleRate - off\n");
             prussdrv_pru_disable(0);
             mCSPS = 0;
+            mGpioEnable.Set( 0 );
             break;
         }
 
         case 500000:{
             mCSPS     = 500000;
             mDecimate = 10;
+            StartPrus();
+            break;
+        }
+
+        case 555555:{
+            mCSPS     = 555555;
+            mDecimate = 9;
+            StartPrus();
+            break;
+        }
+
+        case 625000:{
+            mCSPS     = 625000;
+            mDecimate = 8;
+            StartPrus();
+            break;
+        }
+
+        case 714285:{
+            mCSPS     = 714285;
+            mDecimate = 7;
+            StartPrus();
+            break;
+        }
+
+        case 833333:{
+            mCSPS     = 833333;
+            mDecimate = 6;
             StartPrus();
             break;
         }
@@ -422,6 +454,13 @@ Hboard::SetComplexSampleRate( int complexSamplesPerSecond )
         case 1250000:{
             mCSPS     = 1250000;
             mDecimate = 4;
+            StartPrus();
+            break;
+        }
+
+        case 1428571:{
+            mCSPS     = 1428571;
+            mDecimate = 3;
             StartPrus();
             break;
         }

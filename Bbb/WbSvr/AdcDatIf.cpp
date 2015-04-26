@@ -84,6 +84,7 @@ void AdcDatIf::RcvEvent( char *evtStr )
 //------------------------------------------------------------------------------
 void AdcDatIf::ConfigureHw()
 {
+    printf("AdcDatIf::ConfigureHw()\n");
     Dp()->Adc()->SetGain( 0 );
     // Dp()->Adc()->SetComplexSampleRate( 500000 );
     // Dp()->Adc()->SetComplexSampleRate( 625000 );
