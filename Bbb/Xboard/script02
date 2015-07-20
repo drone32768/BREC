@@ -1,0 +1,16 @@
+#!/bin/bash
+arm/Xutil -select 0 -enable 1 -us 1 \
+-init \
+-echo   "---> Stream of reading fifo" \
+-write 0x0001 \
+-write 0x0000 \
+-write 0x0000 \
+-write 0x0001 \
+-write 0x0000 \
+-write 0x0000 \
+-write 0x0001 \
+-write 0x0000 \
+-write 0x0000 \
+-write 0x0001 \
+-write 0x0000 \
+-write 0x0000 \

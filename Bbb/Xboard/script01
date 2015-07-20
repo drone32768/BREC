@@ -1,0 +1,34 @@
+#!/bin/bash
+arm/Xutil -select 0 -enable 1 -us 1 \
+-init \
+-write 0x3ff4 \
+-echo   "---> All leds ON" \
+-usleep 1000000 \
+-write 0x0002 \
+-write 0x0000 \
+-echo   "--->Read value should be 0x3ff4" \
+-echo   "\n" \
+\
+-write 0xC0f4 \
+-echo   "---> All leds OFF" \
+-usleep 1000000 \
+-write 0x0002 \
+-write 0x0000 \
+-echo   "--->Read value should be 0xc0f4" \
+-echo   "\n" \
+\
+-write 0xC104 \
+-echo   "---> First led ON" \
+-usleep 1000000 \
+-write 0x0002 \
+-write 0x0000 \
+-echo   "--->Read value should be 0xc104" \
+-echo   "\n" \
+\
+-write 0xC204 \
+-echo   "---> Second led ON" \
+-usleep 1000000 \
+-write 0x0002 \
+-write 0x0000 \
+-echo   "--->Read value should be 0xc204" \
+-echo   "\n" \

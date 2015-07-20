@@ -1,0 +1,5 @@
+#!/bin/bash
+arm/Xutil -select 0 -enable 1 -us 0 \
+-init \
+-echo   "---> Enter continuous test loop reading fifo " \
+-seq
