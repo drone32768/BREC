@@ -1,10 +1,10 @@
 #!/bin/bash
 arm/Xutil -select 0 -enable 1 -us 1000 \
 -init \
--echo "This tests reads the fifo via p1" \
--write  0x8f14            \
+-echo "This tests reads the system clock counter" \
+-write  0x8f44            \
 -write  0x0009            \
--echo   "Next fifo value is valid" \
+-echo   "Next value is valid" \
 -write  0x0009            \
 -write  0x0009            \
 -write  0x0009            \

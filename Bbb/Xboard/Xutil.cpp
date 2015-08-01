@@ -180,6 +180,26 @@ main( int argc, char *argv[] )
             continue;
         }
 
+        else if( 0==strcmp(argv[idx], "-sample") ){
+            int sampCnt;
+
+            // Disable fifo writes, and clear fifo
+            rd = xspi_write( g6pg, 0x0114 ); //  write p0
+            for( sampCnt=0; sampCnt<2048; sampCnt++){
+                rd = xspi_write( g6pg, 0x0009 ); // read p1
+            }
+
+            // Enable fifo writes and read a fifo's worth of data
+            rd = xspi_write( g6pg, 0x8214 ); //  write p0
+            for( sampCnt=0; sampCnt<2048; sampCnt++){
+                rd = xspi_write( g6pg, 0x0009 ); // read p1
+                printf("%d, %d\n",sampCnt,(rd>>4));
+            }
+
+            // Disable fifo writes
+            rd = xspi_write( g6pg, 0x0f14 ); //  write p0
+        }
+
         else if( 0==strcmp(argv[idx], "-seq") ){
             unsigned short ex;
 
@@ -194,7 +214,7 @@ main( int argc, char *argv[] )
                 if( (rdCount%1000)==0 ){
                    printf("read count %d\n",rdCount);
                 }
-                rd = xspi_write( g6pg, 0x0001 );
+                rd = xspi_write( g6pg, 0x0009 );
 
                 if( rd!=ex ){
                    printf(

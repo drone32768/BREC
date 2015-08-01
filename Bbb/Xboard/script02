@@ -1,16 +1,17 @@
 #!/bin/bash
-arm/Xutil -select 0 -enable 1 -us 1 \
+arm/Xutil -select 0 -enable 1 -us 1000 \
 -init \
--echo   "---> Stream of reading fifo" \
--write 0x0001 \
--write 0x0000 \
--write 0x0000 \
--write 0x0001 \
--write 0x0000 \
--write 0x0000 \
--write 0x0001 \
--write 0x0000 \
--write 0x0000 \
--write 0x0001 \
--write 0x0000 \
--write 0x0000 \
+-echo "This tests reads the counter via p1" \
+-write  0x8f04            \
+-write  0x0005            \
+-write  0x0009            \
+-echo   "Next read counter value is valid" \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0004            \
+
