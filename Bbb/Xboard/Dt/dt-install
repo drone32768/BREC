@@ -1,0 +1,10 @@
+#echo am33xx_pwm:00A00 > /sys/devices/bone_capemgr.*/slots 
+
+echo "Before"
+cat /sys/devices/bone_capemgr.*/slots
+
+echo brecX:00A0 > /sys/devices/bone_capemgr.*/slots 
+
+echo "After"
+cat /sys/devices/bone_capemgr.*/slots
+
