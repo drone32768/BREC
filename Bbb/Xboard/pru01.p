@@ -87,7 +87,7 @@ MAIN1:
     MOV       r15, 0x0003ffff
 
 loop_label:
-    JMP loop_lable // TODO develop sram fifo reader
+    JMP loop_label // TODO develop sram fifo reader
 
     // wait if we are at pru0 spot
     LD32      r2, r5              // load pru0's sram postion into r2

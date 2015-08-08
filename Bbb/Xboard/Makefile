@@ -10,27 +10,34 @@ endif
 
 UTIL_OBJS=../Util/$(TGT)/gpioutil.o ../Util/$(TGT)/mcf.o ../Iboard/$(TGT)/Iboard.o
 DEV_OBJS=
-LOCAL_OBJS=
+LOCAL_OBJS=Xboard.o
 
 all	:
-	make $(TGT)/Xboard.o
-	make $(TGT)/Xutil
 ifeq ($(TGT),arm)
 	make $(TGT)/pru00.bin
 	make $(TGT)/pru01.bin
-	make $(TGT)/pructl
+	make pru_images.h
 	cd Dt; make all
 endif
+	make $(TGT)/Xboard.o
+	make $(TGT)/Xtst
+	make $(TGT)/Xutil
 
 
 $(TGT)/Xboard.o    : Xboard.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ -c $(CPPFLAGS) Xboard.cpp -o $(TGT)/Xboard.o
 
-$(TGT)/Xutil    : Xutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
-	g++ $(CPPFLAGS) Xutil.cpp \
+$(TGT)/Xtst    : Xtst.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+	g++ $(CPPFLAGS) Xtst.cpp \
+                $(UTIL_OBJS) \
+                -lm -lpthread -o $(TGT)/Xtst
+
+$(TGT)/Xutil	: Xutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -L$(PRU_LIB) Xutil.cpp \
                 $(LOCAL_OBJS) \
-                $(DEV_OBJS) $(UTIL_OBJS) \
-                -lm -lpthread -o $(TGT)/Xutil
+		$(UTIL_OBJS) \
+                -lm -lprussdrv -lpthread -o $(TGT)/Xutil
+
 $(TGT)/pru00.bin : pru00.p Xpru.h pru00.hp | $(TGT)
 	${PASM} -V3 -b pru00.p
 	mv pru00.bin $(TGT)/pru00.bin

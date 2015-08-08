@@ -83,6 +83,8 @@ MAIN:
 #define       rSO           r7
 #define       rSI           r8
 #define       rCnt          r9
+#define       rDbg1Ptr      r10
+#define       rDbg2Ptr      r11
 
     MOV       rTmp1,             0x0
     MOV       rTmp2,             0x0
@@ -93,26 +95,33 @@ MAIN:
     MOV       rSO,               0x0
     MOV       rSI,               0x0
     MOV       rCnt,              0x0
+    MOV       rDbg1Ptr,          (0x0000 + PRU0_OFFSET_DBG1)
+    MOV       rDbg2Ptr,          (0x0000 + PRU0_OFFSET_DBG2)
 
     // r29 = return register
 
 main_loop: // primary loop
-    LD16      rTmp1, rCmdPtr     // Load command 
+    LD32      rTmp1, rDbg1Ptr
+    ADD       rTmp1,rTmp1,1
+    ST32      rTmp1, rDbg1Ptr
+    JMP       main_loop
+
+    LD32      rTmp1, rCmdPtr     // Load command 
     QBEQ      wr_rd_16,rTmp1,1   // cmd = 1 goto wr_rd_16
     QBEQ      stream,  rTmp1,2   // cmd = 2 goto stream
     CALL      spin_wait          // no cmd, then pause a bit 
     JMP       main_loop          // top of loop to re-check command
 
 wr_rd_16:
-    LD16      rArg0, rWr16Ptr    // load value to write
-    CALL      xspi_wr_rd         // access the spi
-    ST16      rArg0, rRd16Ptr    // store results
+    LD32      rArg0, rWr16Ptr    // load value to write
+    // CALL      xspi_wr_rd         // access the spi
+    ST32      rArg0, rRd16Ptr    // store results
     MOV       rTmp1, 0x0         // load 0
-    ST16      rCmdPtr,rTmp1      // write 0 to command
+    ST32      rCmdPtr,rTmp1      // write 0 to command
     JMP       main_loop          // goto main loop
 
 stream:
-    LD16      rTmp1, rCmdPtr     // Load command 
+    LD32      rTmp1, rCmdPtr     // Load command 
     QBNE      main_loop,rTmp1,2  // if cmd != 2 goto loop_label
     MOV       rArg0, 0x0         // load write value
     CALL      xspi_wr_rd         // access the spi

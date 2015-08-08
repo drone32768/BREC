@@ -1,5 +1,5 @@
 #!/bin/bash
-arm/Xutil -select 0 -enable 1 -us 1 \
+arm/Xtst -select 0 -enable 1 -us 1 \
 -init \
 -sample 
 

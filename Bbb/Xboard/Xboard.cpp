@@ -43,6 +43,11 @@
 #include "../Util/gpioutil.h"
 #include "Xboard.h"
 
+#include "Xpru.h"
+#include "prussdrv.h"
+#include "pruss_intc_mapping.h"
+#include "pru_images.h"
+
 //------------------------------------------------------------------------------
 #define XSPI_FIFO_EN     0x8000
 #define XSPI_FIFO_RST    0x4000
@@ -88,20 +93,21 @@ Xboard::SetGain( int gn )
 int
 Xboard::Open()
 {
-    printf("Xboard:Open\n");
+    int ret;
 
-    mIbrd = new Iboard();
-    mIbrd->Open();
- 
-    mG6pg = mIbrd->AllocPort( 0 );
-    mIbrd->EnablePort( 0, 1 );
+    printf("Xboard:Open enter\n");
 
-    mUsHold = 1;
-    mXspiDbg= 0;
-    mG6pg->GetSs1()->Set( 1 ); us_sleep( mUsHold );
-    mG6pg->GetSs1()->Set( 0 ); us_sleep( mUsHold );
+    prussdrv_init();
+    ret = prussdrv_open(PRU_EVTOUT_0);
+    if( ret ){
+        fprintf(stderr,"prussdrv_open failed\n");
+        return(-1);
+    }
+    prussdrv_map_extmem( (void**)( &mPtrPruSamples ) ); 
+    prussdrv_map_prumem( PRUSS0_PRU0_DATARAM, (void**)(&mPtrPruSram) );
+    mPtrHead = (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DRAM_HEAD);
 
-    XspiWrite( XSPI_STOP );
+    printf("Xboard:Open exit\n");
 
     return(0);
 }
@@ -110,6 +116,7 @@ Xboard::Open()
 int
 Xboard::Flush()
 {
+    mPidx = mPtrHead[0]/2;
     return(0);
 }
 
@@ -117,6 +124,7 @@ Xboard::Flush()
 int 
 Xboard::FlushSamples()
 {
+    Flush();
     return(0);
 }
 
@@ -130,35 +138,9 @@ Xboard::GetSamplePair( short *eo )
 }
 
 //------------------------------------------------------------------------------
-int            localGetCount =0;
-#define        FETCH_COUNT 2048
-unsigned short localBf[FETCH_COUNT];
 int
 Xboard::Get2kSamples( short *bf )
 {
-    int cnt;
-
-
-    if( 0==localGetCount ){
-        printf("Xboard:Xboard::Get2kSamples Start\n");
-        XspiWrite( XSPI_STOP );
-        XspiWrite( XSPI_FLUSH );
-        XspiWrite( XSPI_START );
-        XspiWrite( XSPI_READ_SAMPLE );
-        for( cnt=0; cnt<FETCH_COUNT; cnt++){
-            localBf[ cnt ] = XspiWrite( XSPI_READ_SAMPLE );
-        }
-        localGetCount = 32768/FETCH_COUNT;
-        printf("Xboard:Xboard::Get2kSamples End %d / %d\n",
-                    FETCH_COUNT,localGetCount);
-    }
-    localGetCount--;
-    for( cnt=0; cnt<FETCH_COUNT; cnt++){
-        *bf = localBf[ cnt ];
-         bf++;
-    }
-
-
     return(0);
 }
 
@@ -166,6 +148,33 @@ Xboard::Get2kSamples( short *bf )
 int
 Xboard::StartPrus()
 {
+    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+
+    printf("Xboard:StartPrus Enter\n");
+
+    // Stop the prus
+    prussdrv_pru_disable(0);
+    prussdrv_pru_disable(1);
+
+    // Init pru data
+    prussdrv_pruintc_init(&pruss_intc_initdata);
+
+    // Initialize required ram values
+    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DRAM_PBASE) ) = 
+                                prussdrv_get_phys_addr((void*)mPtrPruSamples);
+    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_CMD) ) = 0;
+
+    // Write the instructions
+    prussdrv_pru_write_memory(PRUSS0_PRU0_IRAM,0,
+                             (unsigned int*)pru_image0,sizeof(pru_image0) );
+    prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM,0,
+                             (unsigned int*)pru_image1,sizeof(pru_image1) );
+
+    // Run/Enable prus
+    prussdrv_pru_enable(0);
+    prussdrv_pru_enable(1);
+
+    printf("Xboard:StartPrus Exit\n");
     return( 0 );
 }
 
@@ -203,48 +212,43 @@ int Xboard::GetRms( int nSamples, short *aSamples, double *rrms )
 int
 Xboard::XspiWrite( int wval )
 {
-    int rval;
-    int obit,ibit,idx;
+    int rval,bsy,cnt;
+    int dbg1,dbg2;
 
     if( mXspiDbg ){
-       printf("xspi_write: wval = 0x%04x\n",wval);
+       printf("Xboard::XspiWrite: wval = 0x%04x\n",wval);
     }
 
-    rval    = 0;
+    dbg1 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
+    dbg2 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
+    printf("Xboard::XspiWrite:Pre  dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
 
-    // expecting: sclk=0, ss=1
-    mG6pg->GetSs1()->Set( 0 ); // us_sleep( mUsHold );
+    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_WRITE_VAL) ) = wval;
+    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_CMD) ) = 1;
 
-    for( idx=15; idx>=0; idx-- ){
-        if( mXspiDbg ){
-            printf("idx[%d]\n",idx);
+    bsy  = 1;
+    cnt  = 100;
+    while( bsy && 0!=cnt ){
+        bsy = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_CMD) );
+        if( bsy ){
+            us_sleep( 1 );
+            cnt--;
         }
-
-        if( wval&0x8000 ) obit = 1;
-        else              obit = 0;
-
-        if( mXspiDbg ){
-            printf("   obit = %d\n",obit);
-        }
-        mG6pg->GetMoSi()->Set( obit ); // us_sleep( mUsHold );
-        mG6pg->GetSclk()->Set( 1    ); // us_sleep( mUsHold );
-        ibit = mG6pg->GetMiSo()->Get( );
-        if( mXspiDbg ){
-            printf("   ibit = %d\n",ibit);
-        }
-
-        mG6pg->GetSclk()->Set( 0 ); // us_sleep( mUsHold );
-
-        rval = (rval<<1) | ibit;
-        wval = (wval<<1);
     }
 
-    // expecting: sclk=0, ss=0
+    if( 0!=cnt ){
+        rval = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_READ_VAL) );
+    }
+    else{
+        rval = -1;
+    }
 
-    mG6pg->GetSs1()->Set( 1 ); // us_sleep( mUsHold );
+    dbg1 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
+    dbg2 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
+    printf("Xboard::XspiWrite:Post dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
 
     if( mXspiDbg ){
-        printf("xspi_write: rval = 0x%04x\n",rval);
+        printf("Xboard::XspiWrite: rval = 0x%04x\n",rval);
     }
 
     return(rval);

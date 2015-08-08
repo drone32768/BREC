@@ -96,6 +96,8 @@
 #define PRU0_OFFSET_CMD        0x1020
 #define PRU0_OFFSET_WRITE_VAL  0x1024
 #define PRU0_OFFSET_READ_VAL   0x1028
+#define PRU0_OFFSET_DBG1       0x102C
+#define PRU0_OFFSET_DBG2       0x1030
 
 // 
 // ---------------------------------------------------------------------------

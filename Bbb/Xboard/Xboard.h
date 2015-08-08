@@ -42,32 +42,31 @@
 
 class Xboard : public AdcIf {
 
-    Gpio6PinGroup           *mG6pg;
-    Iboard                  *mIbrd;
-    int                      mCSPS;    
-    int                      mUsHold;
     int                      mXspiDbg;
+    int                      mCSPS;    
+
     ////////////////////////////////////////
-    int XspiWrite( int wval );
+    int                      mPidx;
+    volatile unsigned short *mPtrPruSamples;
+    volatile unsigned char  *mPtrPruSram;
+    volatile unsigned int   *mPtrHead;
 
 public:
     Xboard();
-    Gpio6PinGroup* AllocPort( int pn );
     int Open();
     int Flush();
     int FlushSamples();
     int GetSamplePair( short *eo ); 
-
     int Get2kSamples( short *bf ); 
-
     int SetComplexSampleRate( int complexSamplesPerSecond );
     int GetComplexSampleRate();
     int StartPrus();
     int GetRms( int nSamples, short *aSamples, double *rrms );
     int SetGain( int gn );
-
     int SetSim( int sim );
 
+    // For testing only
+    int XspiWrite( int wval );
 };
 
 #endif
