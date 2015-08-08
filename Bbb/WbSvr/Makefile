@@ -3,7 +3,7 @@ include ../common.mk
 
 PRU_LIB=/home/root/am335x_pru_package-master/pru_sw/app_loader/lib
 UTIL_OBJS=../Util/$(TGT)/mcf.o ../Util/$(TGT)/cli.o ../Util/$(TGT)/net.o ../Util/$(TGT)/gpioutil.o
-DEV_OBJS=../Hboard/$(TGT)/Hboard.o ../Aboard/$(TGT)/Aboard.o ../Bboard/$(TGT)/Bboard.o ../Adf4351/$(TGT)/Adf4351.o ../Rboard/$(TGT)/Rboard.o ../Iboard/$(TGT)/Iboard.o ../Mboard/$(TGT)/Mboard.o
+DEV_OBJS=../Hboard/$(TGT)/Hboard.o ../Aboard/$(TGT)/Aboard.o ../Bboard/$(TGT)/Bboard.o ../Adf4351/$(TGT)/Adf4351.o ../Rboard/$(TGT)/Rboard.o ../Iboard/$(TGT)/Iboard.o ../Mboard/$(TGT)/Mboard.o ../Xboard/$(TGT)/Xboard.o
 EMUL_OBJS=../PruEmul/$(TGT)/SignalSim.o ../PruEmul/$(TGT)/pruss_emul.o
 
 LOCAL_OBJS=$(TGT)/WbCtlIf.o  $(TGT)/WbTests.o   \

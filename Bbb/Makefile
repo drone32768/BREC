@@ -11,6 +11,7 @@ all	:
 	cd Iboard ;    make all
 	cd Mboard ;    make all
 	cd Lboard ;    make all
+	cd Xboard ;    make all
 	cd PruEmul;    make all
 	cd SdrSvr ;    make all
 	cd WbSvr  ;    make all
@@ -27,6 +28,7 @@ clean	:
 	cd Iboard ;    make clean
 	cd Mboard ;    make clean
 	cd Lboard ;    make clean
+	cd Xboard ;    make clean
 	cd PruEmul;    make clean
 	cd SdrSvr ;    make clean
 	cd WbSvr  ;    make clean

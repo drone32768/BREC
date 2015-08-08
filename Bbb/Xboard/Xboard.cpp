@@ -45,6 +45,7 @@
 
 //------------------------------------------------------------------------------
 #define XSPI_FIFO_EN     0x8000
+#define XSPI_FIFO_RST    0x4000
 
 #define XSPI_LED0        0x0100
 #define XSPI_LED1        0x0200
@@ -63,7 +64,8 @@
 #define XSPI_RP1   (XSPI_READ  | XSPI_PORT1)
 
 #define XSPI_STOP      (               XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
-#define XSPI_START     (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
+#define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
+#define XSPI_START     (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED1 | XSPI_WP0 )
 #define XSPI_READ_SAMPLE   (  XSPI_RP1 )
 
 //------------------------------------------------------------------------------
@@ -128,23 +130,34 @@ Xboard::GetSamplePair( short *eo )
 }
 
 //------------------------------------------------------------------------------
+int            localGetCount =0;
+#define        FETCH_COUNT 2048
+unsigned short localBf[FETCH_COUNT];
 int
 Xboard::Get2kSamples( short *bf )
 {
     int cnt;
 
-    XspiWrite( XSPI_STOP );
-    XspiWrite( XSPI_READ_SAMPLE );
-    for( cnt=0; cnt<2048; cnt++){
-         XspiWrite( XSPI_READ_SAMPLE );
-    }
 
-    XspiWrite( XSPI_START );
-    XspiWrite( XSPI_READ_SAMPLE );
-    for( cnt=0; cnt<2048; cnt++){
-        *bf = XspiWrite( XSPI_READ_SAMPLE );
+    if( 0==localGetCount ){
+        printf("Xboard:Xboard::Get2kSamples Start\n");
+        XspiWrite( XSPI_STOP );
+        XspiWrite( XSPI_FLUSH );
+        XspiWrite( XSPI_START );
+        XspiWrite( XSPI_READ_SAMPLE );
+        for( cnt=0; cnt<FETCH_COUNT; cnt++){
+            localBf[ cnt ] = XspiWrite( XSPI_READ_SAMPLE );
+        }
+        localGetCount = 32768/FETCH_COUNT;
+        printf("Xboard:Xboard::Get2kSamples End %d / %d\n",
+                    FETCH_COUNT,localGetCount);
+    }
+    localGetCount--;
+    for( cnt=0; cnt<FETCH_COUNT; cnt++){
+        *bf = localBf[ cnt ];
          bf++;
     }
+
 
     return(0);
 }
@@ -200,7 +213,7 @@ Xboard::XspiWrite( int wval )
     rval    = 0;
 
     // expecting: sclk=0, ss=1
-    mG6pg->GetSs1()->Set( 0 ); us_sleep( mUsHold );
+    mG6pg->GetSs1()->Set( 0 ); // us_sleep( mUsHold );
 
     for( idx=15; idx>=0; idx-- ){
         if( mXspiDbg ){
@@ -213,14 +226,14 @@ Xboard::XspiWrite( int wval )
         if( mXspiDbg ){
             printf("   obit = %d\n",obit);
         }
-        mG6pg->GetMoSi()->Set( obit ); us_sleep( mUsHold );
-        mG6pg->GetSclk()->Set( 1    ); us_sleep( mUsHold );
+        mG6pg->GetMoSi()->Set( obit ); // us_sleep( mUsHold );
+        mG6pg->GetSclk()->Set( 1    ); // us_sleep( mUsHold );
         ibit = mG6pg->GetMiSo()->Get( );
         if( mXspiDbg ){
             printf("   ibit = %d\n",ibit);
         }
 
-        mG6pg->GetSclk()->Set( 0 ); us_sleep( mUsHold );
+        mG6pg->GetSclk()->Set( 0 ); // us_sleep( mUsHold );
 
         rval = (rval<<1) | ibit;
         wval = (wval<<1);
@@ -228,7 +241,7 @@ Xboard::XspiWrite( int wval )
 
     // expecting: sclk=0, ss=0
 
-    mG6pg->GetSs1()->Set( 1 ); us_sleep( mUsHold );
+    mG6pg->GetSs1()->Set( 1 ); // us_sleep( mUsHold );
 
     if( mXspiDbg ){
         printf("xspi_write: rval = 0x%04x\n",rval);

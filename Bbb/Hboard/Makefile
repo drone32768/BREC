@@ -15,10 +15,10 @@ endif
 
 all	:
 	echo target is $(TGT)
-	make $(TGT)/Hutil
 	make $(TGT)/Hboard.o
 
 ifeq ($(TGT),arm)
+	make $(TGT)/Hutil
 	make pru_images.h
 	cd Dt; make all
 endif

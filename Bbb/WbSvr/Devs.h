@@ -12,6 +12,7 @@
 #include "../Rboard/Rboard.h"
 #include "../Iboard/Iboard.h"
 #include "../Mboard/Mboard.h"
+#include "../Xboard/Xboard.h"
 
 class Devs {
   private:
