@@ -87,7 +87,8 @@ void
 Xboard::ShowPrus(const char *title )
 {
     printf("-----  %s ----------------------\n",title);
-    printf("sram head ptr   0x%08x\n",GetSramWord( SRAM_OFF_SHARED_PTR ) );
+    printf("sram head ptr   0x%08x\n",GetSramWord( SRAM_OFF_HEAD_PTR   ) );
+    printf("sram tail ptr   0x%08x\n",GetSramWord( SRAM_OFF_TAIL_PTR ) );
     printf("dram base ptr   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE ) );
     printf("dram head idx   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_HEAD ) );
     printf("pru cur cmd     0x%08x\n",GetSramWord( SRAM_OFF_CMD ) );
@@ -223,7 +224,6 @@ Xboard::Get2kSamples( short *bf )
     mPidx = (mPidx+2048)%PRU_MAX_SHORT_SAMPLES;
 
     // ShowPrus("at Get2kSamples End");
-
     return( p );
 }
 

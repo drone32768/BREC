@@ -100,8 +100,8 @@ MAIN:
     MOV       rCnt,              0x0
     MOV       rDbg1Ptr,          (0x0000 + SRAM_OFF_DBG1)
     MOV       rStkPtr,           (0x0000 + SRAM_OFF_STACK)
-    MOV       rSrHdPtr,          (0x0000 + SRAM_OFF_SRAM_HEAD)
-    MOV       rSrHeadPtrPtr,     (0x0000 + SRAM_OFF_SHARED_PTR)
+    MOV       rSrHdPtr,          (0x0000)
+    MOV       rSrHeadPtrPtr,     (0x0000 + SRAM_OFF_HEAD_PTR)
     MOV       rHeadMask,         (0x0fff)  // one 4k page of fifo
 
     // r29 = return register
@@ -180,7 +180,7 @@ xspi_wr_rd:
     MOV       rCnt,16            // initialize bit counter
 
 clockbit:
-    CALL      spin_wait
+//    CALL      spin_wait
     LSR       rTmp1,rSO,15       // get so msb at bit 0
     AND       rTmp1,rTmp1,1      // mask bit 0
     LSL       rTmp1,rTmp1,MOSI_B // move msb to mosi bit loc
@@ -189,10 +189,10 @@ clockbit:
     OR        rTmp2,rTmp2,rTmp1  // or in the new mosi bit 
     MOV       r30,rTmp1          // ** Set MOSI
 
-    CALL      spin_wait          // setup time
+//    CALL      spin_wait          // setup time
     OR        r30, r30,SCLK_H    // ** SCLK high
 
-    CALL      spin_wait          // hold time
+//    CALL      spin_wait          // hold time
     LSR       rTmp1,r31,MISO_B   // ** Get MISO
 
     AND       rTmp1,rTmp1,1      // mask of any other bits

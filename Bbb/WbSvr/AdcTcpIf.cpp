@@ -161,12 +161,15 @@ int AdcTcpIf::SendSamples( TcpSvrCon *tcl )
     // Update the transmission rate estimate
     mRateEst = 1000000.0*(double)sampleCount / (double)dus;
 
-    printf("us = %d samples=%d xferKSPS=%d acqKSPS=%d\n",
+    printf("us = %d samples=%d xferKSPS=%d acqKSPS=%d p=%d\n",
      		     dus, 
                      sampleCount, 
                      (int)(mRateEst/1000),
-                     (2*Dp()->Adc()->GetComplexSampleRate())/1000 );
+                     (2*Dp()->Adc()->GetComplexSampleRate())/1000,
+                     mPauseCount );
 
+    // Clear pause count to this point
+    mPauseCount = 0;
 
     return( 0 );
 }

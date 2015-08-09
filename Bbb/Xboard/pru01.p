@@ -90,17 +90,21 @@ MAIN1:
 #define    rDrmBasePtr      r13
 #define    rDrmOffsetPtrPtr r14
 #define    rNextPtr         r15
+#define    rHeadMask        r16
+#define    rSrTlPtrPtr      r17 
 
     MOV       rDbg2Ptr,          (0x2000 + SRAM_OFF_DBG2)
     MOV       rTailMask,         (0x2fff)
     MOV       rTailPtr,          (0x2000) 
-    MOV       rSrHdPtrPtr,       (0x2000 + SRAM_OFF_SRAM_HEAD)  
+    MOV       rSrHdPtrPtr,       (0x2000 + SRAM_OFF_HEAD_PTR)  
     MOV       rDrmOffsetMask,    (0x0003ffff)
     MOV       rDrmOffset    ,    (0x0000)
     MOV       rDrmBasePtr   ,    (0x2000 + SRAM_OFF_DRAM_PBASE) 
     LD32      rDrmBasePtr, rDrmBasePtr
     MOV       rDrmOffsetPtrPtr,  (0x2000 + SRAM_OFF_DRAM_HEAD) 
-    MOV       rNextPtr, 0x0
+    MOV       rNextPtr,          0x0
+    MOV       rHeadMask,         (0x0fff)
+    MOV       rSrTlPtrPtr,       (0x2000 + SRAM_OFF_TAIL_PTR) 
 
 main_loop:
     // increment dbg2 every loop pass
@@ -108,10 +112,14 @@ main_loop:
     ADD       rTmp1,rTmp1,1
     ST32      rTmp1, rDbg2Ptr
 
+    // save tail pointer to sram for debugging
+    ST32      rTailPtr,rSrTlPtrPtr,
+
     // wait if tail == head
-    LD32      rTmp1, rSrHdPtrPtr         // load other pru head
-    AND       rTmp2,rTmp2,rTmp2          // nop
-    QBEQ      main_loop, rTmp1, rTailPtr // if our tail=other head, loop
+    LD32      rTmp1,rSrHdPtrPtr          // load other pru head
+    AND       rTmp1,rTmp1,rHeadMask     // mask to offset
+    AND       rTmp2,rTailPtr,rHeadMask  // mask to offset
+    QBEQ      main_loop, rTmp1, rTmp2    // if our tail=other head, loop
 
     // load other pru data from sram and advance
     LD16      rTmp1, rTailPtr             // load sample

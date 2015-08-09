@@ -49,7 +49,7 @@
 // 0x0000  - Offset bytes into sram data page of where pru writer will write 
 //           next sample
 // 
-#define SRAM_OFF_SRAM_HEAD  0x1000
+#define SRAM_OFF_HEAD_PTR  0x1000
 
 //
 // 0x0004  - Dram physical base pointer of samples
@@ -98,6 +98,7 @@
 #define SRAM_OFF_DBG1       0x102C
 #define SRAM_OFF_DBG2       0x1030
 #define SRAM_OFF_SHARED_PTR 0x1034
+#define SRAM_OFF_TAIL_PTR   0x1038
 
 
 //

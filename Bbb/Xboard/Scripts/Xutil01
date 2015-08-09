@@ -5,4 +5,6 @@ arm/Xutil       \
 -flush          \
 -usleep 1000000 \
 -pru            \
+-pru            \
+-pru            \
 -samp 
