@@ -24,7 +24,7 @@ endif
 	make $(TGT)/Xutil
 
 
-$(TGT)/Xboard.o    : Xboard.cpp pru_images.h $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+$(TGT)/Xboard.o    : Xboard.cpp pru_images.h  $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ -c $(CPPFLAGS) Xboard.cpp -o $(TGT)/Xboard.o
 
 $(TGT)/Xtst    : Xtst.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
@@ -38,11 +38,11 @@ $(TGT)/Xutil	: Xutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 		$(UTIL_OBJS) \
                 -lm -lprussdrv -lpthread -o $(TGT)/Xutil
 
-$(TGT)/pru00.bin : pru00.p Xpru.h pru00.hp | $(TGT)
+$(TGT)/pru00.bin : pru00.p Xpru.h PruConst.hp | $(TGT)
 	${PASM} -V3 -b pru00.p
 	mv pru00.bin $(TGT)/pru00.bin
 
-$(TGT)/pru01.bin : pru01.p Xpru.h pru00.hp | $(TGT)
+$(TGT)/pru01.bin : pru01.p Xpru.h PruConst.hp | $(TGT)
 	${PASM} -V3 -b pru01.p
 	mv pru01.bin $(TGT)/pru01.bin
 

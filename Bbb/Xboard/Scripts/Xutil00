@@ -1,0 +1,22 @@
+arm/Xutil         \
+-echo "This test exercises the leds" \
+-echo "The patter should walk them all on then off" \
+-open             \
+-write  0x0f04    \
+-usleep 500000    \
+-write  0x0704    \
+-usleep 500000    \
+-write  0x0304    \
+-usleep 500000    \
+-write  0x0104    \
+-usleep 500000    \
+-write  0x0004    \
+-usleep 500000    \
+-write  0x0104    \
+-usleep 500000    \
+-write  0x0304    \
+-usleep 500000    \
+-write  0x0704    \
+-usleep 500000    \
+-write  0x0f04    \
+-usleep 500000    \

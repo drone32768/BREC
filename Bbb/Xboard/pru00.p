@@ -37,7 +37,7 @@
 .origin 0
 .entrypoint MAIN
 
-#include "pru00.hp"
+#include "PruConst.hp"
 #include "Xpru.h"
 
 //-----------------------------------------------------------------------------
@@ -107,6 +107,8 @@ MAIN:
     // r29 = return register
 
 main_loop: // primary loop
+
+    // increment dbg1 every main loop pass
     LD32      rTmp1, rDbg1Ptr
     ADD       rTmp1,rTmp1,1
     ST32      rTmp1, rDbg1Ptr

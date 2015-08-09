@@ -34,6 +34,11 @@ main( int argc, char *argv[] )
             usage(0);
         }
 
+        else if( 0==strcmp(argv[idx], "-echo") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            printf("%s\n",argv[idx+1]);
+        } 
+
         else if( 0==strcmp(argv[idx], "-open") ){
             xbrd = new Xboard();
             xbrd->Open();
@@ -61,7 +66,6 @@ main( int argc, char *argv[] )
             short bf[4096];
             int   idx;
 
-            xbrd->Flush();
             xbrd->Get2kSamples( bf );
             for(idx=0;idx<32;idx++){
                 printf("%d, %d\n",idx,bf[idx]);

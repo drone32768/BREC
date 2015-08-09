@@ -37,7 +37,7 @@
 .origin 0
 .entrypoint MAIN1
 
-#include "pru00.hp"
+#include "PruConst.hp"
 #include "Xpru.h"
 
 
@@ -103,6 +103,7 @@ MAIN1:
     MOV       rNextPtr, 0x0
 
 main_loop:
+    // increment dbg2 every loop pass
     LD32      rTmp1, rDbg2Ptr
     ADD       rTmp1,rTmp1,1
     ST32      rTmp1, rDbg2Ptr
@@ -116,7 +117,6 @@ main_loop:
     LD16      rTmp1, rTailPtr             // load sample
     ADD       rTailPtr, rTailPtr, 2       // inc tail
     AND       rTailPtr,rTailPtr,rTailMask // wrap tail
-
 
     // store and advance ddr dst pointer
     SBBO      rTmp1,rDrmBasePtr,rDrmOffset, 2       // store samp in drm

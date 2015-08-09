@@ -1,5 +1,5 @@
 #!/bin/bash
-arm/Xtst -select 0 -enable 1 -us 1000 \
+arm/Xtst -select 2 -enable 1 -us 1000 \
 -init \
 -echo "This tests r0 reads and writes" \
 -echo "--->R0 write" \

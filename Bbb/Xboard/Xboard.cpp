@@ -49,15 +49,6 @@
 #include "pru_images.h"
 
 //------------------------------------------------------------------------------
-void show_words( unsigned int *bf, int nwords )
-{
-   int idx;
-   for(idx=0;idx<nwords;idx++){
-       printf("0x%08x 0x%08x : 0x%08x\n", 4*idx, idx, bf[idx] );
-   }
-}
-
-//------------------------------------------------------------------------------
 #define XSPI_FIFO_EN     0x8000
 #define XSPI_FIFO_RST    0x4000
 
@@ -79,13 +70,19 @@ void show_words( unsigned int *bf, int nwords )
 
 #define XSPI_STOP      (               XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
 #define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO | XSPI_LED1 | XSPI_WP0 )
-// #define XSPI_START  (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED2 | XSPI_WP0 )
-#define XSPI_START  (XSPI_FIFO_EN | XSPI_SEL_P1_CNTR | XSPI_LED2 | XSPI_WP0 )
+#define XSPI_START     (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED2 | XSPI_WP0 )
 #define XSPI_READ_SAMPLE   (  XSPI_RP1 )
 
-#define GetSramWord( off ) ( *(unsigned int*)((mPtrPruSram + (off))) )
-#define SetSramWord( v,off ) ( *(unsigned int*)((mPtrPruSram + (off))) = (v) )
+// NOTE: Use this start to collect counter values rather than fifo samples
+// this is usefull for testing the full path as a continuous counter is 
+// provided allowing the pattern to be checked
+// #define XSPI_START  (XSPI_FIFO_EN | XSPI_SEL_P1_CNTR | XSPI_LED2 | XSPI_WP0 )
 
+#define GetSramWord( off )   ( *(unsigned int*  )((mPtrPruSram + (off))) )
+#define SetSramWord( v,off ) ( *(unsigned int*  )((mPtrPruSram + (off))) = (v) )
+#define GetSramShort( off )  ( *(unsigned short*)((mPtrPruSram + (off))) )
+
+//------------------------------------------------------------------------------
 void
 Xboard::ShowPrus(const char *title )
 {
@@ -98,10 +95,10 @@ Xboard::ShowPrus(const char *title )
     printf("pru last rd     0x%08x\n",GetSramWord( SRAM_OFF_READ_VAL ) );
     printf("dbg1            0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
     printf("dbg2            0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
-    printf("sram [ 0 ]      0x%08x\n",GetSramWord( 0x0 ) );
-    printf("sram [ 4 ]      0x%08x\n",GetSramWord( 0x4 ) );
-    printf("sram [ 8 ]      0x%08x\n",GetSramWord( 0x8 ) );
-    printf("sram [ C ]      0x%08x\n",GetSramWord( 0xc ) );
+    printf("sram16 [ 0 ]    0x%08x\n",GetSramShort( 0 ) );
+    printf("sram16 [ 2 ]    0x%08x\n",GetSramShort( 2 ) );
+    printf("sram16 [ 4 ]    0x%08x\n",GetSramShort( 4 ) );
+    printf("sram16 [ 6 ]    0x%08x\n",GetSramShort( 6 ) );
 }
 
 //------------------------------------------------------------------------------
@@ -156,17 +153,22 @@ Xboard::Open()
 int
 Xboard::Flush()
 {
+    // Stop the fpga acquisition
     XspiWrite( XSPI_STOP );
+
+    // Flush the fpga fifos
     XspiWrite( XSPI_FLUSH );
 
+    // Reset the pru dram fifo
     mPidx = mPtrHead[0]/2;
 
+    // Start the fpga acquisition
     XspiWrite( XSPI_START );
 
     // Tell the pru to go back to streaming
     *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 2;
 
-    ShowPrus("at flush");
+    // ShowPrus("at flush");
 
     return(0);
 }
@@ -195,7 +197,7 @@ Xboard::Get2kSamples( short *bf )
     int          p;
     unsigned int mask;
 
-ShowPrus("at Get2kSamples Start");
+    // ShowPrus("at Get2kSamples Start");
 
     // Setup pause count and block mask
     p    = 0;
@@ -220,7 +222,7 @@ ShowPrus("at Get2kSamples Start");
     memcpy( (void*)bf, (void*)(mPtrPruSamples+mPidx), 4096);
     mPidx = (mPidx+2048)%PRU_MAX_SHORT_SAMPLES;
 
-ShowPrus("at Get2kSamples End");
+    // ShowPrus("at Get2kSamples End");
 
     return( p );
 }
@@ -242,7 +244,6 @@ Xboard::StartPrus()
 
     // Clear pru sram
     memset( (void*)mPtrPruSram, 0x0, 8192 );
-    // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
 
     // Initialize required ram values
     *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DRAM_PBASE) ) = 
@@ -258,9 +259,6 @@ Xboard::StartPrus()
     // Run/Enable prus
     prussdrv_pru_enable(0);
     prussdrv_pru_enable(1);
-
-    // us_sleep( 10000 );
-    // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
 
     // Configure fpga adc fifo to start
     XspiWrite( XSPI_STOP );
@@ -312,9 +310,9 @@ Xboard::XspiWrite( int wval )
     }
 
     // Issue command to pru
-    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_READ_VAL) )  = 0;
-    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_WRITE_VAL) ) = wval;
-    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 1;
+    SetSramWord(    0, SRAM_OFF_READ_VAL );
+    SetSramWord( wval, SRAM_OFF_WRITE_VAL );
+    SetSramWord(    1, SRAM_OFF_CMD );
 
     // Wait for pru done with command
     bsy  = 1;
@@ -329,7 +327,7 @@ Xboard::XspiWrite( int wval )
 
     // Read the results
     if( 0!=cnt ){
-        rval = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_READ_VAL) );
+        rval = GetSramWord( SRAM_OFF_READ_VAL );
     }
     else{
         rval = -1;
@@ -338,11 +336,6 @@ Xboard::XspiWrite( int wval )
     if( mXspiDbg ){
         printf("Xboard::XspiWrite: rval = 0x%04x\n",rval);
     }
-
-    // dbg1 = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DBG1) );
-    // dbg2 = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DBG2) );
-    // printf("Xboard::XspiWrite:Post dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
-    // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
 
     return(rval);
 }
