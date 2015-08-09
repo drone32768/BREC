@@ -84,8 +84,10 @@ MAIN:
 #define       rSI           r8
 #define       rCnt          r9
 #define       rDbg1Ptr      r10
-#define       rDbg2Ptr      r11
 #define       rStkPtr       r12
+#define       rSrHdPtr      r13
+#define       rSrHeadPtrPtr r14
+#define       rHeadMask     r15
 
     MOV       rTmp1,             0x0
     MOV       rTmp2,             0x0
@@ -97,8 +99,10 @@ MAIN:
     MOV       rSI,               0x0
     MOV       rCnt,              0x0
     MOV       rDbg1Ptr,          (0x0000 + SRAM_OFF_DBG1)
-    MOV       rDbg2Ptr,          (0x0000 + SRAM_OFF_DBG2)
-    MOV       rStkPtr,         (0x0000 + SRAM_OFF_STACK)
+    MOV       rStkPtr,           (0x0000 + SRAM_OFF_STACK)
+    MOV       rSrHdPtr,          (0x0000 + SRAM_OFF_SRAM_HEAD)
+    MOV       rSrHeadPtrPtr,     (0x0000 + SRAM_OFF_SHARED_PTR)
+    MOV       rHeadMask,         (0x0fff)  // one 4k page of fifo
 
     // r29 = return register
 
@@ -124,23 +128,22 @@ wr_rd_16:
 stream:
     LD32      rTmp1, rCmdPtr     // Load command 
     QBNE      main_loop,rTmp1,2  // if cmd != 2 goto loop_label
-    MOV       rArg0, 0x0         // load write value
+    MOV       rArg0, 0x9         // load write value (read port 1 = 0x9)
     CALL      xspi_wr_rd         // access the spi
     CALL      fifo_write         // store the spi read into fifo
+    // TODO - check if fpga fifo is nearly empty (if so spin wait)
     JMP       stream;            // goto top of streaming loop
   
 //-----------------------------------------------------------------------------
 // This routine writes the 16 bits of rArg0 to the sram fifo
-// Stack : 4 bytes
+// Stack : none
 //
 fifo_write:
-    ST32      r29, rStkPtr       // save return pointer on stack
-    ADD       rStkPtr,rStkPtr,4  // inc stack
-
-fifo_write_out:
-    SUB       rStkPtr,rStkPtr,4  // dec stack
-    LD32      r29, rStkPtr       // fetch return pointer
-    RET       
+    ST16      rArg0,rSrHdPtr              // store sample at sram head
+    ADD       rSrHdPtr,rSrHdPtr,2         // inc the head by 2
+    AND       rSrHdPtr,rSrHdPtr,rHeadMask // wrap head
+    ST32      rSrHdPtr,rSrHeadPtrPtr      // store head pt for other pru to use
+    RET
 
 //-----------------------------------------------------------------------------
 // This routine spins on a register a fixed number of times.

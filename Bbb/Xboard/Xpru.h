@@ -71,7 +71,6 @@
 //
 // 0x0010  - Unused
 // 
-#define SRAM_OFF_SRAM_TAIL  0x1010  
 
 
 // 0x0014  - Dram offset in bytes of last pru write within dram buffer
@@ -98,8 +97,14 @@
 #define SRAM_OFF_READ_VAL   0x1028
 #define SRAM_OFF_DBG1       0x102C
 #define SRAM_OFF_DBG2       0x1030
+#define SRAM_OFF_SHARED_PTR 0x1034
 
 
+//
+// SRAM offset for stack.  The stack will grow in advancing addresses
+// so no ther locations after this should be used and there must 
+// be enough locations after this to handl maximum stack growth
+//
 #define SRAM_OFF_STACK      0x1200
 
 // 

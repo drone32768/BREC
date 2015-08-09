@@ -56,6 +56,25 @@ main( int argc, char *argv[] )
             rval = xbrd->XspiWrite( val );
             printf("Xutil:read   : 0x%08x\n",rval);
         }
+    
+        else if( 0==strcmp(argv[idx], "-samp") ){
+            short bf[4096];
+            int   idx;
+
+            xbrd->Flush();
+            xbrd->Get2kSamples( bf );
+            for(idx=0;idx<32;idx++){
+                printf("%d, %d\n",idx,bf[idx]);
+            }
+        }
+
+        else if( 0==strcmp(argv[idx], "-flush") ){
+            xbrd->Flush();
+        }
+
+        else if( 0==strcmp(argv[idx], "-pru") ){
+            xbrd->ShowPrus( "Xutil: pru state" );
+        }
 
         // Move to next argument for parsing
         idx++;

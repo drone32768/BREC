@@ -70,6 +70,8 @@ public:
 
     // For testing only
     int XspiWrite( int wval );
+
+    void ShowPrus( const char *title );
 };
 
 #endif

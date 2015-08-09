@@ -40,6 +40,32 @@
 #include "pru00.hp"
 #include "Xpru.h"
 
+
+//   
+//   SRAM
+//           +-- rTailPtr       +--- rSrHdPtrPtr
+//           |                  |  + -- rDrmOffsetPtrPtr
+//           |                  |  |
+//           |                  |  |
+//           V                  V  V
+//   +-------------------------+-----------------------+  
+//   |                         |                       |
+//   +-------------------------+-----------------------+  
+//    <---- rTailMask -------->
+//
+//   DRAM
+// 
+//   +-- rDrmBasePtr
+//   |
+//   |<----- rDrmOffset -----|
+//   |                       |
+//   V                       V
+//   +------------------------------------------------------------+
+//   |                                                            |
+//   +------------------------------------------------------------+
+//    <----------------- rDrmOffsetMask ------------------------->
+// 
+
 //-----------------------------------------------------------------------------
 //
 // This pru module reads a serial word and stores the results in 
@@ -52,71 +78,52 @@ MAIN1:
     CLR       r0, r0, 4  // Clear SYSCFG[STANDBY_INIT] to enable OCP master port
     SBCO      r0, CONST_PRUCFG, 4, 4
 
-    // r1 = tmp
+#define    rDbg1Ptr         r4
+#define    rDbg2Ptr         r5
+#define    rTmp1            r6
+#define    rTmp2            r7
+#define    rTailMask        r8
+#define    rTailPtr         r9
+#define    rSrHdPtrPtr      r10 
+#define    rDrmOffsetMask   r11
+#define    rDrmOffset       r12 
+#define    rDrmBasePtr      r13
+#define    rDrmOffsetPtrPtr r14
+#define    rNextPtr         r15
 
-    // r2 = tmp
-
-    // r3 = sample value
-
-    // r4 = sram data page base
-    MOV       r4, 0x2000
-
-    // r5 = sram fifo pointer 
-    MOV       r5, (0x2000 + SRAM_OFF_SRAM_HEAD) // 0x3000
-
-    // r6 = sram mask
-    MOV       r6, 0xfff
-
-    // r7 =  0x3010 sram
-    MOV       r7, (0x2000 + SRAM_OFF_SRAM_TAIL) // 0x3010
-
-    // r8 =  0x3014 sram
-    MOV       r8, (0x2000 + SRAM_OFF_DRAM_HEAD) //  0x3014
-
-    // r9  = pru1 reading sram
-    MOV       r9, 0x00
-
-    // r10 = ddr fifor offset addr
-    MOV       r10, 0x00
-
-    // r14 = ddr fifo base pointer (loaded from 0x3004 SRAM)
-    MOV       r14, (0x2000 + SRAM_OFF_DRAM_PBASE) // 0x3004
-    LD32      r14, r14
-
-    // r15 = ddr mask (fixed internally at 256kB or 128k samples))
-    MOV       r15, 0x0003ffff
-
-#define   rTmp1     r1
-#define   rDbg2Ptr  r8
-    MOV       rTmp1, 0
     MOV       rDbg2Ptr,          (0x2000 + SRAM_OFF_DBG2)
+    MOV       rTailMask,         (0x2fff)
+    MOV       rTailPtr,          (0x2000) 
+    MOV       rSrHdPtrPtr,       (0x2000 + SRAM_OFF_SRAM_HEAD)  
+    MOV       rDrmOffsetMask,    (0x0003ffff)
+    MOV       rDrmOffset    ,    (0x0000)
+    MOV       rDrmBasePtr   ,    (0x2000 + SRAM_OFF_DRAM_PBASE) 
+    LD32      rDrmBasePtr, rDrmBasePtr
+    MOV       rDrmOffsetPtrPtr,  (0x2000 + SRAM_OFF_DRAM_HEAD) 
+    MOV       rNextPtr, 0x0
 
 main_loop:
     LD32      rTmp1, rDbg2Ptr
     ADD       rTmp1,rTmp1,1
     ST32      rTmp1, rDbg2Ptr
-    JMP       main_loop
+
+    // wait if tail == head
+    LD32      rTmp1, rSrHdPtrPtr         // load other pru head
+    AND       rTmp2,rTmp2,rTmp2          // nop
+    QBEQ      main_loop, rTmp1, rTailPtr // if our tail=other head, loop
+
+    // load other pru data from sram and advance
+    LD16      rTmp1, rTailPtr             // load sample
+    ADD       rTailPtr, rTailPtr, 2       // inc tail
+    AND       rTailPtr,rTailPtr,rTailMask // wrap tail
 
 
-    // wait if we are at pru0 spot
-    LD32      r2, r5              // load pru0's sram postion into r2
-    ADD       r1, r1, 1           // NOP
-    QBEQ      main_loop, r2, r9  // if pru1's sram position == pru0's loop
+    // store and advance ddr dst pointer
+    SBBO      rTmp1,rDrmBasePtr,rDrmOffset, 2       // store samp in drm
+    ADD       rDrmOffset,rDrmOffset,2               // inc drm dst addr 
+    AND       rDrmOffset,rDrmOffset,rDrmOffsetMask  // wrap dst addr
 
-    // load pru0 data from sram and advance
-    ADD       r9, r9, r4          // add sram base to sram offset
-    LD16      r3, r9              // load from pru1's head to r3
-    ADD       r9, r9, 2           // advance pru1 sram offset
-    AND       r9, r9, r6          // wrap pru1 sram offset
+    // save dram head in sram so cpu can access
+    ST32      rDrmOffset,rDrmOffsetPtrPtr   
 
-//MOV r3, 0x33
-
-    // Store and advance ddr dst pointer
-    SBBO      r3,  r14, r10, 2   // Store results at ddr  dst addr
-    ADD       r10, r10, 2        // Inc ddr dst addr 
-    AND       r10, r10, r15      // Wrap ddr dst addr
-
-    ST32      r9,  r7            // store sram reading location
-    ST32      r10, r8            // store dram addr ofset into sram
-
-    JMP       main_loop         // Do it all over again
+    JMP       main_loop         // do it all over again

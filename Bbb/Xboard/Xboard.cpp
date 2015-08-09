@@ -78,9 +78,31 @@ void show_words( unsigned int *bf, int nwords )
 #define XSPI_RP1   (XSPI_READ  | XSPI_PORT1)
 
 #define XSPI_STOP      (               XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
-#define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
-#define XSPI_START     (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED1 | XSPI_WP0 )
+#define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO | XSPI_LED1 | XSPI_WP0 )
+// #define XSPI_START  (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED2 | XSPI_WP0 )
+#define XSPI_START  (XSPI_FIFO_EN | XSPI_SEL_P1_CNTR | XSPI_LED2 | XSPI_WP0 )
 #define XSPI_READ_SAMPLE   (  XSPI_RP1 )
+
+#define GetSramWord( off ) ( *(unsigned int*)((mPtrPruSram + (off))) )
+#define SetSramWord( v,off ) ( *(unsigned int*)((mPtrPruSram + (off))) = (v) )
+
+void
+Xboard::ShowPrus(const char *title )
+{
+    printf("-----  %s ----------------------\n",title);
+    printf("sram head ptr   0x%08x\n",GetSramWord( SRAM_OFF_SHARED_PTR ) );
+    printf("dram base ptr   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE ) );
+    printf("dram head idx   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_HEAD ) );
+    printf("pru cur cmd     0x%08x\n",GetSramWord( SRAM_OFF_CMD ) );
+    printf("pru last wr     0x%08x\n",GetSramWord( SRAM_OFF_WRITE_VAL ) );
+    printf("pru last rd     0x%08x\n",GetSramWord( SRAM_OFF_READ_VAL ) );
+    printf("dbg1            0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
+    printf("dbg2            0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
+    printf("sram [ 0 ]      0x%08x\n",GetSramWord( 0x0 ) );
+    printf("sram [ 4 ]      0x%08x\n",GetSramWord( 0x4 ) );
+    printf("sram [ 8 ]      0x%08x\n",GetSramWord( 0x8 ) );
+    printf("sram [ C ]      0x%08x\n",GetSramWord( 0xc ) );
+}
 
 //------------------------------------------------------------------------------
 Xboard::Xboard()
@@ -134,7 +156,18 @@ Xboard::Open()
 int
 Xboard::Flush()
 {
+    XspiWrite( XSPI_STOP );
+    XspiWrite( XSPI_FLUSH );
+
     mPidx = mPtrHead[0]/2;
+
+    XspiWrite( XSPI_START );
+
+    // Tell the pru to go back to streaming
+    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 2;
+
+    ShowPrus("at flush");
+
     return(0);
 }
 
@@ -159,7 +192,37 @@ Xboard::GetSamplePair( short *eo )
 int
 Xboard::Get2kSamples( short *bf )
 {
-    return(0);
+    int          p;
+    unsigned int mask;
+
+ShowPrus("at Get2kSamples Start");
+
+    // Setup pause count and block mask
+    p    = 0;
+    mask = ~(2048-1);
+
+    // Make sure we are aligned to 2k so we don't copy past end of src
+    mPidx = (mPidx&mask);
+
+    // Wait while the PRU source is within the same 2k block we want
+    while( 1 ){
+        if( (mPidx&mask) == ((mPtrHead[0]/2)&mask) ){
+            us_sleep( 5000 );
+            p++;
+        }
+        else{
+            break;
+        }
+    }
+
+    // NOTE: memcpy is just as fast as the hand optimized
+    // asm with ldmia/stmia moving 32 bytes at a time
+    memcpy( (void*)bf, (void*)(mPtrPruSamples+mPidx), 4096);
+    mPidx = (mPidx+2048)%PRU_MAX_SHORT_SAMPLES;
+
+ShowPrus("at Get2kSamples End");
+
+    return( p );
 }
 
 //------------------------------------------------------------------------------
@@ -198,6 +261,11 @@ Xboard::StartPrus()
 
     // us_sleep( 10000 );
     // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
+
+    // Configure fpga adc fifo to start
+    XspiWrite( XSPI_STOP );
+    XspiWrite( XSPI_FLUSH );
+    XspiWrite( XSPI_START );
 
     printf("Xboard:StartPrus Exit\n");
     return( 0 );
@@ -243,10 +311,12 @@ Xboard::XspiWrite( int wval )
        printf("Xboard::XspiWrite: wval = 0x%04x\n",wval);
     }
 
+    // Issue command to pru
     *( (unsigned int*)(mPtrPruSram + SRAM_OFF_READ_VAL) )  = 0;
     *( (unsigned int*)(mPtrPruSram + SRAM_OFF_WRITE_VAL) ) = wval;
     *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 1;
 
+    // Wait for pru done with command
     bsy  = 1;
     cnt  = 100;
     while( bsy && 0!=cnt ){
@@ -257,6 +327,7 @@ Xboard::XspiWrite( int wval )
         }
     }
 
+    // Read the results
     if( 0!=cnt ){
         rval = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_READ_VAL) );
     }
@@ -271,7 +342,7 @@ Xboard::XspiWrite( int wval )
     // dbg1 = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DBG1) );
     // dbg2 = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DBG2) );
     // printf("Xboard::XspiWrite:Post dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
-    show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
+    // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
 
     return(rval);
 }
