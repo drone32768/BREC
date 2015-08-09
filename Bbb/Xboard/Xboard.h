@@ -51,6 +51,9 @@ class Xboard : public AdcIf {
     volatile unsigned char  *mPtrPruSram;
     volatile unsigned int   *mPtrHead;
 
+    // gpio to enable i board port 2
+    GpioUtil mPortEnable;
+
 public:
     Xboard();
     int Open();

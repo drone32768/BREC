@@ -41,6 +41,12 @@ main( int argc, char *argv[] )
             xbrd->SetComplexSampleRate( 5000000 );
         }		 
 
+        else if( 0==strcmp(argv[idx], "-usleep") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            val = strtol(argv[idx+1],&end,0);
+            us_sleep( val );
+        } 
+
         else if( 0==strcmp(argv[idx], "-write") ){
             int rval; 
             if( (idx+1) >= argc ){ usage(-1); }

@@ -62,16 +62,16 @@ MAIN1:
     MOV       r4, 0x2000
 
     // r5 = sram fifo pointer 
-    MOV       r5, (0x2000 + PRU0_OFFSET_SRAM_HEAD) // 0x3000
+    MOV       r5, (0x2000 + SRAM_OFF_SRAM_HEAD) // 0x3000
 
     // r6 = sram mask
     MOV       r6, 0xfff
 
     // r7 =  0x3010 sram
-    MOV       r7, (0x2000 + PRU0_OFFSET_SRAM_TAIL) // 0x3010
+    MOV       r7, (0x2000 + SRAM_OFF_SRAM_TAIL) // 0x3010
 
     // r8 =  0x3014 sram
-    MOV       r8, (0x2000 + PRU0_OFFSET_DRAM_HEAD) //  0x3014
+    MOV       r8, (0x2000 + SRAM_OFF_DRAM_HEAD) //  0x3014
 
     // r9  = pru1 reading sram
     MOV       r9, 0x00
@@ -80,19 +80,28 @@ MAIN1:
     MOV       r10, 0x00
 
     // r14 = ddr fifo base pointer (loaded from 0x3004 SRAM)
-    MOV       r14, (0x2000 + PRU0_OFFSET_DRAM_PBASE) // 0x3004
+    MOV       r14, (0x2000 + SRAM_OFF_DRAM_PBASE) // 0x3004
     LD32      r14, r14
 
     // r15 = ddr mask (fixed internally at 256kB or 128k samples))
     MOV       r15, 0x0003ffff
 
-loop_label:
-    JMP loop_label // TODO develop sram fifo reader
+#define   rTmp1     r1
+#define   rDbg2Ptr  r8
+    MOV       rTmp1, 0
+    MOV       rDbg2Ptr,          (0x2000 + SRAM_OFF_DBG2)
+
+main_loop:
+    LD32      rTmp1, rDbg2Ptr
+    ADD       rTmp1,rTmp1,1
+    ST32      rTmp1, rDbg2Ptr
+    JMP       main_loop
+
 
     // wait if we are at pru0 spot
     LD32      r2, r5              // load pru0's sram postion into r2
     ADD       r1, r1, 1           // NOP
-    QBEQ      loop_label, r2, r9  // if pru1's sram position == pru0's loop
+    QBEQ      main_loop, r2, r9  // if pru1's sram position == pru0's loop
 
     // load pru0 data from sram and advance
     ADD       r9, r9, r4          // add sram base to sram offset
@@ -110,4 +119,4 @@ loop_label:
     ST32      r9,  r7            // store sram reading location
     ST32      r10, r8            // store dram addr ofset into sram
 
-    JMP       loop_label         // Do it all over again
+    JMP       main_loop         // Do it all over again

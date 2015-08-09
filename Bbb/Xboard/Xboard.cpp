@@ -49,6 +49,15 @@
 #include "pru_images.h"
 
 //------------------------------------------------------------------------------
+void show_words( unsigned int *bf, int nwords )
+{
+   int idx;
+   for(idx=0;idx<nwords;idx++){
+       printf("0x%08x 0x%08x : 0x%08x\n", 4*idx, idx, bf[idx] );
+   }
+}
+
+//------------------------------------------------------------------------------
 #define XSPI_FIFO_EN     0x8000
 #define XSPI_FIFO_RST    0x4000
 
@@ -105,7 +114,16 @@ Xboard::Open()
     }
     prussdrv_map_extmem( (void**)( &mPtrPruSamples ) ); 
     prussdrv_map_prumem( PRUSS0_PRU0_DATARAM, (void**)(&mPtrPruSram) );
-    mPtrHead = (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DRAM_HEAD);
+    mPtrHead = (unsigned int*)(mPtrPruSram + SRAM_OFF_DRAM_HEAD);
+
+    // Enable (power on) I board port 2
+    mPortEnable.Define( 68 ); // gpio_2_4
+    mPortEnable.Export();
+    mPortEnable.SetDirInput(0);
+    mPortEnable.Open();
+
+    // Since we may just have powered on fpga let it load
+    us_sleep( 100000 );
 
     printf("Xboard:Open exit\n");
 
@@ -159,10 +177,14 @@ Xboard::StartPrus()
     // Init pru data
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
+    // Clear pru sram
+    memset( (void*)mPtrPruSram, 0x0, 8192 );
+    // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
+
     // Initialize required ram values
-    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DRAM_PBASE) ) = 
+    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DRAM_PBASE) ) = 
                                 prussdrv_get_phys_addr((void*)mPtrPruSamples);
-    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_CMD) ) = 0;
+    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) ) = 0;
 
     // Write the instructions
     prussdrv_pru_write_memory(PRUSS0_PRU0_IRAM,0,
@@ -173,6 +195,9 @@ Xboard::StartPrus()
     // Run/Enable prus
     prussdrv_pru_enable(0);
     prussdrv_pru_enable(1);
+
+    // us_sleep( 10000 );
+    // show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
 
     printf("Xboard:StartPrus Exit\n");
     return( 0 );
@@ -213,43 +238,40 @@ int
 Xboard::XspiWrite( int wval )
 {
     int rval,bsy,cnt;
-    int dbg1,dbg2;
 
     if( mXspiDbg ){
        printf("Xboard::XspiWrite: wval = 0x%04x\n",wval);
     }
 
-    dbg1 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
-    dbg2 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
-    printf("Xboard::XspiWrite:Pre  dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
-
-    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_WRITE_VAL) ) = wval;
-    *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_CMD) ) = 1;
+    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_READ_VAL) )  = 0;
+    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_WRITE_VAL) ) = wval;
+    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 1;
 
     bsy  = 1;
     cnt  = 100;
     while( bsy && 0!=cnt ){
-        bsy = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_CMD) );
+        bsy = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) );
         if( bsy ){
-            us_sleep( 1 );
+            us_sleep( 100 );
             cnt--;
         }
     }
 
     if( 0!=cnt ){
-        rval = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_READ_VAL) );
+        rval = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_READ_VAL) );
     }
     else{
         rval = -1;
     }
 
-    dbg1 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
-    dbg2 = *( (unsigned int*)(mPtrPruSram + PRU0_OFFSET_DBG1) );
-    printf("Xboard::XspiWrite:Post dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
-
     if( mXspiDbg ){
         printf("Xboard::XspiWrite: rval = 0x%04x\n",rval);
     }
+
+    // dbg1 = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DBG1) );
+    // dbg2 = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_DBG2) );
+    // printf("Xboard::XspiWrite:Post dbg1=0x%08x, dbg2=0x%08x\n",dbg1,dbg2);
+    show_words( (unsigned int*)(mPtrPruSram+SRAM_OFF_SRAM_HEAD),16);
 
     return(rval);
 }

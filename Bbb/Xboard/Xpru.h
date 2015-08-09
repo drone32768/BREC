@@ -49,55 +49,58 @@
 // 0x0000  - Offset bytes into sram data page of where pru writer will write 
 //           next sample
 // 
-#define PRU0_OFFSET_SRAM_HEAD  0x1000
+#define SRAM_OFF_SRAM_HEAD  0x1000
 
 //
 // 0x0004  - Dram physical base pointer of samples
 //           Used by pru as start of dram memory region to write to.
 // 
-#define PRU0_OFFSET_DRAM_PBASE 0x1004  
+#define SRAM_OFF_DRAM_PBASE 0x1004  
 
 //
 // 0x0008  - Number of time to spin before attempting to collect next sample
 // 
-#define PRU0_OFFSET_SPIN_COUNT 0x1008
+#define SRAM_OFF_SPIN_COUNT 0x1008
 
 //
 // 0x000C  - Number of samples to drop
 //           This is the decimation count
 // 
-#define PRU0_OFFSET_DEC       0x100C
+#define SRAM_OFF_DEC       0x100C
 
 //
 // 0x0010  - Unused
 // 
-#define PRU0_OFFSET_SRAM_TAIL  0x1010  
+#define SRAM_OFF_SRAM_TAIL  0x1010  
 
 
 // 0x0014  - Dram offset in bytes of last pru write within dram buffer
 //           Used by pru to indicate to cpu were in physical memory it 
 //           is writing
 //
-#define PRU0_OFFSET_DRAM_HEAD  0x1014  // H
+#define SRAM_OFF_DRAM_HEAD  0x1014  // H
 
 //
 // 
 // 0x0018  - Reserved.
 //           This location is not used and is set to 0xbabedead by pructl.
 // 
-#define PRU0_OFFSET_RES2       0x1018
+#define SRAM_OFF_RES2       0x1018
 
 //
 // 0x001C  - Reserved.
 //           This location is not used and is set to 0xbeefcafe by pructl.
 //
-#define PRU0_OFFSET_RES3       0x101C
+#define SRAM_OFF_RES3       0x101C
 
-#define PRU0_OFFSET_CMD        0x1020
-#define PRU0_OFFSET_WRITE_VAL  0x1024
-#define PRU0_OFFSET_READ_VAL   0x1028
-#define PRU0_OFFSET_DBG1       0x102C
-#define PRU0_OFFSET_DBG2       0x1030
+#define SRAM_OFF_CMD        0x1020
+#define SRAM_OFF_WRITE_VAL  0x1024
+#define SRAM_OFF_READ_VAL   0x1028
+#define SRAM_OFF_DBG1       0x102C
+#define SRAM_OFF_DBG2       0x1030
+
+
+#define SRAM_OFF_STACK      0x1200
 
 // 
 // ---------------------------------------------------------------------------
@@ -109,9 +112,9 @@
 //        |         PRU0 -> PRU1 FIFO         |   |  
 //   0fff |                                   |   +-> SRAM FIFO MASK = 0x0fff
 //        +-----------------------------------+
-// 0x1000 | PRU0_OFFSET_SRAM_HEAD             |
-//   1004 | PRU0_OFFSET_DRAM_PBASE            |
-//   1008 | PRU0_OFFSET_SPIN_COUNT            |
+// 0x1000 | SRAM_OFF_SRAM_HEAD             |
+//   1004 | SRAM_OFF_DRAM_PBASE            |
+//   1008 | SRAM_OFF_SPIN_COUNT            |
 //        |          ....                     |
 //   1fff |                                   |
 //        ********** PRU1 SRAM ****************

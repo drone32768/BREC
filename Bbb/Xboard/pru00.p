@@ -85,18 +85,20 @@ MAIN:
 #define       rCnt          r9
 #define       rDbg1Ptr      r10
 #define       rDbg2Ptr      r11
+#define       rStkPtr       r12
 
     MOV       rTmp1,             0x0
     MOV       rTmp2,             0x0
     MOV       rArg0,             0x0
-    MOV       rCmdPtr,           (0x0000 + PRU0_OFFSET_CMD) 
-    MOV       rWr16Ptr,          (0x0000 + PRU0_OFFSET_WRITE_VAL) 
-    MOV       rRd16Ptr,          (0x0000 + PRU0_OFFSET_READ_VAL) 
+    MOV       rCmdPtr,           (0x0000 + SRAM_OFF_CMD) 
+    MOV       rWr16Ptr,          (0x0000 + SRAM_OFF_WRITE_VAL) 
+    MOV       rRd16Ptr,          (0x0000 + SRAM_OFF_READ_VAL) 
     MOV       rSO,               0x0
     MOV       rSI,               0x0
     MOV       rCnt,              0x0
-    MOV       rDbg1Ptr,          (0x0000 + PRU0_OFFSET_DBG1)
-    MOV       rDbg2Ptr,          (0x0000 + PRU0_OFFSET_DBG2)
+    MOV       rDbg1Ptr,          (0x0000 + SRAM_OFF_DBG1)
+    MOV       rDbg2Ptr,          (0x0000 + SRAM_OFF_DBG2)
+    MOV       rStkPtr,         (0x0000 + SRAM_OFF_STACK)
 
     // r29 = return register
 
@@ -104,7 +106,6 @@ main_loop: // primary loop
     LD32      rTmp1, rDbg1Ptr
     ADD       rTmp1,rTmp1,1
     ST32      rTmp1, rDbg1Ptr
-    JMP       main_loop
 
     LD32      rTmp1, rCmdPtr     // Load command 
     QBEQ      wr_rd_16,rTmp1,1   // cmd = 1 goto wr_rd_16
@@ -114,10 +115,10 @@ main_loop: // primary loop
 
 wr_rd_16:
     LD32      rArg0, rWr16Ptr    // load value to write
-    // CALL      xspi_wr_rd         // access the spi
+    CALL      xspi_wr_rd         // access the spi
     ST32      rArg0, rRd16Ptr    // store results
     MOV       rTmp1, 0x0         // load 0
-    ST32      rCmdPtr,rTmp1      // write 0 to command
+    ST32      rTmp1,rCmdPtr      // write 0 to command
     JMP       main_loop          // goto main loop
 
 stream:
@@ -129,27 +130,46 @@ stream:
     JMP       stream;            // goto top of streaming loop
   
 //-----------------------------------------------------------------------------
+// This routine writes the 16 bits of rArg0 to the sram fifo
+// Stack : 4 bytes
+//
 fifo_write:
+    ST32      r29, rStkPtr       // save return pointer on stack
+    ADD       rStkPtr,rStkPtr,4  // inc stack
+
+fifo_write_out:
+    SUB       rStkPtr,rStkPtr,4  // dec stack
+    LD32      r29, rStkPtr       // fetch return pointer
     RET       
 
 //-----------------------------------------------------------------------------
+// This routine spins on a register a fixed number of times.
+// Stack : none.
+//
 spin_wait:
-    MOV       rTmp1, 20          // load spin wait count
+    MOV       rTmp1, 5         // load spin wait count
 spwloop:
     SUB       rTmp1,rTmp1,1      // dec counter
     QBNE      spwloop, rTmp1, 0  // if counter not 0 loop back
     RET
 
 //-----------------------------------------------------------------------------
+// This routine clocks 16 bits of data out and in.  rArg0 is the write
+// data and the read data is produced here.  
+// Stack : 4 bytes
+//
 xspi_wr_rd:
 #define MOSI_B   2
 #define MISO_B   5
-#define SS_HIGH  0x08            // OR into r31 
-#define SS_LOW   0xf7            // AND into r31 
-#define SCLK_H   0x02            // OR int r31
-#define SCLK_L   0xfd            // AND into r31
+#define SS_HIGH  0x08            // OR  into r30 
+#define SS_LOW   0xf7            // AND into r30 
+#define SCLK_H   0x02            // OR  into r30
+#define SCLK_L   0xfd            // AND into r30
 
-    AND       r31, r31, SS_LOW   // ss low
+    ST32      r29, rStkPtr       // save return pointer on stack
+    ADD       rStkPtr,rStkPtr,4  // inc stack
+
+    AND       r30, r30, SS_LOW   // ss low
     MOV       rSO, rArg0         // setup output word
     MOV       rSI, 0             // setup input word
     MOV       rCnt,16            // initialize bit counter
@@ -159,20 +179,30 @@ clockbit:
     LSR       rTmp1,rSO,15       // get so msb at bit 0
     AND       rTmp1,rTmp1,1      // mask bit 0
     LSL       rTmp1,rTmp1,MOSI_B // move msb to mosi bit loc
-    OR        r31, r31, rTmp1    // ** Set MOSI
-    CALL      spin_wait
-    OR        r31, r31,SCLK_H    // ** SCLK high
-    CALL      spin_wait
-    LSR       rTmp1,r30,MISO_B   // ** Get MISO
-    AND       rTmp1,rTmp1,1
-    LSL       rSI,rSI,1
+    MOV       rTmp2,r30          // copy r30
+    AND       rTmp2,rTmp2,0xb    // mask out the current value of mosi bit
+    OR        rTmp2,rTmp2,rTmp1  // or in the new mosi bit 
+    MOV       r30,rTmp1          // ** Set MOSI
+
+    CALL      spin_wait          // setup time
+    OR        r30, r30,SCLK_H    // ** SCLK high
+
+    CALL      spin_wait          // hold time
+    LSR       rTmp1,r31,MISO_B   // ** Get MISO
+
+    AND       rTmp1,rTmp1,1      // mask of any other bits
+    LSL       rSI,rSI,1          // shift running input up
     OR        rSI,rSI,rTmp1      // add the new bit to si 
-    AND       r31, r31,SCLK_L    // ** SCLK LOW
-    LSL       rSO,rSO,1          // shift to prep next bi
+    AND       r30, r30,SCLK_L    // ** SCLK LOW
+    LSL       rSO,rSO,1          // shift to prep next bit
 
     SUB       rCnt,rCnt,1        // dec the bit count
     QBNE      clockbit,rCnt,0    // if more bits, goto top of loop
-    OR        r31, r31, SS_HIGH  // ss high
+    OR        r30, r30, SS_HIGH  // ss high
+xspi_wr_rd_out:
+    MOV       rArg0,rSI          // move serial input to return
+    SUB       rStkPtr,rStkPtr,4  // dec stack
+    LD32      r29, rStkPtr       // fetch return pointer
     RET
 
 

@@ -25,6 +25,7 @@
 
 			pru_pru_pins: pinmux_pru_pru_pins {
 				pinctrl-single,pins = <
+         /* See pad control registers section spruh73h p747 */
          0x1ac 0x26 /* P9.25  MODE6 | RCVEN | PRU */
          0x1a4 0x26 /* P9.27  MODE6 | RCVEN | PRU */
          0x19c 0x25 /* P9.28  MODE5 | RCVEN | PRU */

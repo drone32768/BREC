@@ -10,7 +10,7 @@ endif
 
 UTIL_OBJS=../Util/$(TGT)/gpioutil.o ../Util/$(TGT)/mcf.o ../Iboard/$(TGT)/Iboard.o
 DEV_OBJS=
-LOCAL_OBJS=Xboard.o
+LOCAL_OBJS=$(TGT)/Xboard.o
 
 all	:
 ifeq ($(TGT),arm)
@@ -24,7 +24,7 @@ endif
 	make $(TGT)/Xutil
 
 
-$(TGT)/Xboard.o    : Xboard.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+$(TGT)/Xboard.o    : Xboard.cpp pru_images.h $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ -c $(CPPFLAGS) Xboard.cpp -o $(TGT)/Xboard.o
 
 $(TGT)/Xtst    : Xtst.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
