@@ -3,20 +3,34 @@ arm/Xutil         \
 -echo "The patter should walk them all on then off" \
 -open             \
 -write  0x0f04    \
+-write  0x0008    \
+-write  0x0008    \
+-write  0x0008    \
+-write  0x0008    \
+-write  0x0009    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0704    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0304    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0104    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0004    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0104    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0304    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0704    \
+-write  0x0009    \
 -usleep 500000    \
 -write  0x0f04    \
+-write  0x0009    \
 -usleep 500000    \

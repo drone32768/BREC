@@ -1,0 +1,54 @@
+#!/bin/bash
+arm/Xtst -select 2 -enable 1 -us 1000 \
+-init \
+-echo "This test captures some samples from the nco" \
+-echo "                                             " \
+-echo "Set P1 = r6(pinc)" \
+-write  0x0064            \
+-echo "                                             " \
+-echo "Write(P1=r6) -> 001X = Pinc=1" \
+-write  0x0015            \
+-echo "                                             " \
+-echo "Set P1 = r3" \
+-write  0x0034            \
+-echo "                                             " \
+-echo "Write(P1=r3) ->N00X=fifo select:0=adc,1=nco1,2=nco2" \
+-write  0x1005            \
+-echo "                                             " \
+-echo "Reset fifo, select fifo reads" \
+-write  0x4014            \
+-echo "                                             " \
+-echo "Enable fifo, select fifo reads" \
+-write  0x8014            \
+-echo "                                             " \
+-echo "Read P1 (fifo)" \
+-write  0x0009            \
+-echo "Next value is valid" \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-echo "Reset fifos" \
+-write  0x4014            \
+-write  0x8014            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \

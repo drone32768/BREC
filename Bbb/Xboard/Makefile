@@ -25,15 +25,15 @@ endif
 
 
 $(TGT)/Xboard.o    : Xboard.cpp pru_images.h  $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
-	g++ -c $(CPPFLAGS) Xboard.cpp -o $(TGT)/Xboard.o
+	g++ -c $(CPPFLAGS) -I$(PRU_INC) Xboard.cpp -o $(TGT)/Xboard.o
 
 $(TGT)/Xtst    : Xtst.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
-	g++ $(CPPFLAGS) Xtst.cpp \
+	g++ $(CPPFLAGS) -I$(PRU_INC) Xtst.cpp \
                 $(UTIL_OBJS) \
                 -lm -lpthread -o $(TGT)/Xtst
 
 $(TGT)/Xutil	: Xutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
-	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -L$(PRU_LIB) Xutil.cpp \
+	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -I$(PRU_INC) -L$(PRU_LIB) Xutil.cpp \
                 $(LOCAL_OBJS) \
 		$(UTIL_OBJS) \
                 -lm -lprussdrv -lpthread -o $(TGT)/Xutil

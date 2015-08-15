@@ -1,0 +1,30 @@
+#!/bin/bash
+arm/Xtst -select 2 -enable 1 -us 1000 \
+-init \
+-echo "This test captures some samples from the fifo" \
+-echo "                                             " \
+-echo "Set P1 = r3" \
+-write  0x0034            \
+-echo "                                             " \
+-echo "Write(P1=r3) -> 0000 = fifo select = ADC" \
+-write  0x0005            \
+-echo "                                             " \
+-echo "Reset fifo, select fifo reads" \
+-write  0x4014            \
+-echo "                                             " \
+-echo "Enable fifo, select fifo reads" \
+-write  0x8014            \
+-echo "                                             " \
+-echo "Read P1 (fifo)" \
+-write  0x0009            \
+-echo "Next value is valid" \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+

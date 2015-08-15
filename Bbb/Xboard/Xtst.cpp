@@ -182,7 +182,7 @@ main( int argc, char *argv[] )
             val = strtol(argv[idx+1],&end,0);
             
             rd = xspi_write( g6pg, val );
-            printf("w=0x%04x r=0x%04x (%d)\n",val, rd, rd);
+            printf("w=0x%04hx r=0x%04hx (%hd)\n",val, rd, rd);
 
             idx+=2;
             continue;
@@ -201,7 +201,7 @@ main( int argc, char *argv[] )
             rd = xspi_write( g6pg, 0x8214 ); //  write p0
             for( sampCnt=0; sampCnt<2048; sampCnt++){
                 rd = xspi_write( g6pg, 0x0009 ); // read p1
-                printf("%d, %d\n",sampCnt,(rd>>4));
+                printf("%06d, 0x%04hx (%hd)\n",sampCnt,rd,rd);
             }
 
             // Disable fifo writes

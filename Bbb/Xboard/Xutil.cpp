@@ -57,9 +57,8 @@ main( int argc, char *argv[] )
             if( (idx+1) >= argc ){ usage(-1); }
             val = strtol( argv[idx+1], &end, 0 );
 
-            printf("Xutil:write  : 0x%08x\n",val);
             rval = xbrd->XspiWrite( val );
-            printf("Xutil:read   : 0x%08x\n",rval);
+            printf("Xutil:w=0x%04hx r=0x%04hx (%hd)\n",val,rval,rval);
         }
     
         else if( 0==strcmp(argv[idx], "-samp") ){
@@ -68,7 +67,7 @@ main( int argc, char *argv[] )
 
             xbrd->Get2kSamples( bf );
             for(idx=0;idx<32;idx++){
-                printf("%d, %d\n",idx,bf[idx]);
+                printf("%03d, 0x%04hx %hd\n",idx,bf[idx],bf[idx]);
             }
         }
 
