@@ -152,7 +152,7 @@ fifo_write:
 // Stack : none.
 //
 spin_wait:
-    MOV       rTmp1, 5         // load spin wait count
+    MOV       rTmp1, 2         // load spin wait count
 spwloop:
     SUB       rTmp1,rTmp1,1      // dec counter
     QBNE      spwloop, rTmp1, 0  // if counter not 0 loop back
@@ -180,7 +180,7 @@ xspi_wr_rd:
     MOV       rCnt,16            // initialize bit counter
 
 clockbit:
-//    CALL      spin_wait
+    CALL      spin_wait
     LSR       rTmp1,rSO,15       // get so msb at bit 0
     AND       rTmp1,rTmp1,1      // mask bit 0
     LSL       rTmp1,rTmp1,MOSI_B // move msb to mosi bit loc
@@ -189,10 +189,10 @@ clockbit:
     OR        rTmp2,rTmp2,rTmp1  // or in the new mosi bit 
     MOV       r30,rTmp1          // ** Set MOSI
 
-//    CALL      spin_wait          // setup time
+    CALL      spin_wait          // setup time
     OR        r30, r30,SCLK_H    // ** SCLK high
 
-//    CALL      spin_wait          // hold time
+    CALL      spin_wait          // hold time
     LSR       rTmp1,r31,MISO_B   // ** Get MISO
 
     AND       rTmp1,rTmp1,1      // mask of any other bits
