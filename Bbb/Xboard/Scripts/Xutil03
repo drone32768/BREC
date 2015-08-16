@@ -1,0 +1,10 @@
+# this test collects a set of csv samples
+arm/Xutil       \
+-open           \
+-flush          \
+-usleep 500000  \
+-csv            \
+-flush          \
+-usleep 500000  \
+-csv            \
+> samples.csv

@@ -71,6 +71,16 @@ main( int argc, char *argv[] )
             }
         }
 
+        else if( 0==strcmp(argv[idx], "-csv") ){
+            short bf[4096];
+            int   idx;
+
+            xbrd->Get2kSamples( bf );
+            for(idx=0;idx<2048;idx++){
+                printf("CSV, %d, %hd\n",idx,bf[idx]);
+            }
+        }
+
         else if( 0==strcmp(argv[idx], "-flush") ){
             xbrd->Flush();
         }

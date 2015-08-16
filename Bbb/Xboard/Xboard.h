@@ -68,10 +68,15 @@ public:
     int SetGain( int gn );
     int SetSim( int sim );
 
-    // For testing only
-    int XspiWrite( int wval );
+    // Non ADC interface methods
 
+    // For testing only
+    int  XspiWrite( int wval );
     void ShowPrus( const char *title );
+
+    int SetSource( int arg );
+    int SetLoFreq( int arg );
+
 };
 
 #endif

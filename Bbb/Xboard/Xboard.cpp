@@ -59,14 +59,18 @@
 
 #define XSPI_SEL_P1_CNTR 0x0000
 #define XSPI_SEL_P1_FIFO 0x0010
+#define XSPI_SEL_P1_R3   0x0030
+#define XSPI_SEL_P1_R6   0x0060
 
 #define XSPI_READ        0x0008
 #define XSPI_WRITE       0x0004
 #define XSPI_PORT1       0x0001
 #define XSPI_PORT0       0x0000
 
+#define XSPI_RP0   (XSPI_READE | XSPI_PORT0)
 #define XSPI_WP0   (XSPI_WRITE | XSPI_PORT0)
 #define XSPI_RP1   (XSPI_READ  | XSPI_PORT1)
+#define XSPI_WP1   (XSPI_WRITE | XSPI_PORT1)
 
 #define XSPI_STOP      (               XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
 #define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO | XSPI_LED1 | XSPI_WP0 )
@@ -120,6 +124,26 @@ Xboard::SetGain( int gn )
 
 //------------------------------------------------------------------------------
 int
+Xboard::SetSource( int arg )
+{
+    XspiWrite( XSPI_SEL_P1_R3     | XSPI_WP0 );
+    XspiWrite( ((arg&0x000f)<<12) | XSPI_WP1 );
+    XspiWrite( XSPI_SEL_P1_FIFO   | XSPI_WP0 );
+    return(0);
+}
+
+//------------------------------------------------------------------------------
+int
+Xboard::SetLoFreq( int arg )
+{
+    XspiWrite( XSPI_SEL_P1_R6    | XSPI_WP0 );
+    XspiWrite( ((arg&0x0fff)<<4) | XSPI_WP1 );
+    XspiWrite( XSPI_SEL_P1_FIFO  | XSPI_WP0 );
+    return(0);
+}
+
+//------------------------------------------------------------------------------
+int
 Xboard::Open()
 {
     int ret;
@@ -160,11 +184,17 @@ Xboard::Flush()
     // Flush the fpga fifos
     XspiWrite( XSPI_FLUSH );
 
-    // Reset the pru dram fifo
-    mPidx = mPtrHead[0]/2;
+    // TODO
+    SetSource( 2 );
+    SetLoFreq( 500 );
+
+    us_sleep( 5000 );
 
     // Start the fpga acquisition
     XspiWrite( XSPI_START );
+
+    // Reset the pru dram fifo
+    mPidx = mPtrHead[0]/2;
 
     // Tell the pru to go back to streaming
     *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 2;
@@ -196,32 +226,27 @@ int
 Xboard::Get2kSamples( short *bf )
 {
     int          p;
-    unsigned int mask;
+    int          idx;
 
     // ShowPrus("at Get2kSamples Start");
 
     // Setup pause count and block mask
-    p    = 0;
-    mask = ~(2048-1);
-
-    // Make sure we are aligned to 2k so we don't copy past end of src
-    mPidx = (mPidx&mask);
+    p   = 0;
 
     // Wait while the PRU source is within the same 2k block we want
-    while( 1 ){
-        if( (mPidx&mask) == ((mPtrHead[0]/2)&mask) ){
+    idx = 0;
+    while( idx<2048 ){
+
+        while( mPidx == (mPtrHead[0]/2) ){
             us_sleep( 5000 );
             p++;
         }
-        else{
-            break;
-        }
-    }
 
-    // NOTE: memcpy is just as fast as the hand optimized
-    // asm with ldmia/stmia moving 32 bytes at a time
-    memcpy( (void*)bf, (void*)(mPtrPruSamples+mPidx), 4096);
-    mPidx = (mPidx+2048)%PRU_MAX_SHORT_SAMPLES;
+        bf[ idx ] = mPtrPruSamples[mPidx];
+        bf[ idx ] = bf[ idx ] + 2048;  // TODO - based on format
+        idx   = idx+1;
+        mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
+    }
 
     // ShowPrus("at Get2kSamples End");
     return( p );
