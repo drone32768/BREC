@@ -2,7 +2,7 @@
 arm/Xtst -select 2 -enable 1 -us 1000 \
 -init \
 -echo "This tests reads the counter via p1" \
--write  0x8f04            \
+-write  0x8f24            \
 -write  0x0005            \
 -write  0x0009            \
 -echo   "Next read counter value is valid" \

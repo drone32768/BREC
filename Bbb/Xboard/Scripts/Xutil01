@@ -13,7 +13,7 @@ arm/Xutil       \
 -echo "Flush fifos" \
 -write 0x4014   \
 -echo "Enable fifo but select P1 read counter" \
--write 0x8004   \
+-write 0x8024   \
 -write 0x0009   \
 -echo "This sample should be valid" \
 -write 0x0009   \

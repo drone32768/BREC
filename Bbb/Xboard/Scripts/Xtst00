@@ -6,7 +6,7 @@ arm/Xtst -select 2 -enable 1 -us 1000 \
 -write 0xCff4 \
 -write 0x0008 \
 -write 0x0008 \
--echo "--->R0 should be cff4" \
+-echo "--->R0 should be Xff4" \
 -echo "--->R0 write" \
 -write 0x0004 \
 -write 0x0008 \

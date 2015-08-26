@@ -1,4 +1,5 @@
 # this test collects a set of csv samples
+echo "This test collects a set of csv samples and places in samples.csv"
 arm/Xutil       \
 -open           \
 -flush          \

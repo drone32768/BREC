@@ -2,6 +2,6 @@
 arm/Xtst -select 2 -enable 1 -us 0 \
 -init \
 -echo   "---> Enter continuous test loop reading fifo " \
--write 0x8f04 \
+-write 0x8f24 \
 -write 0x0005 \
 -seq

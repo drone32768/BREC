@@ -123,12 +123,66 @@ Xboard::SetGain( int gn )
 }
 
 //------------------------------------------------------------------------------
+/**
+ * Enumeration of valid data sources within fpga
+ */
+#define FIFO_SRC_ADC    0
+#define FIFO_SRC_NCO1   1
+#define FIFO_SRC_NCO2   2
+#define FIFO_SRC_I      3
+#define FIFO_SRC_Q      4
+#define FIFO_SRC_CIC_I  5
+#define FIFO_SRC_CIC_Q  6
+#define FIFO_SRC_CIC_IQ 7
+
 int
 Xboard::SetSource( int arg )
 {
+    printf("Xboard:SetSource=%d\n",arg);
+
     XspiWrite( XSPI_SEL_P1_R3     | XSPI_WP0 );
     XspiWrite( ((arg&0x000f)<<12) | XSPI_WP1 );
     XspiWrite( XSPI_SEL_P1_FIFO   | XSPI_WP0 );
+
+    switch( arg ){
+        case FIFO_SRC_ADC      :  // input = 12 bit unsigned
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 0;
+            break;
+        case FIFO_SRC_NCO1     :  // input = 12 bit signed 
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 2048;
+            break;
+        case FIFO_SRC_NCO2     :  // input = 12 bit signed 
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 2048;
+            break;
+        case FIFO_SRC_I        :  // input = 16 bit signed
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case FIFO_SRC_Q        :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case FIFO_SRC_CIC_I    :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case FIFO_SRC_CIC_Q    :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case FIFO_SRC_CIC_IQ   :
+        default                :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+    }
+    printf("Xboard:SetSource shift=%d add=%d\n",mOutFmtShift,mOutFmtAdd);
+   
+
+    Flush(); // Necessary to start streaming
     return(0);
 }
 
@@ -136,9 +190,12 @@ Xboard::SetSource( int arg )
 int
 Xboard::SetLoFreq( int arg )
 {
+    printf("Xboard:SetLoFreq=%d\n",arg);
     XspiWrite( XSPI_SEL_P1_R6    | XSPI_WP0 );
     XspiWrite( ((arg&0x0fff)<<4) | XSPI_WP1 );
     XspiWrite( XSPI_SEL_P1_FIFO  | XSPI_WP0 );
+
+    Flush(); // Necessary to start streaming
     return(0);
 }
 
@@ -158,7 +215,6 @@ Xboard::Open()
     }
     prussdrv_map_extmem( (void**)( &mPtrPruSamples ) ); 
     prussdrv_map_prumem( PRUSS0_PRU0_DATARAM, (void**)(&mPtrPruSram) );
-    mPtrHead = (unsigned int*)(mPtrPruSram + SRAM_OFF_DRAM_HEAD);
 
     // Enable (power on) I board port 2
     mPortEnable.Define( 68 ); // gpio_2_4
@@ -168,6 +224,10 @@ Xboard::Open()
 
     // Since we may just have powered on fpga let it load
     us_sleep( 100000 );
+
+    // Set startup default signal paramters
+    SetLoFreq( 500 );
+    SetSource( 2 ); 
 
     printf("Xboard:Open exit\n");
 
@@ -184,20 +244,14 @@ Xboard::Flush()
     // Flush the fpga fifos
     XspiWrite( XSPI_FLUSH );
 
-    // TODO
-    SetSource( 2 );
-    SetLoFreq( 500 );
-
-    us_sleep( 5000 );
-
     // Start the fpga acquisition
     XspiWrite( XSPI_START );
 
     // Reset the pru dram fifo
-    mPidx = mPtrHead[0]/2;
+    mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
 
     // Tell the pru to go back to streaming
-    *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) )       = 2;
+    SetSramWord( 2, SRAM_OFF_CMD );
 
     // ShowPrus("at flush");
 
@@ -226,26 +280,40 @@ int
 Xboard::Get2kSamples( short *bf )
 {
     int          p;
-    int          idx;
+    int          srcIdx,idx;
 
     // ShowPrus("at Get2kSamples Start");
 
     // Setup pause count and block mask
     p   = 0;
 
-    // Wait while the PRU source is within the same 2k block we want
+    // Loop until we have all of the samples
     idx = 0;
     while( idx<2048 ){
 
-        while( mPidx == (mPtrHead[0]/2) ){
+        // See where pru writer is
+        srcIdx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
+
+        // If we are at same spot as pru writer then wait
+        while( mPidx == srcIdx ){
             us_sleep( 5000 );
             p++;
+            srcIdx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
         }
 
-        bf[ idx ] = mPtrPruSamples[mPidx];
-        bf[ idx ] = bf[ idx ] + 2048;  // TODO - based on format
-        idx   = idx+1;
-        mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
+        // Copy out samples until we hit pru or are done
+        while( (mPidx!=srcIdx) && (idx<2048) ){
+            bf[ idx ] = mPtrPruSamples[mPidx];
+
+            // bf[ idx ]=( ( (unsigned short)mOutFmtAdd + bf[ idx ]) & 0xffff );
+            bf[ idx ] = (mOutFmtAdd + bf[ idx ])<<mOutFmtShift;
+            // bf[ idx ] = (bf[ idx ]+mOutFmtAdd)<<mOutFmtShift;
+            // bf[ idx ] = (bf[ idx ]) + 2048; // works some
+
+            idx   = idx+1;
+            mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
+        }
+
     }
 
     // ShowPrus("at Get2kSamples End");
@@ -343,7 +411,7 @@ Xboard::XspiWrite( int wval )
     bsy  = 1;
     cnt  = 100;
     while( bsy && 0!=cnt ){
-        bsy = *( (unsigned int*)(mPtrPruSram + SRAM_OFF_CMD) );
+        bsy = GetSramWord( SRAM_OFF_CMD );
         if( bsy ){
             us_sleep( 100 );
             cnt--;

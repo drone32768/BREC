@@ -72,6 +72,10 @@ static const char *helpStr=
 "  Set R board rf chnl [0..3]\n"
 "wb-rf-atten <M>\n"
 "  Set R board attenuation value to <M>\n"
+"x-src <M>\n"
+"  Set X board fifo source to <M>\n"
+"x-pinc <M>\n"
+"  Set X board phase inc to <M>\n"
 " \n"
 ;
 
@@ -366,6 +370,25 @@ void WbCtlIf::SvcCmd( TcpSvrCon *tsc, Cli *cli )
         return;
     }
 
+    if( 0==strcmp(cmdStr,"x-src")  ){
+        arg1 = CliArgByIndex( cli, 1 );
+        if( !arg1 ) { SvcErr(tsc); return; }
+        intVal= atoi(arg1);
+
+        Xboard *xBrd;
+        xBrd = (Xboard*)( Dp()->Adc() );
+        xBrd->SetSource(  intVal );
+    }
+
+    if( 0==strcmp(cmdStr,"x-pinc")  ){
+        arg1 = CliArgByIndex( cli, 1 );
+        if( !arg1 ) { SvcErr(tsc); return; }
+        intVal= atoi(arg1);
+
+        Xboard *xBrd;
+        xBrd = (Xboard*)( Dp()->Adc() );
+        xBrd->SetLoFreq(  intVal );
+    }
     return;
 }
 

@@ -49,10 +49,13 @@ class Xboard : public AdcIf {
     int                      mPidx;
     volatile unsigned short *mPtrPruSamples;
     volatile unsigned char  *mPtrPruSram;
-    volatile unsigned int   *mPtrHead;
 
     // gpio to enable i board port 2
-    GpioUtil mPortEnable;
+    GpioUtil                 mPortEnable;
+
+    // Output formating parameters
+    int                      mOutFmtShift;
+    int                      mOutFmtAdd;
 
 public:
     Xboard();

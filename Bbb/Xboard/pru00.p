@@ -88,6 +88,8 @@ MAIN:
 #define       rSrHdPtr      r13
 #define       rSrHeadPtrPtr r14
 #define       rHeadMask     r15
+#define       r2k           r16
+#define       rSampCnt      r17
 
     MOV       rTmp1,             0x0
     MOV       rTmp2,             0x0
@@ -103,7 +105,8 @@ MAIN:
     MOV       rSrHdPtr,          (0x0000)
     MOV       rSrHeadPtrPtr,     (0x0000 + SRAM_OFF_HEAD_PTR)
     MOV       rHeadMask,         (0x0fff)  // one 4k page of fifo
-
+    MOV       r2k,               (0x800)   // 
+    MOV       rSampCnt,          0
     // r29 = return register
 
 main_loop: // primary loop
@@ -115,8 +118,9 @@ main_loop: // primary loop
 
     LD32      rTmp1, rCmdPtr     // Load command 
     QBEQ      wr_rd_16,rTmp1,1   // cmd = 1 goto wr_rd_16
-    QBEQ      stream,  rTmp1,2   // cmd = 2 goto stream
-    CALL      spin_wait          // no cmd, then pause a bit 
+//    QBEQ      stream,  rTmp1,2   // cmd = 2 goto stream
+    QBEQ      stream_fc, rTmp1,2 // cmd = 2 goto stream
+    CALL      spinWaitBit        // no cmd, then pause a bit 
     JMP       main_loop          // top of loop to re-check command
 
 wr_rd_16:
@@ -127,15 +131,53 @@ wr_rd_16:
     ST32      rTmp1,rCmdPtr      // write 0 to command
     JMP       main_loop          // goto main loop
 
-stream:
+// No flow control, just reads board fifo as quickly as possible
+stream: 
     LD32      rTmp1, rCmdPtr     // Load command 
     QBNE      main_loop,rTmp1,2  // if cmd != 2 goto loop_label
     MOV       rArg0, 0x9         // load write value (read port 1 = 0x9)
     CALL      xspi_wr_rd         // access the spi
     CALL      fifo_write         // store the spi read into fifo
-    // TODO - check if fpga fifo is nearly empty (if so spin wait)
+
+    // AND       rTmp1,rArg0,1      // mask for 1
+    // QBNE      stream,rTmp1,1     // if the bit is not set goto loop top
+    // CALL      spinWaitSamp
     JMP       stream;            // goto top of streaming loop
-  
+
+//-----------------------------------------------------------------------------
+// Uses fifo data flag indicator
+#define XRDP0 0x8 // Xspi read port 0 command
+#define XRDP1 0x9 // Xspi read port 1 command
+#define XFRBIT 13 // R0 fifo ready bit
+stream_fc:
+    LD32      rTmp1, rCmdPtr     // load current pru command 
+    QBNE      main_loop,rTmp1,2  // if cmd != 2 goto loop_label
+
+    MOV       rArg0, XRDP0       // load write value (read port 0 = 0x8)
+    CALL      xspi_wr_rd         // access the spi
+    MOV       rArg0, XRDP0       // load write value (read port 0 = 0x8)
+    CALL      xspi_wr_rd         // access the spi
+    LSR       rTmp1,rArg0,XFRBIT // shift result down 
+    AND       rTmp1,rTmp1,1      // mask for 1
+    QBNE      stream_fc,rTmp1,1  // if the bit is not set goto loop top
+
+read2k:
+    MOV       rSampCnt,0
+    MOV       rArg0, XRDP1       // load write value (read port 1 = 0x9)
+    CALL      xspi_wr_rd         // access the spi (this load 1st fifo value)
+
+loop2k:
+    MOV       rArg0, XRDP1       // load write value (read port 1 = 0x9)
+    CALL      xspi_wr_rd         // access the spi
+    CALL      fifo_write         // store the spi read into fifo
+    ADD       rSampCnt,rSampCnt,1 // inc counter
+    QBNE      loop2k,r2k,rSampCnt // if < 2k samples loop
+
+    MOV       rArg0, XRDP0       // load write value (read port 0 = 0x8)
+    CALL      xspi_wr_rd         // access the spi (loads last fifo value)
+    CALL      fifo_write         // store the spi read into fifo
+    JMP       stream_fc          // have 2k samples, goto main loop
+ 
 //-----------------------------------------------------------------------------
 // This routine writes the 16 bits of rArg0 to the sram fifo
 // Stack : none
@@ -151,11 +193,22 @@ fifo_write:
 // This routine spins on a register a fixed number of times.
 // Stack : none.
 //
-spin_wait:
-    MOV       rTmp1, 2         // load spin wait count
-spwloop:
+spinWaitSamp:
+    MOV       rTmp1, 3000        // load spin wait count
+swsloop:
     SUB       rTmp1,rTmp1,1      // dec counter
-    QBNE      spwloop, rTmp1, 0  // if counter not 0 loop back
+    QBNE      swsloop, rTmp1, 0  // if counter not 0 loop back
+    RET
+
+//-----------------------------------------------------------------------------
+// This routine spins on a register a fixed number of times.
+// Stack : none.
+//
+spinWaitBit:
+    MOV       rTmp1, 2         // load spin wait count
+swbloop:
+    SUB       rTmp1,rTmp1,1      // dec counter
+    QBNE      swbloop, rTmp1, 0  // if counter not 0 loop back
     RET
 
 //-----------------------------------------------------------------------------
@@ -180,7 +233,7 @@ xspi_wr_rd:
     MOV       rCnt,16            // initialize bit counter
 
 clockbit:
-    CALL      spin_wait
+    CALL      spinWaitBit
     LSR       rTmp1,rSO,15       // get so msb at bit 0
     AND       rTmp1,rTmp1,1      // mask bit 0
     LSL       rTmp1,rTmp1,MOSI_B // move msb to mosi bit loc
@@ -189,10 +242,10 @@ clockbit:
     OR        rTmp2,rTmp2,rTmp1  // or in the new mosi bit 
     MOV       r30,rTmp1          // ** Set MOSI
 
-    CALL      spin_wait          // setup time
+    CALL      spinWaitBit          // setup time
     OR        r30, r30,SCLK_H    // ** SCLK high
 
-    CALL      spin_wait          // hold time
+    CALL      spinWaitBit          // hold time
     LSR       rTmp1,r31,MISO_B   // ** Get MISO
 
     AND       rTmp1,rTmp1,1      // mask of any other bits
