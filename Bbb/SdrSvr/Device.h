@@ -46,6 +46,8 @@
 #include "../Hboard/Hboard.h"
 #include "../Iboard/Iboard.h"
 #include "../Mboard/Mboard.h"
+
+#include "../Xboard/Xboard.h"
 #include "Fir.h"
 
 class Device : public McF {
@@ -68,6 +70,14 @@ class Device : public McF {
 
     int           TunerSet( long long freqHz );
 
+    int           mXboard;
+    int           mHboard;
+    int           mAboard;
+
+    void          GetSamples_A( short *sampPtr, int nSamples );
+    void          GetSamples_H( short *sampPtr, int nSamples );
+    void          GetSamples_X( short *sampPtr, int nSamples );
+    
   public:
     Device();
     void          Main();

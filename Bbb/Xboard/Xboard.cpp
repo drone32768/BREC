@@ -176,7 +176,7 @@ Xboard::SetSource( int arg )
         case FIFO_SRC_CIC_IQ   :
         default                :
             mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
+            mOutFmtAdd   = 0; // 32768;
             break;
     }
     printf("Xboard:SetSource shift=%d add=%d\n",mOutFmtShift,mOutFmtAdd);

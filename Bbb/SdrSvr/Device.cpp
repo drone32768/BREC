@@ -55,8 +55,12 @@ Device::Device()
 
     mSwapIQ           = 0;
     mPmTuneMHz        = 0;
+    mXboard           = 0;
+    mHboard           = 0;
+    mAboard           = 0;
 
     if( FindCapeByName("brecA") ){
+        mAboard = 1;
         mAdc = new Aboard();
         mAdc->Open();
         mAdc->StartPrus();
@@ -69,6 +73,8 @@ Device::Device()
     }
 
     if( FindCapeByName("brecH") ){
+        mHboard = 1;
+
         mAdc = new Hboard();
         mAdc->Open();
 
@@ -96,6 +102,43 @@ Device::Device()
         mBoard = new Mboard();
         mBoard->Open( g6pg );
         mLo1 = mBoard->GetAdf4351( 0 );
+    }
+
+    if( FindCapeByName("brecX") ){
+        mXboard = 1;
+        mAdc = new Xboard();
+        mAdc->Open();
+        mAdc->StartPrus();
+        mAdc->SetComplexSampleRate( 5000000 );
+
+        ((Xboard*)mAdc)->SetLoFreq( 2 );
+
+        // ((Xboard*)mAdc)->SetSource ( 0 );
+        // ((Xboard*)mAdc)->SetSource ( 1 );
+        // ((Xboard*)mAdc)->SetSource ( 6 );
+        ((Xboard*)mAdc)->SetSource ( 7 );
+
+
+        Iboard        *iBoard;
+        Gpio6PinGroup *g6pg;
+        Mboard        *mBoard;
+
+        iBoard = new Iboard();
+        iBoard->Open();
+
+        g6pg = iBoard->AllocPort( 0 );
+        iBoard->EnablePort( 0, 1 );
+
+        mBoard = new Mboard();
+        mBoard->Open( g6pg );
+        mLo0 = mBoard->GetAdf4351( 0 );
+
+        g6pg = iBoard->AllocPort( 1 );
+        iBoard->EnablePort( 1, 1 );
+
+        mBoard = new Mboard();
+        mBoard->Open( g6pg );
+        mLo1 = mBoard->GetAdf4351( 1 );
     }
 
     mLo0->SetFrequency( IF0 + 93100000 );
@@ -219,17 +262,7 @@ double Device::PmTuneMHz()
 }
 
 //------------------------------------------------------------------------------
-//
-// This method is expected to produce the specified number of complex 16 bit 
-// samples at the location provided.  
-// 
-// It is periodically called and may pend waiting for samples.
-//
-// This is the standard device interface.  This simulation/test version
-// rate limits to the specified sample rate and relies on GenSamples() to 
-// actually produce the samples.
-//
-void Device::GetSamples( short *sampPtr, int nComplexSamples )
+void Device::GetSamples_A( short *sampPtr, int nComplexSamples )
 {
     static unsigned int runningSampleCount;
     int                 complexSampleCount;
@@ -253,58 +286,6 @@ void Device::GetSamples( short *sampPtr, int nComplexSamples )
 
         // Complex sample output
         if( mComplex ){
-
-if( 0 ){
-            // filter first real on odds
-            if( runningSampleCount&1 ) eo[0] = -eo[0];
-            sampPtr[0] = miF3.Filter(1,eo[0]);
-
-            // filter second real on evens
-            if( runningSampleCount&1 ) eo[1] = -eo[1];
-            sampPtr[1] = mqF3.Filter(0,eo[1]);
-
-	    if(mSwapIQ) {
-  	        short tmp = sampPtr[0];
-	        sampPtr[0] = sampPtr[1];
-	        sampPtr[1] = tmp;
-	    }
-}
-else{
-            // sampPtr[0] = eo[0]>>4;
-            // sampPtr[1] = eo[1]>>4;
-	    if( runningSampleCount&1 ){ 
-                sampPtr[0] = -eo[0];
-                sampPtr[1] = -eo[1];
-	    }
-	    else{
-                sampPtr[0] = eo[0];
-                sampPtr[1] = eo[1];
-            }		     
-
-}
-        }
-
-        // Real sample output
-        else{
-            sampPtr[0] = eo[0];
-            sampPtr[1] = eo[1];
-        }
-
-if( mDisplayCount > 0 ){
-printf("%d,%d\n", sampPtr[0], sampPtr[1] );
-mDisplayCount--;
-}
-
-        // update sample count and buffer location
-        runningSampleCount++;
-        sampPtr+=2;
-        complexSampleCount++;
-
-        // Update internal buffer
-        eo     +=2;
-        bfSamps-=2;
-    }
-}
 
 /*
 Smpl  Sin Fsr/4  Dncvt    Filter                                     Dec
@@ -332,3 +313,167 @@ S6      -1       -S6      A0*(-S6) + A1*0     + A3*S0    + A3*0      E    I2
 S7       0         0      A0*0     + A1*(-S6) + A2*0     + A3*S0     X
 
 */
+            // filter first real on odds
+            if( runningSampleCount&1 ) eo[0] = -eo[0];
+            sampPtr[0] = miF3.Filter(1,eo[0]);
+
+            // filter second real on evens
+            if( runningSampleCount&1 ) eo[1] = -eo[1];
+            sampPtr[1] = mqF3.Filter(0,eo[1]);
+
+	    if(mSwapIQ) {
+  	        short tmp = sampPtr[0];
+	        sampPtr[0] = sampPtr[1];
+	        sampPtr[1] = tmp;
+	    }
+        }
+
+        // Real sample output
+        else{
+            sampPtr[0] = eo[0];
+            sampPtr[1] = eo[1];
+        }
+
+        if( mDisplayCount > 0 ){
+            printf("%d,%d\n", sampPtr[0], sampPtr[1] );
+            mDisplayCount--;
+        }
+
+        // update sample count and buffer location
+        runningSampleCount++;
+        sampPtr+=2;
+        complexSampleCount++;
+
+        // Update internal buffer
+        eo     +=2;
+        bfSamps-=2;
+    }
+}
+
+//------------------------------------------------------------------------------
+void Device::GetSamples_H( short *sampPtr, int nComplexSamples )
+{
+    static unsigned int runningSampleCount;
+    int                 complexSampleCount;
+
+    // TODO - move these into class
+    static short        *eo;
+    static short        bf[2048];
+    static int          bfSamps=0;
+
+    // Process samples
+    complexSampleCount = 0;
+    while( complexSampleCount < nComplexSamples ){
+
+        // Get 2k samples to internal buffer
+        if( bfSamps<=0 ){
+            mPmPause += mAdc->Get2kSamples( bf );
+            eo      = bf;
+            bfSamps = 2048;
+        }
+
+        // Complex sample output
+        if( mComplex ){
+
+            // sampPtr[0] = eo[0]>>4;
+            // sampPtr[1] = eo[1]>>4;
+	    if( runningSampleCount&1 ){ 
+                sampPtr[0] = -eo[0];
+                sampPtr[1] = -eo[1];
+	    }
+	    else{
+                sampPtr[0] = eo[0];
+                sampPtr[1] = eo[1];
+            }		     
+        }
+
+        // Real sample output
+        else{
+            sampPtr[0] = eo[0];
+            sampPtr[1] = eo[1];
+        }
+
+        if( mDisplayCount > 0 ){
+            printf("%d,%d\n", sampPtr[0], sampPtr[1] );
+            mDisplayCount--;
+        }
+
+        // update sample count and buffer location
+        runningSampleCount++;
+        sampPtr+=2;
+        complexSampleCount++;
+
+        // Update internal buffer
+        eo     +=2;
+        bfSamps-=2;
+    }
+}
+
+//------------------------------------------------------------------------------
+void Device::GetSamples_X( short *sampPtr, int nComplexSamples )
+{
+    static unsigned int runningSampleCount;
+    int                 complexSampleCount;
+
+    // TODO - move these into class
+    static short        *eo;
+    static short        bf[2048];
+    static int          bfSamps=0;
+
+
+    // Process samples
+    complexSampleCount = 0;
+    while( complexSampleCount < nComplexSamples ){
+
+        // Get 2k samples to internal buffer
+        if( bfSamps<=0 ){
+            mPmPause += mAdc->Get2kSamples( bf );
+            eo      = bf;
+            bfSamps = 2048;
+        }
+
+        // Complex sample output
+        if( mComplex ){
+            sampPtr[0] = eo[0];
+            sampPtr[1] = eo[1];
+        }
+
+        // Real sample output
+        else{
+            sampPtr[0] = eo[0];
+            sampPtr[1] = eo[1];
+        }
+
+        if( mDisplayCount > 0 ){
+            printf("%d,%d\n", sampPtr[0], sampPtr[1] );
+            mDisplayCount--;
+        }
+
+        // update sample count and buffer location
+        runningSampleCount++;
+        sampPtr+=2;
+        complexSampleCount++;
+
+        // Update internal buffer
+        eo     +=2;
+        bfSamps-=2;
+    }
+}
+//------------------------------------------------------------------------------
+//
+// This method is expected to produce the specified number of complex 16 bit 
+// samples at the location provided.  
+// 
+// It is periodically called and may pend waiting for samples.
+//
+// This is the standard device interface.  This simulation/test version
+// rate limits to the specified sample rate and relies on GenSamples() to 
+// actually produce the samples.
+//
+void Device::GetSamples( short *sampPtr, int nComplexSamples )
+{
+   if( mXboard ) return( GetSamples_X(sampPtr,nComplexSamples) );
+   if( mHboard ) return( GetSamples_H(sampPtr,nComplexSamples) );
+   if( mAboard ) return( GetSamples_A(sampPtr,nComplexSamples) );
+}
+
