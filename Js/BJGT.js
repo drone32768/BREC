@@ -314,8 +314,15 @@ BJGT.Markers = function ( aCanvas, a2Dtran )
       this.mMarker[idx] = {};
       this.mMarker[idx].mX = 0;
       this.mMarker[idx].mY = 0;
-      this.mMarker[idx].mLabel = new BJGT.Label( this.mCanvas );
-      this.mMarker[idx].mLabel.SetLabel("0:012345678901,012345678901");
+
+      this.mMarker[idx].mIdLbl = new BJGT.Label( this.mCanvas );
+      this.mMarker[idx].mIdLbl.SetLabel("0");
+
+      this.mMarker[idx].mXvLbl = new BJGT.Label( this.mCanvas );
+      this.mMarker[idx].mXvLbl.SetLabel("012345678901");
+
+      this.mMarker[idx].mYvLbl = new BJGT.Label( this.mCanvas );
+      this.mMarker[idx].mYvLbl.SetLabel("012345678901");
    }
 };
 
@@ -338,17 +345,32 @@ BJGT.Markers.prototype.SetMarker = function( aIdx, aX, aY )
 BJGT.Markers.prototype.Layout = function()
 {
    var idx,y0,yd;
+   var xc;
+   var ystart;
 
-   y0 = 2 * this.mMarker[0].mLabel.Height();
-   yd = this.mMarker[0].mLabel.Height() + 1;
+   xc     = this.mMarker[0].mXvLbl.Width() / 2;
+   y0     = this.mMarker[0].mXvLbl.Height();
+   yd     = this.mMarker[0].mXvLbl.Height() + 1;
+   ystart = 0;
 
    for(idx=0;idx<this.mMaxMarkers;idx++){
-      this.mMarker[idx].mLabel.SetAnchor(3, this.mCanvas.width-1, y0 );
+      // this.mMarker[idx].mLabel.SetAnchor(3, this.mCanvas.width-1, y0 );
+      // y0+=yd;
+
+      this.mMarker[idx].mIdLbl.SetAnchor(3, this.mCanvas.width-1 - xc, y0 );
       y0+=yd;
+
+      this.mMarker[idx].mXvLbl.SetAnchor(3, this.mCanvas.width-1, y0 );
+      y0+=yd;
+
+      this.mMarker[idx].mYvLbl.SetAnchor(3, this.mCanvas.width-1, y0 );
+      y0+=yd;
+
+      y0+=3; // Small vertical seperation 
    }
 
-   this.mHeight = (yd+1)*10;
-   this.mWidth  =  this.mMarker[0].mLabel.Width();
+   this.mHeight = y0 - ystart;
+   this.mWidth  = this.mMarker[0].mXvLbl.Width() + 1;
 };
 
 BJGT.Markers.prototype.Width = function() {
@@ -379,11 +401,15 @@ BJGT.Markers.prototype.Draw = function()
 
    // Draw the table
    for(idx=0;idx<this.mMaxMarkers;idx++){
-      this.mMarker[idx].mLabel.SetLabel( 
-                         idx+":"+
-                         this.mMarker[idx].mX.toExponential(5) + "," + 
-                         this.mMarker[idx].mY.toExponential(5) );
-      this.mMarker[idx].mLabel.Draw();
+ 
+      this.mMarker[idx].mIdLbl.SetLabel( idx );
+      this.mMarker[idx].mIdLbl.Draw();
+
+      this.mMarker[idx].mXvLbl.SetLabel(this.mMarker[idx].mX.toExponential(5));
+      this.mMarker[idx].mXvLbl.Draw();
+
+      this.mMarker[idx].mYvLbl.SetLabel(this.mMarker[idx].mY.toExponential(5));
+      this.mMarker[idx].mYvLbl.Draw();
    }
 
    // Draw the individual makers

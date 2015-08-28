@@ -11,14 +11,13 @@ Your browser does not support the HTML5 canvas tag.
 </canvas>
 
 <br>
-<button onclick="ToggleTraces()">Traces</button>
-<button onclick="ToggleMarkers()">Markers</button>
 <button onclick="ToggleRun()">Run</button>
-<button onclick="ToggleFun()">Function</button>
+<button onclick="ToggleMarkers()">Markers</button>
 <button onclick="TogglePeaks()">Peaks</button>
-<button onclick="CaptureHist()">Hist</button>
-<button onclick="ToggleEnvVisible()">EnvVis</button>
-<button onclick="ToggleEnvEnable()">EnvEnable</button>
+<button onclick="ToggleTraces()">MemShow</button>
+<button onclick="CaptureHist()">Mem</button>
+<button onclick="ToggleEnvEnable()">Envelope</button>
+<button onclick="ToggleFun()">Function</button>
 
 <script src="BJGT.js"></script>
 <script>
@@ -41,7 +40,7 @@ for(n=0;n<npts;n++){
 bxy1.SetTitle("BxyDisplay1 Graph Test");
 bxy1.SetXlabel("Radians");
 bxy1.SetYlabel("Sin(x)");
-bxy1.SetLogicalLimits( 0,6.28, -1,1 );
+bxy1.SetLogicalLimits( 0,6.28, -2,2 );
 bxy1.Layout();
 
 bxy1.SetXy( xvals, yvals );
@@ -54,7 +53,7 @@ bxy1.SetMarker( 0, 0,0 );
 bxy1.SetMarker( 1, (3.14/2),1.0 );
 bxy1.SetMarker( 2, (3.14),  0.0 );
 bxy1.SetMarker( 3, (3*3.14/2),-1.0 );
-bxy1.MarkersVisible( 1 );
+bxy1.MarkersVisible( 0 );
 bxy1.Draw();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +94,15 @@ function ToggleEnvVisible()
 
 function ToggleEnvEnable()
 {
-   bxy1.EnvEnable(bxy1.EnvIsEnable()^1);
+   if( bxy1.EnvIsEnable() ){
+      bxy1.EnvVisible( 0 );
+      bxy1.EnvEnable(  0 );
+   }
+   else{
+      bxy1.EnvVisible( 1 );
+      bxy1.EnvEnable(  1 );
+   }
+
    bxy1.Draw();
 }
 
@@ -111,11 +118,12 @@ function ToggleMarkers()
    bxy1.Draw();
 }
 
-var gPeaks =0;
+var gPeaks = 0;
 function TogglePeaks()
 {
-   gPeaks++;
-   if( gPeaks>9 ) gPeaks = 0;
+   if( gPeaks>0 ) gPeaks = 0;
+   else           gPeaks = 9;
+  
    bxy1.PeakPick( gPeaks );
 }
 
@@ -130,7 +138,7 @@ function ToggleFun()
        bxy1.SetTitle("Sinusoid Test");
        bxy1.SetXlabel("Radians");
        bxy1.SetYlabel("Sin(x)");
-       bxy1.SetLogicalLimits( 0,6.28, -1,1 );
+       bxy1.SetLogicalLimits( 0,6.28, -2,2 );
        bxy1.Layout();
    }
    else{
