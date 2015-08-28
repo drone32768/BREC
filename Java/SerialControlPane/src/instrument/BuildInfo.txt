@@ -1,0 +1,9 @@
+
+package instrument;
+
+class BuildInfo{
+    public static String buildDate(){
+        return "@DATE@";
+    }
+}
+
