@@ -13,15 +13,15 @@ DEV_OBJS=
 LOCAL_OBJS=$(TGT)/Xboard.o
 
 all	:
+	make $(TGT)/Xboard.o
 ifeq ($(TGT),arm)
 	make $(TGT)/pru00.bin
 	make $(TGT)/pru01.bin
 	make pru_images.h
 	cd Dt; make all
-endif
-	make $(TGT)/Xboard.o
 	make $(TGT)/Xtst
 	make $(TGT)/Xutil
+endif
 
 
 $(TGT)/Xboard.o    : Xboard.cpp pru_images.h  $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)

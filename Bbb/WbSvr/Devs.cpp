@@ -94,23 +94,28 @@ int Devs::Open()
         mAdc->SetComplexSampleRate( 5000000 );
     }
 
-//    if( FindCapeByName("brecX")>0  ){
+    if( FindCapeByName("brecX")>0  ){
         printf("*********** Devs::Open Starting X board ****************\n");
-
         mAdc = new Xboard();
         mAdc->Open();
         mAdc->StartPrus();
         mAdc->SetComplexSampleRate( 5000000 );
-//    }
+        // ((Xboard*)( mAdc ))->SetSource( 5 );
+        ((Xboard*)( mAdc ))->SetSource( 0 );
+        ((Xboard*)( mAdc ))->SetLoFreq( 262 );
+    }
 
     // x86 simulation
 #   ifdef TGT_X86
     {
-        printf("*********** Devs::Open Starting x86 H board *************\n");
-        mAdc   = new Hboard();
+        printf("*********** Devs::Open Starting X board ****************\n");
+        mAdc = new Xboard();
         mAdc->Open();
         mAdc->StartPrus();
         mAdc->SetComplexSampleRate( 5000000 );
+        // ((Xboard*)( mAdc ))->SetSource( 5 );
+        ((Xboard*)( mAdc ))->SetSource( 0 );
+        ((Xboard*)( mAdc ))->SetLoFreq( 262 );
     }
 #   endif
 

@@ -111,13 +111,13 @@ Device::Device()
         mAdc->StartPrus();
         mAdc->SetComplexSampleRate( 5000000 );
 
-        ((Xboard*)mAdc)->SetLoFreq( 2 );
 
-        // ((Xboard*)mAdc)->SetSource ( 0 );
-        // ((Xboard*)mAdc)->SetSource ( 1 );
-        // ((Xboard*)mAdc)->SetSource ( 6 );
+        // Tuning will reset this
+        // 2048 * 640k / 5000k = 262.144
+        ((Xboard*)mAdc)->SetLoFreq( 262 );
+
+        // Set the source to be IQ signed 16 bit
         ((Xboard*)mAdc)->SetSource ( 7 );
-
 
         Iboard        *iBoard;
         Gpio6PinGroup *g6pg;
@@ -157,6 +157,23 @@ Device::Device()
 //------------------------------------------------------------------------------
 int Device::TunerSet( long long freqHz )
 {
+    printf("Device::TunerSet( %f Hz )\n",(double)freqHz);
+
+    // X board w/o mixer is a special case.  Integrated nco
+    if( mXboard ){
+        int pinc;
+        int hzMod;
+        // TODO integrate this better with device model
+
+        // Fout = ( pinc / 2^16 )*Fsamp
+
+        hzMod= freqHz % 5000000;
+        pinc = 2048 * hzMod / 5000000;
+        printf("XboardSdr : hzMod = %d, pinc=%d\n",hzMod,pinc);
+        ((Xboard*)mAdc)->SetLoFreq( pinc );
+
+        return( 0 );
+    }
 
     switch( mNLO ){
 
@@ -420,7 +437,6 @@ void Device::GetSamples_X( short *sampPtr, int nComplexSamples )
     static short        bf[2048];
     static int          bfSamps=0;
 
-
     // Process samples
     complexSampleCount = 0;
     while( complexSampleCount < nComplexSamples ){
@@ -431,23 +447,8 @@ void Device::GetSamples_X( short *sampPtr, int nComplexSamples )
             eo      = bf;
             bfSamps = 2048;
         }
-
-        // Complex sample output
-        if( mComplex ){
-            sampPtr[0] = eo[0];
-            sampPtr[1] = eo[1];
-        }
-
-        // Real sample output
-        else{
-            sampPtr[0] = eo[0];
-            sampPtr[1] = eo[1];
-        }
-
-        if( mDisplayCount > 0 ){
-            printf("%d,%d\n", sampPtr[0], sampPtr[1] );
-            mDisplayCount--;
-        }
+        sampPtr[0] = eo[0];
+        sampPtr[1] = eo[1];
 
         // update sample count and buffer location
         runningSampleCount++;
@@ -459,6 +460,7 @@ void Device::GetSamples_X( short *sampPtr, int nComplexSamples )
         bfSamps-=2;
     }
 }
+
 //------------------------------------------------------------------------------
 //
 // This method is expected to produce the specified number of complex 16 bit 
@@ -472,6 +474,7 @@ void Device::GetSamples_X( short *sampPtr, int nComplexSamples )
 //
 void Device::GetSamples( short *sampPtr, int nComplexSamples )
 {
+   // TODO better approach to multiple board sets.
    if( mXboard ) return( GetSamples_X(sampPtr,nComplexSamples) );
    if( mHboard ) return( GetSamples_H(sampPtr,nComplexSamples) );
    if( mAboard ) return( GetSamples_A(sampPtr,nComplexSamples) );

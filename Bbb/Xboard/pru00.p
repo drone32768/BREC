@@ -162,7 +162,7 @@ stream_fc:
     QBNE      stream_fc,rTmp1,1  // if the bit is not set goto loop top
 
 read2k:
-    MOV       rSampCnt,0
+    MOV       rSampCnt,1
     MOV       rArg0, XRDP1       // load write value (read port 1 = 0x9)
     CALL      xspi_wr_rd         // access the spi (this load 1st fifo value)
 

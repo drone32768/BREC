@@ -47,7 +47,58 @@
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
 #include "pru_images.h"
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// produces a 12 bit signed number
+void SimGetAdcSample( short *bf )
+{
+    double x;
+    static double phi = 0.0;
+
+    phi = phi + (680e3*2*M_PI/10.0e6);
+    x   = sin(phi);
+    *bf = (short)(2048*x);
+}
+////////////////////////////////////////////////////////////////////////////////
+void SimGetISample( short *bf )
+{
+    short adc,nco;
+    double x,prod;
+    static double phi = 0.0;
+
+    SimGetAdcSample( &adc );
+
+    phi = phi + (110e3*2*M_PI/10.0e6);
+    x   = sin(phi);
+    nco = (short)(2048*x);
+
+    prod = (double)nco * (double)adc;
+    *bf  = (short)(prod/256);
+
+    // *bf = nco;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int SimGet2kSamples( short *bf )
+{
+    int idx;
+    short v;
+
+// output must be an unsigned 16 bit number
+printf("sim sample 2k\n");
+    for(idx=0;idx<2048;idx++){
+        // SimGetAdcSample( &v ); bf[idx] = v + 2048;
+        SimGetISample( &v ); bf[idx] = v + 32768;
+    }
+    return( 0 );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 #define XSPI_FIFO_EN     0x8000
 #define XSPI_FIFO_RST    0x4000
@@ -61,6 +112,7 @@
 #define XSPI_SEL_P1_FIFO 0x0010
 #define XSPI_SEL_P1_R3   0x0030
 #define XSPI_SEL_P1_R6   0x0060
+#define XSPI_SEL_P1_R8   0x0080
 
 #define XSPI_READ        0x0008
 #define XSPI_WRITE       0x0004
@@ -72,9 +124,9 @@
 #define XSPI_RP1   (XSPI_READ  | XSPI_PORT1)
 #define XSPI_WP1   (XSPI_WRITE | XSPI_PORT1)
 
-#define XSPI_STOP      (               XSPI_SEL_P1_FIFO | XSPI_LED0 | XSPI_WP0 )
-#define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO | XSPI_LED1 | XSPI_WP0 )
-#define XSPI_START     (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO | XSPI_LED2 | XSPI_WP0 )
+#define XSPI_STOP      (               XSPI_SEL_P1_FIFO |             XSPI_WP0 )
+#define XSPI_FLUSH     (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO |             XSPI_WP0 )
+#define XSPI_START     (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO |             XSPI_WP0 )
 #define XSPI_READ_SAMPLE   (  XSPI_RP1 )
 
 // NOTE: Use this start to collect counter values rather than fifo samples
@@ -188,6 +240,17 @@ Xboard::SetSource( int arg )
 
 //------------------------------------------------------------------------------
 int
+Xboard::GetFwVersion()
+{
+    int ver;
+    XspiWrite( XSPI_SEL_P1_R8     | XSPI_WP0 );
+    XspiWrite( XSPI_RP1 );
+    ver = XspiWrite( XSPI_RP1 );
+    return(ver);
+}
+
+//------------------------------------------------------------------------------
+int
 Xboard::SetLoFreq( int arg )
 {
     printf("Xboard:SetLoFreq=%d\n",arg);
@@ -225,9 +288,11 @@ Xboard::Open()
     // Since we may just have powered on fpga let it load
     us_sleep( 100000 );
 
+    printf("Xboard::Open::fw ver = 0x%08x\n",GetFwVersion());
+
     // Set startup default signal paramters
     SetLoFreq( 500 );
-    SetSource( 2 ); 
+    SetSource( 0 ); 
 
     printf("Xboard:Open exit\n");
 
@@ -238,11 +303,16 @@ Xboard::Open()
 int
 Xboard::Flush()
 {
+    printf("Xboard:Flush Enter\n");
+
     // Stop the fpga acquisition
     XspiWrite( XSPI_STOP );
 
     // Flush the fpga fifos
     XspiWrite( XSPI_FLUSH );
+
+    // Let pru1 catch up to pru0
+    // us_sleep( 50000 );
 
     // Start the fpga acquisition
     XspiWrite( XSPI_START );
@@ -282,6 +352,10 @@ Xboard::Get2kSamples( short *bf )
     int          p;
     int          srcIdx,idx;
 
+#   ifdef TGT_X86
+    return( SimGet2kSamples(bf) );
+#   endif
+
     // ShowPrus("at Get2kSamples Start");
 
     // Setup pause count and block mask
@@ -305,10 +379,19 @@ Xboard::Get2kSamples( short *bf )
         while( (mPidx!=srcIdx) && (idx<2048) ){
             bf[ idx ] = mPtrPruSamples[mPidx];
 
-            // bf[ idx ]=( ( (unsigned short)mOutFmtAdd + bf[ idx ]) & 0xffff );
             bf[ idx ] = (mOutFmtAdd + bf[ idx ])<<mOutFmtShift;
-            // bf[ idx ] = (bf[ idx ]+mOutFmtAdd)<<mOutFmtShift;
-            // bf[ idx ] = (bf[ idx ]) + 2048; // works some
+
+            /*
+            if( idx&1 ){
+               bf[ idx ] = bf[idx - 1];
+            }
+            */
+
+            /*
+            if( idx&1 ){
+               bf[ idx-1 ] = bf[idx];
+            }
+            */
 
             idx   = idx+1;
             mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
@@ -432,3 +515,4 @@ Xboard::XspiWrite( int wval )
 
     return(rval);
 }
+

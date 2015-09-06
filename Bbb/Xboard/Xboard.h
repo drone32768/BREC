@@ -77,6 +77,7 @@ public:
     int  XspiWrite( int wval );
     void ShowPrus( const char *title );
 
+    int GetFwVersion( );
     int SetSource( int arg );
     int SetLoFreq( int arg );
 
