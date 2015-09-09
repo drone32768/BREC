@@ -168,7 +168,8 @@ int Device::TunerSet( long long freqHz )
         // Fout = ( pinc / 2^16 )*Fsamp
 
         hzMod= freqHz % 5000000;
-        pinc = 2048 * hzMod / 5000000;
+        // pinc = 2048 * hzMod / 5000000;
+        pinc = (double)2048 * (double)hzMod / (double)5000000;
         printf("XboardSdr : hzMod = %d, pinc=%d\n",hzMod,pinc);
         ((Xboard*)mAdc)->SetLoFreq( pinc );
 

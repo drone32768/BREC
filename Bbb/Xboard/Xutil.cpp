@@ -70,9 +70,10 @@ void IqpTest (Xboard *xbrd )
 {
     unsigned short ubf[4096];
     unsigned short key;
-    int            nErrs,cnt;
+    int            nErrs,cnt,icnt,us;
     int            reset;
     unsigned short pinc;
+    struct timeval tv1,tv2;
 
     printf("Starting iq pattern test\n");
 
@@ -82,6 +83,8 @@ void IqpTest (Xboard *xbrd )
     cnt       = 0;
     reset     = 1;
     pinc      = 1;
+    icnt      = 0;
+    gettimeofday( &tv1, NULL );
     while( 1 ){
         xbrd->Get2kSamples( (short*)ubf );
         nErrs=IqpTest_Check2kPattern(ubf,&key,reset);
@@ -90,10 +93,17 @@ void IqpTest (Xboard *xbrd )
             return;
         }
         cnt++;
+        icnt++;
         reset=0;
 
-        if( 0==(cnt%500) ){
-           printf("%d 2k words checked...\n",cnt);
+        if( 0==(cnt%300) ){
+           gettimeofday( &tv2, NULL );
+           us = tv_delta_useconds( &tv2, &tv1 );
+
+           printf("%8d 2k words checked, t=%8d uS, i=%6d, %f k word/sec\n",
+                         cnt,us,icnt,(2.0*1e6*icnt/(double)us) );
+           icnt = 0;
+           gettimeofday( &tv1, NULL );
         }
         if( 0==(cnt%4000) ){
            printf("changing lo...\n");

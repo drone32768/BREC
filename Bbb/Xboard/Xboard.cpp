@@ -113,6 +113,7 @@ printf("sim sample 2k\n");
 #define XSPI_SEL_P1_R3   0x0030
 #define XSPI_SEL_P1_R6   0x0060
 #define XSPI_SEL_P1_R8   0x0080
+#define XSPI_SEL_P1_R9   0x0090
 
 #define XSPI_READ        0x0008
 #define XSPI_WRITE       0x0004
@@ -196,6 +197,8 @@ Xboard::SetSource( int arg )
     XspiWrite( ((arg&0x000f)<<12) | XSPI_WP1 );
     XspiWrite( XSPI_SEL_P1_FIFO   | XSPI_WP0 );
 
+    mFifoSrc = arg;
+
     switch( arg ){
         case FIFO_SRC_ADC      :  // input = 12 bit unsigned
             mOutFmtShift = 0;
@@ -253,10 +256,18 @@ Xboard::GetFwVersion()
 int
 Xboard::SetLoFreq( int arg )
 {
+    unsigned short val;
+
     printf("Xboard:SetLoFreq=%d\n",arg);
     XspiWrite( XSPI_SEL_P1_R6    | XSPI_WP0 );
     XspiWrite( ((arg&0x0fff)<<4) | XSPI_WP1 );
     XspiWrite( XSPI_SEL_P1_FIFO  | XSPI_WP0 );
+
+    XspiWrite( XSPI_SEL_P1_R9    | XSPI_WP0 );
+    val = XspiWrite(               XSPI_RP1 );
+    val = XspiWrite(               XSPI_RP1 );
+    XspiWrite( XSPI_SEL_P1_FIFO  | XSPI_WP0 );
+    printf("Xboard: pinc counter = %d\n",val);
 
     Flush(); // Necessary to start streaming
     return(0);
@@ -311,14 +322,21 @@ Xboard::Flush()
     // Flush the fpga fifos
     XspiWrite( XSPI_FLUSH );
 
-    // Let pru1 catch up to pru0
-    // us_sleep( 50000 );
+    // TODO - not strictly necessary
+    us_sleep( 100 );
+    XspiWrite( XSPI_STOP );
+
+    // Reset the pru dram fifo
+    if( FIFO_SRC_CIC_IQ != mFifoSrc ){
+        mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
+        while( mPidx != (int)GetSramWord( SRAM_OFF_DRAM_HEAD )/2 ){
+           us_sleep( 100 );
+           mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
+        }
+    }
 
     // Start the fpga acquisition
     XspiWrite( XSPI_START );
-
-    // Reset the pru dram fifo
-    mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
 
     // Tell the pru to go back to streaming
     SetSramWord( 2, SRAM_OFF_CMD );

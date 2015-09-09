@@ -56,6 +56,7 @@ class Xboard : public AdcIf {
     // Output formating parameters
     int                      mOutFmtShift;
     int                      mOutFmtAdd;
+    int                      mFifoSrc;
 
 public:
     Xboard();

@@ -118,9 +118,10 @@ main_loop: // primary loop
 
     LD32      rTmp1, rCmdPtr     // Load command 
     QBEQ      wr_rd_16,rTmp1,1   // cmd = 1 goto wr_rd_16
-//    QBEQ      stream,  rTmp1,2   // cmd = 2 goto stream
     QBEQ      stream_fc, rTmp1,2 // cmd = 2 goto stream
-    CALL      spinWaitBit        // no cmd, then pause a bit 
+    OR        rTmp2,rTmp2,rTmp2  // nop
+    OR        rTmp2,rTmp2,rTmp2  // nop
+    OR        rTmp2,rTmp2,rTmp2  // nop
     JMP       main_loop          // top of loop to re-check command
 
 wr_rd_16:
@@ -130,19 +131,6 @@ wr_rd_16:
     MOV       rTmp1, 0x0         // load 0
     ST32      rTmp1,rCmdPtr      // write 0 to command
     JMP       main_loop          // goto main loop
-
-// No flow control, just reads board fifo as quickly as possible
-stream: 
-    LD32      rTmp1, rCmdPtr     // Load command 
-    QBNE      main_loop,rTmp1,2  // if cmd != 2 goto loop_label
-    MOV       rArg0, 0x9         // load write value (read port 1 = 0x9)
-    CALL      xspi_wr_rd         // access the spi
-    CALL      fifo_write         // store the spi read into fifo
-
-    // AND       rTmp1,rArg0,1      // mask for 1
-    // QBNE      stream,rTmp1,1     // if the bit is not set goto loop top
-    // CALL      spinWaitSamp
-    JMP       stream;            // goto top of streaming loop
 
 //-----------------------------------------------------------------------------
 // Uses fifo data flag indicator
@@ -190,28 +178,6 @@ fifo_write:
     RET
 
 //-----------------------------------------------------------------------------
-// This routine spins on a register a fixed number of times.
-// Stack : none.
-//
-spinWaitSamp:
-    MOV       rTmp1, 3000        // load spin wait count
-swsloop:
-    SUB       rTmp1,rTmp1,1      // dec counter
-    QBNE      swsloop, rTmp1, 0  // if counter not 0 loop back
-    RET
-
-//-----------------------------------------------------------------------------
-// This routine spins on a register a fixed number of times.
-// Stack : none.
-//
-spinWaitBit:
-    MOV       rTmp1, 2         // load spin wait count
-swbloop:
-    SUB       rTmp1,rTmp1,1      // dec counter
-    QBNE      swbloop, rTmp1, 0  // if counter not 0 loop back
-    RET
-
-//-----------------------------------------------------------------------------
 // This routine clocks 16 bits of data out and in.  rArg0 is the write
 // data and the read data is produced here.  
 // Stack : 4 bytes
@@ -224,43 +190,75 @@ xspi_wr_rd:
 #define SCLK_H   0x02            // OR  into r30
 #define SCLK_L   0xfd            // AND into r30
 
-    ST32      r29, rStkPtr       // save return pointer on stack
-    ADD       rStkPtr,rStkPtr,4  // inc stack
-
     AND       r30, r30, SS_LOW   // ss low
     MOV       rSO, rArg0         // setup output word
     MOV       rSI, 0             // setup input word
     MOV       rCnt,16            // initialize bit counter
 
 clockbit:
-    CALL      spinWaitBit
-    LSR       rTmp1,rSO,15       // get so msb at bit 0
-    AND       rTmp1,rTmp1,1      // mask bit 0
-    LSL       rTmp1,rTmp1,MOSI_B // move msb to mosi bit loc
-    MOV       rTmp2,r30          // copy r30
-    AND       rTmp2,rTmp2,0xb    // mask out the current value of mosi bit
-    OR        rTmp2,rTmp2,rTmp1  // or in the new mosi bit 
-    MOV       r30,rTmp1          // ** Set MOSI
+    LSR       rTmp1,rSO,15       // 04 get so msb at bit 0
+    AND       rTmp1,rTmp1,1      // 05 mask bit 0
+    LSL       rTmp1,rTmp1,MOSI_B // 06 move msb to mosi bit loc
+    MOV       r30,rTmp1          // 07 ** Set MOSI
+    OR        rTmp2,rTmp2,rTmp2  // 08 nop
+    OR        rTmp2,rTmp2,rTmp2  // 09 nop
 
-    CALL      spinWaitBit          // setup time
-    OR        r30, r30,SCLK_H    // ** SCLK high
+    OR        rTmp2,rTmp2,rTmp2  // 10 nop
+    OR        rTmp2,rTmp2,rTmp2  // 11 nop
+    OR        rTmp2,rTmp2,rTmp2  // 12 nop
+    OR        rTmp2,rTmp2,rTmp2  // 13 nop
+    OR        rTmp2,rTmp2,rTmp2  // 14 nop
+    OR        rTmp2,rTmp2,rTmp2  // 15 nop
+    OR        rTmp2,rTmp2,rTmp2  // 16 nop
+    OR        rTmp2,rTmp2,rTmp2  // 17 nop
+    OR        rTmp2,rTmp2,rTmp2  // 18 nop
+    OR        rTmp2,rTmp2,rTmp2  // 19 nop
+    OR        r30, r30,SCLK_H    // 20 ** SCLK high
 
-    CALL      spinWaitBit          // hold time
-    LSR       rTmp1,r31,MISO_B   // ** Get MISO
+    OR        rTmp2,rTmp2,rTmp2  // 21 nop
+    OR        rTmp2,rTmp2,rTmp2  // 22 nop
+    OR        rTmp2,rTmp2,rTmp2  // 23 nop
+    OR        rTmp2,rTmp2,rTmp2  // 24 nop
+    OR        rTmp2,rTmp2,rTmp2  // 25 nop
+    OR        rTmp2,rTmp2,rTmp2  // 26 nop
+    OR        rTmp2,rTmp2,rTmp2  // 27 nop
+    OR        rTmp2,rTmp2,rTmp2  // 28 nop
+    OR        rTmp2,rTmp2,rTmp2  // 29 nop
+    LSR       rTmp1,r31,MISO_B   // 30 ** Get MISO
 
-    AND       rTmp1,rTmp1,1      // mask of any other bits
-    LSL       rSI,rSI,1          // shift running input up
-    OR        rSI,rSI,rTmp1      // add the new bit to si 
-    AND       r30, r30,SCLK_L    // ** SCLK LOW
-    LSL       rSO,rSO,1          // shift to prep next bit
+    AND       rTmp1,rTmp1,1      // 31 mask of any other bits
+    LSL       rSI,rSI,1          // 32 shift running input up
+    OR        rSI,rSI,rTmp1      // 33 add the new bit to si 
+    OR        rTmp2,rTmp2,rTmp2  // 34 nop
+    OR        rTmp2,rTmp2,rTmp2  // 35 nop
+    OR        rTmp2,rTmp2,rTmp2  // 36 nop
+    OR        rTmp2,rTmp2,rTmp2  // 37 nop
+    OR        rTmp2,rTmp2,rTmp2  // 39 nop
+    AND       r30, r30,SCLK_L    // 40 ** SCLK LOW
 
-    SUB       rCnt,rCnt,1        // dec the bit count
-    QBNE      clockbit,rCnt,0    // if more bits, goto top of loop
+    LSL       rSO,rSO,1          // 01 shift SO to prep next bit
+    SUB       rCnt,rCnt,1        // 02 dec the bit count
+    QBNE      clockbit,rCnt,0    // 03 if more bits, goto top of loop
+
     OR        r30, r30, SS_HIGH  // ss high
 xspi_wr_rd_out:
     MOV       rArg0,rSI          // move serial input to return
-    SUB       rStkPtr,rStkPtr,4  // dec stack
-    LD32      r29, rStkPtr       // fetch return pointer
     RET
 
-
+//      000000000011111111112222222222333333333344444444444
+//      012345678901234567890123456789012345678901234567890
+//                .         .         .         .
+// MOSI 0000000VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV000
+//                .         .         .         .
+// MISO ------------------------------S-------------
+//                .         .         .         .
+//      +         .         .         .         .
+// SS   |         .         .         .         .
+//      |         .         .         .         .
+//      +------------------------------------------------------
+//                .         .         .         .
+//      +         .         +-------------------+
+// SCLK |         .         |                   |
+//      |         .         |                   |
+//      +-------------------+                   +------------
+//
