@@ -111,10 +111,8 @@ Device::Device()
         mAdc->StartPrus();
         mAdc->SetComplexSampleRate( 5000000 );
 
-
-        // Tuning will reset this
-        // 2048 * 640k / 5000k = 262.144
-        ((Xboard*)mAdc)->SetLoFreq( 262 );
+        // Set initial down conversion frequency
+        ((Xboard*)mAdc)->SetFrequency( 10640000 );
 
         // Set the source to be IQ signed 16 bit
         ((Xboard*)mAdc)->SetSource ( 7 );
@@ -161,18 +159,7 @@ int Device::TunerSet( long long freqHz )
 
     // X board w/o mixer is a special case.  Integrated nco
     if( mXboard ){
-        int pinc;
-        int hzMod;
-        // TODO integrate this better with device model
-
-        // Fout = ( pinc / 2^16 )*Fsamp
-
-        hzMod= freqHz % 5000000;
-        // pinc = 2048 * hzMod / 5000000;
-        pinc = (double)2048 * (double)hzMod / (double)5000000;
-        printf("XboardSdr : hzMod = %d, pinc=%d\n",hzMod,pinc);
-        ((Xboard*)mAdc)->SetLoFreq( pinc );
-
+        ((Xboard*)mAdc)->SetFrequency( freqHz );
         return( 0 );
     }
 

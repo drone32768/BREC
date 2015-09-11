@@ -38,10 +38,12 @@
 #include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
 #include "../Interfaces/AdcIf.h"
+#include "../Interfaces/MixerIf.h"
 #include "../Iboard/Iboard.h"
 
-class Xboard : public AdcIf {
+class Xboard : public AdcIf, public MixerIf {
 
+private:
     int                      mXspiDbg;
     int                      mCSPS;    
 
@@ -56,10 +58,17 @@ class Xboard : public AdcIf {
     // Output formating parameters
     int                      mOutFmtShift;
     int                      mOutFmtAdd;
+
+    // Other internal controls
     int                      mFifoSrc;
+    int                      mTpg;
+
+    void SetR3(); 
 
 public:
     Xboard();
+
+    // ADC interfaces
     int Open();
     int Flush();
     int FlushSamples();
@@ -72,15 +81,31 @@ public:
     int SetGain( int gn );
     int SetSim( int sim );
 
+    // Mixer interfaces
+    int64_t SetFrequency( int64_t freqHz );
+
     // Non ADC interface methods
+
+    int GetFwVersion( );
+    int SetSource( int arg );
+    int SetTpg( int arg );
 
     // For testing only
     int  XspiWrite( int wval );
     void ShowPrus( const char *title );
 
-    int GetFwVersion( );
-    int SetSource( int arg );
-    int SetLoFreq( int arg );
+    /**
+     * Enumeration of valid data sources within fpga
+     * to be used with SetSource()
+     */
+#   define XBOARD_FS_ADC    0
+#   define XBOARD_FS_NCO1   1
+#   define XBOARD_FS_NCO2   2
+#   define XBOARD_FS_I      3
+#   define XBOARD_FS_Q      4
+#   define XBOARD_FS_CIC_I  5
+#   define XBOARD_FS_CIC_Q  6
+#   define XBOARD_FS_CIC_IQ 7
 
 };
 

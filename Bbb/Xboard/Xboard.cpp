@@ -47,13 +47,12 @@
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
 #include "pru_images.h"
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Internal Testing Simulation ////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // produces a 12 bit signed number
-void SimGetAdcSample( short *bf )
+static void SimGetAdcSample( short *bf )
 {
     double x;
     static double phi = 0.0;
@@ -62,8 +61,9 @@ void SimGetAdcSample( short *bf )
     x   = sin(phi);
     *bf = (short)(2048*x);
 }
+
 ////////////////////////////////////////////////////////////////////////////////
-void SimGetISample( short *bf )
+static void SimGetISample( short *bf )
 {
     short adc,nco;
     double x,prod;
@@ -82,7 +82,7 @@ void SimGetISample( short *bf )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int SimGet2kSamples( short *bf )
+static int SimGet2kSamples( short *bf )
 {
     int idx;
     short v;
@@ -97,9 +97,8 @@ printf("sim sample 2k\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Hardware definitions ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//------------------------------------------------------------------------------
 #define XSPI_FIFO_EN     0x8000
 #define XSPI_FIFO_RST    0x4000
 
@@ -112,6 +111,7 @@ printf("sim sample 2k\n");
 #define XSPI_SEL_P1_FIFO 0x0010
 #define XSPI_SEL_P1_R3   0x0030
 #define XSPI_SEL_P1_R6   0x0060
+#define XSPI_SEL_P1_R7   0x0070
 #define XSPI_SEL_P1_R8   0x0080
 #define XSPI_SEL_P1_R9   0x0090
 
@@ -139,138 +139,14 @@ printf("sim sample 2k\n");
 #define SetSramWord( v,off ) ( *(unsigned int*  )((mPtrPruSram + (off))) = (v) )
 #define GetSramShort( off )  ( *(unsigned short*)((mPtrPruSram + (off))) )
 
-//------------------------------------------------------------------------------
-void
-Xboard::ShowPrus(const char *title )
-{
-    printf("-----  %s ----------------------\n",title);
-    printf("sram head ptr   0x%08x\n",GetSramWord( SRAM_OFF_HEAD_PTR   ) );
-    printf("sram tail ptr   0x%08x\n",GetSramWord( SRAM_OFF_TAIL_PTR ) );
-    printf("dram base ptr   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE ) );
-    printf("dram head idx   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_HEAD ) );
-    printf("pru cur cmd     0x%08x\n",GetSramWord( SRAM_OFF_CMD ) );
-    printf("pru last wr     0x%08x\n",GetSramWord( SRAM_OFF_WRITE_VAL ) );
-    printf("pru last rd     0x%08x\n",GetSramWord( SRAM_OFF_READ_VAL ) );
-    printf("dbg1            0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
-    printf("dbg2            0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
-    printf("sram16 [ 0 ]    0x%08x\n",GetSramShort( 0 ) );
-    printf("sram16 [ 2 ]    0x%08x\n",GetSramShort( 2 ) );
-    printf("sram16 [ 4 ]    0x%08x\n",GetSramShort( 4 ) );
-    printf("sram16 [ 6 ]    0x%08x\n",GetSramShort( 6 ) );
-}
-
-//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+/// External Methods ///////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 Xboard::Xboard()
 {
-   mCSPS = 0;
-}
-
-//------------------------------------------------------------------------------
-int
-Xboard::SetGain( int gn )
-{
-   if( gn!=0 ){
-       fprintf(stderr,"Xboard:SetGain invoked w/o 0 - err \n");
-   }
-   return( 0 );
-}
-
-//------------------------------------------------------------------------------
-/**
- * Enumeration of valid data sources within fpga
- */
-#define FIFO_SRC_ADC    0
-#define FIFO_SRC_NCO1   1
-#define FIFO_SRC_NCO2   2
-#define FIFO_SRC_I      3
-#define FIFO_SRC_Q      4
-#define FIFO_SRC_CIC_I  5
-#define FIFO_SRC_CIC_Q  6
-#define FIFO_SRC_CIC_IQ 7
-
-int
-Xboard::SetSource( int arg )
-{
-    printf("Xboard:SetSource=%d\n",arg);
-
-    XspiWrite( XSPI_SEL_P1_R3     | XSPI_WP0 );
-    XspiWrite( ((arg&0x000f)<<12) | XSPI_WP1 );
-    XspiWrite( XSPI_SEL_P1_FIFO   | XSPI_WP0 );
-
-    mFifoSrc = arg;
-
-    switch( arg ){
-        case FIFO_SRC_ADC      :  // input = 12 bit unsigned
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 0;
-            break;
-        case FIFO_SRC_NCO1     :  // input = 12 bit signed 
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 2048;
-            break;
-        case FIFO_SRC_NCO2     :  // input = 12 bit signed 
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 2048;
-            break;
-        case FIFO_SRC_I        :  // input = 16 bit signed
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
-            break;
-        case FIFO_SRC_Q        :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
-            break;
-        case FIFO_SRC_CIC_I    :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
-            break;
-        case FIFO_SRC_CIC_Q    :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
-            break;
-        case FIFO_SRC_CIC_IQ   :
-        default                :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 0; // 32768;
-            break;
-    }
-    printf("Xboard:SetSource shift=%d add=%d\n",mOutFmtShift,mOutFmtAdd);
-   
-
-    Flush(); // Necessary to start streaming
-    return(0);
-}
-
-//------------------------------------------------------------------------------
-int
-Xboard::GetFwVersion()
-{
-    int ver;
-    XspiWrite( XSPI_SEL_P1_R8     | XSPI_WP0 );
-    XspiWrite( XSPI_RP1 );
-    ver = XspiWrite( XSPI_RP1 );
-    return(ver);
-}
-
-//------------------------------------------------------------------------------
-int
-Xboard::SetLoFreq( int arg )
-{
-    unsigned short val;
-
-    printf("Xboard:SetLoFreq=%d\n",arg);
-    XspiWrite( XSPI_SEL_P1_R6    | XSPI_WP0 );
-    XspiWrite( ((arg&0x0fff)<<4) | XSPI_WP1 );
-    XspiWrite( XSPI_SEL_P1_FIFO  | XSPI_WP0 );
-
-    XspiWrite( XSPI_SEL_P1_R9    | XSPI_WP0 );
-    val = XspiWrite(               XSPI_RP1 );
-    val = XspiWrite(               XSPI_RP1 );
-    XspiWrite( XSPI_SEL_P1_FIFO  | XSPI_WP0 );
-    printf("Xboard: pinc counter = %d\n",val);
-
-    Flush(); // Necessary to start streaming
-    return(0);
+   mCSPS    = 0;
+   mTpg     = 0;
+   mFifoSrc = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -302,8 +178,9 @@ Xboard::Open()
     printf("Xboard::Open::fw ver = 0x%08x\n",GetFwVersion());
 
     // Set startup default signal paramters
-    SetLoFreq( 500 );
+    SetFrequency( 640000 );
     SetSource( 0 ); 
+    SetTpg( 0 ); 
 
     printf("Xboard:Open exit\n");
 
@@ -312,9 +189,133 @@ Xboard::Open()
 
 //------------------------------------------------------------------------------
 int
-Xboard::Flush()
+Xboard::SetTpg( int arg )
 {
-    printf("Xboard:Flush Enter\n");
+    printf("Xboard:SetTpg=%d\n",arg);
+    mTpg = arg;
+    SetR3();
+    return(0);
+}
+
+//------------------------------------------------------------------------------
+int
+Xboard::SetSource( int arg )
+{
+
+// for sdr testing
+if( arg == 7 ) {
+   printf(" NOTE NOTE NOTE over ride to tpg=2 NOTE NOTE NOTE NOTE \n");
+   mTpg = 2;
+}
+
+    printf("Xboard:SetSource=%d\n",arg);
+    mFifoSrc = arg;
+    SetR3();
+
+    switch( arg ){
+        case XBOARD_FS_ADC      :  // input = 12 bit unsigned
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 0;
+            break;
+        case XBOARD_FS_NCO1     :  // input = 12 bit signed 
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 2048;
+            break;
+        case XBOARD_FS_NCO2     :  // input = 12 bit signed 
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 2048;
+            break;
+        case XBOARD_FS_I        :  // input = 16 bit signed
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case XBOARD_FS_Q        :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case XBOARD_FS_CIC_I    :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case XBOARD_FS_CIC_Q    :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 32768;
+            break;
+        case XBOARD_FS_CIC_IQ   :
+        default                :
+            mOutFmtShift = 0;
+            mOutFmtAdd   = 0; // 32768;
+            break;
+    }
+    printf("Xboard:SetSource shift=%d add=%d\n",mOutFmtShift,mOutFmtAdd);
+   
+    return(0);
+}
+
+//------------------------------------------------------------------------------
+// Internal support combining fifo source and tpg
+void
+Xboard::SetR3()
+{
+    unsigned int word;
+    word = ((mFifoSrc&0xf)<<12) | ((mTpg&0xf)<<8);
+
+    printf("Xboard:Set R3=0x%04x\n",word);
+
+    XspiWrite( XSPI_SEL_P1_R3     | XSPI_WP0 );
+    XspiWrite( word               | XSPI_WP1 );
+    XspiWrite( XSPI_SEL_P1_FIFO   | XSPI_WP0 );
+
+    FlushSamples(); // Necessary to start streaming
+}
+
+//------------------------------------------------------------------------------
+int
+Xboard::GetFwVersion()
+{
+    int ver;
+    XspiWrite( XSPI_SEL_P1_R8     | XSPI_WP0 );
+    XspiWrite( XSPI_RP1 );
+    ver = XspiWrite( XSPI_RP1 );
+    FlushSamples(); // Necessary to start streaming
+    return(ver);
+}
+
+//------------------------------------------------------------------------------
+int64_t
+Xboard::SetFrequency( int64_t freqHz )
+{
+    unsigned int   pincLo,pincHi;
+    uint64_t       hzMod,pinc;
+
+    printf("Xboard:SetFreq=%lld Hz\n",freqHz);
+
+    hzMod = freqHz % 10000000;
+    pinc  = hzMod * 65536 / 10000000;;
+    pincLo=       pinc & 0x0fff;
+    pincHi= (pinc>>12) & 0x0fff;
+
+    printf("Xboard: pinc = %lld 0x%08x (0x%04x 0x%04x)\n",
+                   pinc,(unsigned int)pinc,pincHi,pincLo);
+
+    XspiWrite( XSPI_SEL_P1_R6        | XSPI_WP0 );
+    XspiWrite( ((pincLo&0x0fff)<<4)  | XSPI_WP1 );
+
+    XspiWrite( XSPI_SEL_P1_R7        | XSPI_WP0 );
+    XspiWrite( ((pincHi&0x0fff)<<4)  | XSPI_WP1 );
+
+    XspiWrite( XSPI_SEL_P1_FIFO      | XSPI_WP0 );
+
+    FlushSamples(); // Necessary to continue streaming
+
+    return( freqHz );
+}
+
+//------------------------------------------------------------------------------
+int
+Xboard::FlushSamples()
+{
+    printf("Xboard:FlushSamples Enter\n");
 
     // Stop the fpga acquisition
     XspiWrite( XSPI_STOP );
@@ -327,7 +328,10 @@ Xboard::Flush()
     XspiWrite( XSPI_STOP );
 
     // Reset the pru dram fifo
-    if( FIFO_SRC_CIC_IQ != mFifoSrc ){
+    if(  (XBOARD_FS_CIC_IQ==mFifoSrc)  ){
+        ;  // Do nothing if IQ streaming
+    }
+    else{
         mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
         while( mPidx != (int)GetSramWord( SRAM_OFF_DRAM_HEAD )/2 ){
            us_sleep( 100 );
@@ -343,14 +347,6 @@ Xboard::Flush()
 
     // ShowPrus("at flush");
 
-    return(0);
-}
-
-//------------------------------------------------------------------------------
-int 
-Xboard::FlushSamples()
-{
-    Flush();
     return(0);
 }
 
@@ -395,21 +391,9 @@ Xboard::Get2kSamples( short *bf )
 
         // Copy out samples until we hit pru or are done
         while( (mPidx!=srcIdx) && (idx<2048) ){
+
             bf[ idx ] = mPtrPruSamples[mPidx];
-
             bf[ idx ] = (mOutFmtAdd + bf[ idx ])<<mOutFmtShift;
-
-            /*
-            if( idx&1 ){
-               bf[ idx ] = bf[idx - 1];
-            }
-            */
-
-            /*
-            if( idx&1 ){
-               bf[ idx-1 ] = bf[idx];
-            }
-            */
 
             idx   = idx+1;
             mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
@@ -488,9 +472,21 @@ Xboard::GetComplexSampleRate()
 }
 
 //------------------------------------------------------------------------------
+// NOTE: this adc interface is not supported
 int Xboard::GetRms( int nSamples, short *aSamples, double *rrms )
 {
     return( 0 );
+}
+
+//------------------------------------------------------------------------------
+// NOTE: this adc interface is not supported
+int
+Xboard::SetGain( int gn )
+{
+   if( gn!=0 ){
+       fprintf(stderr,"Xboard:SetGain invoked w/o 0 - err \n");
+   }
+   return( 0 );
 }
 
 //------------------------------------------------------------------------------
@@ -532,5 +528,25 @@ Xboard::XspiWrite( int wval )
     }
 
     return(rval);
+}
+
+//------------------------------------------------------------------------------
+void
+Xboard::ShowPrus(const char *title )
+{
+    printf("-----  %s ----------------------\n",title);
+    printf("sram head ptr   0x%08x\n",GetSramWord( SRAM_OFF_HEAD_PTR   ) );
+    printf("sram tail ptr   0x%08x\n",GetSramWord( SRAM_OFF_TAIL_PTR ) );
+    printf("dram base ptr   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE ) );
+    printf("dram head idx   0x%08x\n",GetSramWord( SRAM_OFF_DRAM_HEAD ) );
+    printf("pru cur cmd     0x%08x\n",GetSramWord( SRAM_OFF_CMD ) );
+    printf("pru last wr     0x%08x\n",GetSramWord( SRAM_OFF_WRITE_VAL ) );
+    printf("pru last rd     0x%08x\n",GetSramWord( SRAM_OFF_READ_VAL ) );
+    printf("dbg1            0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
+    printf("dbg2            0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
+    printf("sram16 [ 0 ]    0x%08x\n",GetSramShort( 0 ) );
+    printf("sram16 [ 2 ]    0x%08x\n",GetSramShort( 2 ) );
+    printf("sram16 [ 4 ]    0x%08x\n",GetSramShort( 4 ) );
+    printf("sram16 [ 6 ]    0x%08x\n",GetSramShort( 6 ) );
 }
 

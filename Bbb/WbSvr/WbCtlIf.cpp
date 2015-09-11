@@ -74,8 +74,10 @@ static const char *helpStr=
 "  Set R board attenuation value to <M>\n"
 "x-src <M>\n"
 "  Set X board fifo source to <M>\n"
-"x-pinc <M>\n"
-"  Set X board phase inc to <M>\n"
+"x-freq <M>\n"
+"  Set X board frequency to <M> Hz\n"
+"x-tpg <M>\n"
+"  Set X board test pattern generator to <M>\n"
 " \n"
 ;
 
@@ -380,15 +382,26 @@ void WbCtlIf::SvcCmd( TcpSvrCon *tsc, Cli *cli )
         xBrd->SetSource(  intVal );
     }
 
-    if( 0==strcmp(cmdStr,"x-pinc")  ){
+    if( 0==strcmp(cmdStr,"x-freq")  ){
         arg1 = CliArgByIndex( cli, 1 );
         if( !arg1 ) { SvcErr(tsc); return; }
         intVal= atoi(arg1);
 
         Xboard *xBrd;
         xBrd = (Xboard*)( Dp()->Adc() );
-        xBrd->SetLoFreq(  intVal );
+        xBrd->SetFrequency(  intVal );
     }
+
+    if( 0==strcmp(cmdStr,"x-tpg")  ){
+        arg1 = CliArgByIndex( cli, 1 );
+        if( !arg1 ) { SvcErr(tsc); return; }
+        intVal= atoi(arg1);
+
+        Xboard *xBrd;
+        xBrd = (Xboard*)( Dp()->Adc() );
+        xBrd->SetTpg(  intVal );
+    }
+
     return;
 }
 

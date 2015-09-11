@@ -100,9 +100,8 @@ int Devs::Open()
         mAdc->Open();
         mAdc->StartPrus();
         mAdc->SetComplexSampleRate( 5000000 );
-        // ((Xboard*)( mAdc ))->SetSource( 5 );
         ((Xboard*)( mAdc ))->SetSource( 0 );
-        ((Xboard*)( mAdc ))->SetLoFreq( 262 );
+        ((Xboard*)( mAdc ))->SetFrequency( 10640000 );
     }
 
     // x86 simulation
@@ -115,7 +114,7 @@ int Devs::Open()
         mAdc->SetComplexSampleRate( 5000000 );
         // ((Xboard*)( mAdc ))->SetSource( 5 );
         ((Xboard*)( mAdc ))->SetSource( 0 );
-        ((Xboard*)( mAdc ))->SetLoFreq( 262 );
+        ((Xboard*)( mAdc ))->SetFrequency( 10640000 );
     }
 #   endif
 

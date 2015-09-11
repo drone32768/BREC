@@ -77,8 +77,9 @@ void IqpTest (Xboard *xbrd )
 
     printf("Starting iq pattern test\n");
 
-    xbrd->SetLoFreq( 1 ); 
-    xbrd->SetSource( 8 );
+    xbrd->SetFrequency( 0 ); 
+    xbrd->SetTpg( 1 );
+    xbrd->SetSource( 7 );
 
     cnt       = 0;
     reset     = 1;
@@ -107,7 +108,7 @@ void IqpTest (Xboard *xbrd )
         }
         if( 0==(cnt%4000) ){
            printf("changing lo...\n");
-           xbrd->SetLoFreq( pinc ); 
+           xbrd->SetFrequency( pinc ); 
            pinc = (pinc+1)%4096;
            reset= 1;
         }
@@ -121,7 +122,7 @@ void Histogram (Xboard *xbrd )
     short          bf[4096];
 
     xbrd->SetSource( 0 );
-    xbrd->Flush();
+    xbrd->FlushSamples();
     xbrd->Get2kSamples( bf );
 }
 
@@ -170,11 +171,10 @@ void QuadTest (Xboard *xbrd )
 {
     short          bf[4096];
 
-    // xbrd->SetLoFreq( 268 ); 
-    xbrd->SetLoFreq( 1 ); 
+    xbrd->SetFrequency( 1 ); 
     xbrd->SetSource( 7 );
 
-    xbrd->Flush();
+    xbrd->FlushSamples();
     xbrd->Get2kSamples( bf );
     ShowPhases( bf, 2048 );
 }
@@ -255,7 +255,7 @@ main( int argc, char *argv[] )
         }
 
         else if( 0==strcmp(argv[idx], "-flush") ){
-            xbrd->Flush();
+            xbrd->FlushSamples();
         }
 
         else if( 0==strcmp(argv[idx], "-pru") ){
@@ -287,7 +287,7 @@ main( int argc, char *argv[] )
             lastGood  = 0;
             ns = 0;
             while( 1 ){
-                xbrd->Flush();
+                xbrd->FlushSamples();
                 xbrd->Get2kSamples( bf );
                 for(idx=0;idx<2048;idx++){
                    if( (bf[idx] > 2080) || (bf[idx]<2020) ){
