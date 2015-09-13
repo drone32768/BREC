@@ -76,6 +76,8 @@ public:
     int Get2kSamples( short *bf ); 
     int SetComplexSampleRate( int complexSamplesPerSecond );
     int GetComplexSampleRate();
+    int IsComplexFmt();
+
     int StartPrus();
     int GetRms( int nSamples, short *aSamples, double *rrms );
     int SetGain( int gn );

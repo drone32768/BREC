@@ -57,9 +57,9 @@ static void SimGetAdcSample( short *bf )
     double x;
     static double phi = 0.0;
 
-    phi = phi + (680e3*2*M_PI/10.0e6);
+    phi = phi + (1.25e6*2*M_PI/10.0e6);
     x   = sin(phi);
-    *bf = (short)(2048*x);
+    *bf = (short)( (2030*x) + random()%16);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,7 +71,8 @@ static void SimGetISample( short *bf )
 
     SimGetAdcSample( &adc );
 
-    phi = phi + (110e3*2*M_PI/10.0e6);
+    // phi = phi + (1.25e6*2*M_PI/10.0e6);
+    phi = 0.0;
     x   = sin(phi);
     nco = (short)(2048*x);
 
@@ -87,12 +88,16 @@ static int SimGet2kSamples( short *bf )
     int idx;
     short v;
 
-// output must be an unsigned 16 bit number
-printf("sim sample 2k\n");
+    // NOTE: the output is always a signed 16 bit integer
+
     for(idx=0;idx<2048;idx++){
-        // SimGetAdcSample( &v ); bf[idx] = v + 2048;
-        SimGetISample( &v ); bf[idx] = v + 32768;
+        SimGetAdcSample( &v ); 
+        // bf[idx] = v + 2048; // creates unsigned 12 bit
+        bf[idx] = v * 16;      // creates signed 16 bit (16)
+
+        // SimGetISample( &v ); bf[idx] = v + 32768;
     }
+    us_sleep( 100000 );
     return( 0 );
 }
 
@@ -195,6 +200,12 @@ Xboard::SetTpg( int arg )
     mTpg = arg;
     SetR3();
     return(0);
+}
+//------------------------------------------------------------------------------
+int
+Xboard::IsComplexFmt()
+{
+  return( (mFifoSrc==XBOARD_FS_CIC_IQ)?1:0 );
 }
 
 //------------------------------------------------------------------------------
@@ -316,6 +327,10 @@ int
 Xboard::FlushSamples()
 {
     printf("Xboard:FlushSamples Enter\n");
+
+#   ifdef TGT_X86
+    return(0);
+#   endif
 
     // Stop the fpga acquisition
     XspiWrite( XSPI_STOP );
