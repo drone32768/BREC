@@ -47,6 +47,7 @@ public:
     virtual int StartPrus() = 0;
     virtual int GetRms( int nSamples, short *aSamples, double *rrms ) = 0;
     virtual int SetGain( int gn ) = 0;
+    virtual int IsComplexFmt() = 0;
 };
 
 #endif
