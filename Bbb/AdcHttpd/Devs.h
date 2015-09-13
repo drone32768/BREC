@@ -39,8 +39,8 @@
 #include "../Util/gpioutil.h"
 
 #include "../Interfaces/AdcIf.h"
-// #include "../Iboard/Iboard.h"
-// #include "../Xboard/Xboard.h"
+#include "../Iboard/Iboard.h"
+#include "../Xboard/Xboard.h"
 
 class Devs {
   private:

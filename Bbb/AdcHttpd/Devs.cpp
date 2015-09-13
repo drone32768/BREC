@@ -60,7 +60,6 @@ Devs::Devs()
 int Devs::Open()
 {
     if( FindCapeByName("brecX")>0  ){
-/*** TODO
         printf("*********** Devs::Open Starting X board ****************\n");
         mAdc = new Xboard();
         mAdc->Open();
@@ -68,22 +67,16 @@ int Devs::Open()
         mAdc->SetComplexSampleRate( 5000000 );
         ((Xboard*)( mAdc ))->SetSource( 0 );
         ((Xboard*)( mAdc ))->SetFrequency( 10640000 );
-*/
     }
 
     // x86 simulation
 #   ifdef TGT_X86
     {
-        printf("*********** Devs::Open Starting X board ****************\n");
-/*** TODO
-        mAdc = new Xboard();
-        mAdc->Open();
-        mAdc->StartPrus();
-        mAdc->SetComplexSampleRate( 5000000 );
-        // ((Xboard*)( mAdc ))->SetSource( 5 );
-        ((Xboard*)( mAdc ))->SetSource( 0 );
-        ((Xboard*)( mAdc ))->SetFrequency( 10640000 );
-*/
+       printf("*********** Devs::Open Starting x86 X board ****************\n");
+       mAdc = new Xboard();
+       mAdc->Open();
+       mAdc->StartPrus();
+       mAdc->SetComplexSampleRate( 100000 ); // FIXME
     }
 #   endif
 
@@ -92,5 +85,4 @@ int Devs::Open()
     return(0);
 }
 
-//------------------------------------------------------------------------------
 
