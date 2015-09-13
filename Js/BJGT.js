@@ -255,6 +255,8 @@ BJGT.XyData.prototype.SetXy = function( xvec, yvec )
       this.mYvec[idx]=yvec[idx];
       // console.log(idx+":"+xvec[idx]+","+yvec[idx]);
    }
+   this.mXvec.length = xvec.length;
+   this.mYvec.length = yvec.length;
 };
 
 BJGT.XyData.prototype.GetXvec = function()
@@ -909,4 +911,14 @@ BJGT.XyDisplay.prototype.EnvEnable = function ( aEnable )
 {
    this.mEnvEnable=aEnable;
    this.mEnvelope.Reset();
+};
+
+BJGT.XyDisplay.prototype.SetXticks = function( val )
+{
+   this.mReticle.SetXticks( val );
+};
+
+BJGT.XyDisplay.prototype.SetYticks = function( val )
+{
+   this.mReticle.SetYticks( val );
 };
