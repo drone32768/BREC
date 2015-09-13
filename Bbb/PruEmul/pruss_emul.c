@@ -59,7 +59,8 @@ int prussdrv_init( void )
     gDdrMem  = (unsigned char*)malloc( 8*1024*1024 );
     if(!gDdrMem) return(-1);
 
-    SignalSimStart();
+    // SignalSimStart();
+    printf("prussdrv_init: SignalSimStart NOT invoked, do manually\n");
 
     return( 0 );
 }
