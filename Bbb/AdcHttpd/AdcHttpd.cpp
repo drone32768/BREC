@@ -45,6 +45,7 @@
 #include "../Util/gpioutil.h"
 
 #include "Devs.h"
+#include "Pse.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// HwModel ////////////////////////////////////////////////////////////////////
@@ -56,29 +57,36 @@
 class HwModel : public McF {
 
 private:
-#   define         HWDEVS_LOG_SETOUTPUT 0x00000010
-#   define         HWDEVS_LOG_SWEEP     0x00000020
+#   define         HWM_LOG_SETOUTPUT 0x00000010
+#   define         HWM_LOG_SWEEP     0x00000020
     unsigned int   mLog;   // Logging level for hw model
 
     int            mRun;         // on/off running with hw
-    int            mFftSize;     // Size of fft to calculate
     int            mNave ;       // Number of averages
     int            mParamChange; // Flag indicating state has changed
     char          *mCfgFname;
 
+    int            mXyCurLen;    // number of points in xy vectors
+    int            mXyMaxLen;    // maximum points in xy vectors
+
+    double         *mXvec;       // x values
+    double         *mYvec;       // y values
+
+    double         mXmin,mXmax;  // x limits determined by processing
+    double         mYmin,mYmax;  // y limits determined by processing
+
+    Pse            mPse;         // power spectrum estimator object
+
+    // Internal support routines
+    int            HwInit();
+    void           HwStop();
+    void           ShowState();
     int            ReadCfg();
     int            WriteCfg();
 
-    int            mXyCurLen;
-    int            mXyMaxLen;
-
-    double         *mXvec;
-    double         *mYvec;
-
-    double         mXmin,mXmax;
-    double         mYmin,mYmax;
 public:
 
+    // Zero arg constructor
     HwModel();
 
     // Reqired interface elements for mcf
@@ -89,12 +97,6 @@ public:
     int    SetState( char *name, char *value );
     int    GetState( char *resultsStr, int resultsLen );
     int    SetCfg( const char *fname );
-
-    // Internal support routines
-    int    HwInit();
-    void   HwStop();
-    void   ShowState();
-
 };
 
 /**
@@ -105,22 +107,21 @@ HwModel::HwModel()
 {
     int  idx;
 
-    mLog        = 0x20; // 0xffffffff;
+    mLog        = 0x0; // 0xffffffff;
 
     mRun        = 0;
-    mFftSize    = 1024;
     mNave       = 1;
     mParamChange= 0;
     mCfgFname   = strdup( "x.cfg" );
 
     mXyMaxLen   = 8192;
-    mXyCurLen   = 2048;
+    mXyCurLen   = 16;
     mXvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
     mYvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
 
     mXmin       = -50e3;
     mXmax       =  50e3;
-    mYmin       = -120;
+    mYmin       = -160;
     mYmax       = 0;
     for( idx=0; idx<mXyCurLen; idx++){
        mXvec[ idx ] = mXmin + ((double)idx/2048.0)*(mXmax-mXmin);
@@ -138,8 +139,8 @@ HwModel::SetCfg( const char *fname )
 
 int  HwModel::ReadCfg()
 {
-    printf("Reading configuration file\n");
-    printf("Configuration file read complete\n");
+    printf("HwModel::ReadCfg:Reading configuration file\n");
+    printf("HwModel::ReadCfg:Configuration file read complete\n");
 
     return( 0 );
 }
@@ -147,8 +148,8 @@ int  HwModel::ReadCfg()
 int
 HwModel::WriteCfg()
 {
-    printf("WriteCfg:Enter\n");
-    printf("WriteCfg:Exit\n");
+    printf("HwModel:WriteCfg:Enter\n");
+    printf("HwModel:WriteCfg:Exit\n");
     return(0);
 }
 
@@ -159,24 +160,22 @@ HwModel::WriteCfg()
  */
 void  HwModel::Main()
 {
-    int idx;
-
     // Read and restore saved configuration
     ReadCfg();
-    if( mRun ){
-        HwInit();
-    }
+
+    // Initialize the hw
+    HwInit();
 
     // Main processing loop
     while( !mThreadExit ){
-       
-       printf("HwModel::Main loop pass run=%d\n",mRun);
 
        if( mRun ){
-          for( idx=0; idx<mXyCurLen; idx++){
-             mYvec[ idx ] = -100.0 + 10.0 * random() / (double)RAND_MAX;
-          }
-          us_sleep( 250000 );
+          mPse.ProcessCoherentInterval( 
+                    mNave,
+                    mXyCurLen,
+                    mXvec,   
+                    mYvec
+          ); 
        }
        else{
           sleep( 1 );
@@ -218,12 +217,12 @@ HwModel::SetState( char *name, char *value )
           }
     }
 
-    else if( 0==strcmp(name,"fftSize") ){
-          int fftSize;
-          fftSize = mFftSize;
-          fftSize = fftSize * 2;
-          if( fftSize>4096 ) fftSize = 1024;
-          mFftSize = fftSize;
+    else if( 0==strcmp(name,"nPts") ){
+          int nPts;
+          nPts = mXyCurLen;
+          nPts = nPts * 2;
+          if( nPts>4096 ) nPts = 16;
+          mXyCurLen = nPts;
     }
 
     else if( 0==strcmp(name,"nAve") ){
@@ -320,7 +319,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     "\"run\"      : \"%s\","
                     "\"time\"     : \"%s\","
                     "\"nAve\"     : \"%d\","
-                    "\"fftSize\"  : \"%d\","
+                    "\"nPts\"     : \"%d\","
                     "\"ref\"      : \"%g\","
                     "\"tpc\"      : %d,"      
                     "\"npc\"      : %d,"      
@@ -328,7 +327,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     mRun?"ON":"OFF",            // run
                     timeStr,                    // time
                     mNave,                      // nAve
-                    mFftSize,                   // fftSize
+                    mXyCurLen,                  // nPts
                     mYmax,                      // ref
                     mXyCurLen,                  // total point count
                     npc,                        // new point count
@@ -337,6 +336,9 @@ HwModel::GetState( char *resultsStr, int resultsLen )
     pos += nBytes;
     len -= nBytes;
 
+    // TODO - these should not be necessary
+    mXmin = mXvec[0];
+    mXmax = mXvec[mXyCurLen-1]; // FIXME PSE should be able to set
     nBytes = snprintf(pos, len, "\"lim\":[%g,%g,%g,%g],",
                                     mXmin,mXmax,mYmin,mYmax);
     pos += nBytes;
@@ -384,8 +386,8 @@ HwModel::GetState( char *resultsStr, int resultsLen )
  */
 void HwModel::ShowState()
 {
-    printf("mFftSize= %d\n",mFftSize);
-    printf("mNave   = %d\n",mNave );
+    printf("HwModel::ShowState:mXyCurLen= %d\n",mXyCurLen);
+    printf("HwModel::ShowState:mNave    = %d\n",mNave );
 }
 
 /**

@@ -41,8 +41,8 @@ Your browser does not support the HTML5 canvas tag.
     <td><div id="nAveDiv"></div></td>
   </tr>
   <tr>
-    <td><button onclick="ToggleStateVar( 'fftSize' )">FftSize</button></td>
-    <td><div id="fftSizeDiv"></div></td>
+    <td><button onclick="ToggleStateVar( 'nPts' )"># Points</button></td>
+    <td><div id="nPtsDiv"></div></td>
   </tr>
   <tr>
     <td><button onclick="ToggleStateVar( 'ref' )">Ref(dB)</button></td>
@@ -71,6 +71,8 @@ bxy1.SetTitle("Adc Display");
 bxy1.SetXlabel("Freq(Hz)");
 bxy1.SetYlabel("dBFS16");
 bxy1.SetLogicalLimits( -100e3,100e3, -120,0 );
+bxy1.SetXticks( 8 );
+bxy1.SetYticks( 10 );
 bxy1.Layout();
 bxy1.EnableMouse();
 bxy1.MarkersVisible( 1 );
@@ -211,7 +213,7 @@ function UpdateState()
             document.getElementById("runDiv").innerHTML    =unitState.run;
             document.getElementById("timeDiv").innerHTML   =unitState.time;
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
-            document.getElementById("fftSizeDiv").innerHTML=unitState.fftSize;
+            document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
             document.getElementById("refDiv").innerHTML    =unitState.ref;
 
             stateUpdatedOk = 1;
@@ -232,22 +234,24 @@ function UpdatePlot()
    // console.log( "UpdatePlot: npc = " + unitState.npc );
    // console.log( "UpdatePlot: npi = " + unitState.npi );
 
-   // FIXME - figure out 
-   // xyVec.length = unitState.tpc;
-   // xyVec.length = unitState.tpc;
-
    // Copy over any newly available display points
    for(sidx=0, didx=unitState.npi;sidx<unitState.npc;sidx++,didx++){
       xyXvec[didx] = unitState.npx[sidx];
       xyYvec[didx] = unitState.npy[sidx];
    }
 
-   // Draw it
-   // console.log( "[" + unitState.lim[0] +","+ unitState.lim[1]+"]" );
-   // console.log( "[" + unitState.lim[2] +","+ unitState.lim[3]+"]" );
+   // Re-establish limits
    bxy1.SetLogicalLimits( unitState.lim[0], unitState.lim[1], 
                           unitState.lim[2], unitState.lim[3] );
+
+   // Force the length to be current total
+   xyYvec.length = unitState.tpc;
+   xyXvec.length = unitState.tpc;
+
+   // Copy in the vectors to draw
    bxy1.SetXy( xyXvec, xyYvec );
+
+   // Draw it
    bxy1.Draw();
 }
 

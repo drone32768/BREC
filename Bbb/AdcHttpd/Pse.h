@@ -10,7 +10,14 @@ nPoints    complex    nPoints  2*nPoints
 */
 
 class Pse {
+#  define   PSE_LOG_SETUP    0x00000001
+#  define   PSE_LOG_FFT      0x00000002
+#  define   PSE_LOG_FFT_IN   0x00000004
+#  define   PSE_LOG_OUTX     0x00000008
+#  define   PSE_LOG_OUTY     0x00000010
+#  define   PSE_LOG_PCOHI    0x00000020
 
+   int      mLog;      // logging mask
    int      mMaxSamp;  // max number coherent samples
    int      mMaxFft;   // max fft size
 
