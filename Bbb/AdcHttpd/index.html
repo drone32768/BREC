@@ -1,58 +1,109 @@
 <!DOCTYPE html>
 <html>
 
+<style>
+button {
+     border-radius: 10px;
+     width        : 85px;
+     height       : 35px;
+}
+</style>
+
 <head>
+
 <!----------------------------------------------------------------------------->
 <body onresize="ResizeCanvas()" onload="BodyLoad()">
 
-<canvas id="mainCanvas"
-        width="600"
-        height="200"
-        style="border:1px solid #c3c3c3;"
->
-Your browser does not support the HTML5 canvas tag.
-</canvas>
-
-  <!------------------------------------------->
+<!---------------------------------------------------------------------------->
+<!-- Main canvas -->
 <table>
   <tr>
     <td align="center">
-      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
-      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
-      <button onclick="ToggleEnvelope( )">Envelope</button>
-      <button onclick="TogglePeaks( )">Peaks</button>
-  </tr>
+      <div id="statusDiv"></div>
     </td>
   </tr>
   <tr>
-    <td>Connect</td>
-    <td><div id="statusDiv"></div></td>
+    <td>
+       <canvas id="mainCanvas"
+        width="600"
+        height="200"
+        style="border:1px solid #c3c3c3;"
+       >
+       Your browser does not support the HTML5 canvas tag.
+       </canvas>
+    </td>
   </tr>
+</table>
+
+<!---------------------------------------------------------------------------->
+<!-- Primary control buttons -->
+<table >
+
   <tr>
-    <td>Device</td>
-    <td><div id="timeDiv"></div></td>
+    <td align="center">
+      <button onclick="ToggleStateVar('run')"><div id="runDiv"></div></button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleEnvelope( )">Envelope</button>
+    </td>
+    <td align="center">
+      <button onclick="TogglePeaks( )">Peaks</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleMarkers( )">Markers</button>
+    </td>
+    <td align="center">
+      <button onclick="Mstore( )">Mstore</button>
+    </td>
+    <td align="center">
+      <button onclick="Mshow( )">Mshow</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'savecfg' )">SaveCfg</button>
+    </td>
   </tr>
+
   <tr>
-    <td><button onclick="ToggleStateVar( 'run'     )">Run</button></td>
-    <td><div id="runDiv"></div></td>
-  </tr>
-  <tr>
-    <td><button onclick="ToggleStateVar( 'nAve'    )">N(ave)</button></td>
-    <td><div id="nAveDiv"></div></td>
-  </tr>
-  <tr>
-    <td><button onclick="ToggleStateVar( 'nPts' )"># Points</button></td>
-    <td><div id="nPtsDiv"></div></td>
-  </tr>
-  <tr>
-    <td><button onclick="ToggleStateVar( 'ref' )">Ref(dB)</button></td>
-    <td><div id="refDiv"></div></td>
+    <td>
+      <button onclick="ToggleStateVar( 'nPts' )"># Points</button>
+    </td>
+    <td>
+      <div align="center" id="nPtsDiv"></div>
+    </td>
+    <td>
+      <button onclick="ToggleStateVar( 'nAve'    )"># Ave</button>
+    </td>
+    <td>
+      <div align="center" id="nAveDiv"></div>
+    </td>
+    <td>
+      <button onclick="ToggleRef()">dB ref</button>
+    </td>
+    <td>
+      <div align="center" id="refDiv"></div>
+    </td>
+    <td>
+      <button onclick="ToggleDbPer()">dB/div</button>
+    </td>
+    <td>
+      <div align="center" id="dbPerDiv"></div>
+    </td>
   </tr>
 
 </table>
 
+<!---------------------------------------------------------------------------->
+<!-- Status line -->
+<div id="statusDiv"></div>
 
 </body>
+
 <!----------------------------------------------------------------------------->
 <script src="BJGT.js"></script>
 <script>
@@ -67,7 +118,7 @@ for(n=0;n<xyPts;n++){
 
 // This is the may xy plot
 var bxy1 = new BJGT.XyDisplay( document.getElementById("mainCanvas") );
-bxy1.SetTitle("Adc Display");
+bxy1.SetTitle("Title");
 bxy1.SetXlabel("Freq(Hz)");
 bxy1.SetYlabel("dBFS16");
 bxy1.SetLogicalLimits( -100e3,100e3, -120,0 );
@@ -77,6 +128,9 @@ bxy1.Layout();
 bxy1.EnableMouse();
 bxy1.MarkersVisible( 1 );
 bxy1.SetXy( xyXvec, xyYvec );
+
+var gDbRef = 0;
+var gDbPer = 10;
 
 // Flag indicated state has recently been updated.
 var stateUpdatedOk;
@@ -183,7 +237,7 @@ function UpdateStatus()
 {
     if( stateUpdatedOk!=0 ){
        document.getElementById("statusDiv").innerHTML=
-                       "OK";
+                       "Connected";
     }
     else{
        document.getElementById("statusDiv").innerHTML=
@@ -211,7 +265,6 @@ function UpdateState()
             unitState = JSON.parse( xmlhttp.responseText );
 
             document.getElementById("runDiv").innerHTML    =unitState.run;
-            document.getElementById("timeDiv").innerHTML   =unitState.time;
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
             document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
             document.getElementById("refDiv").innerHTML    =unitState.ref;
@@ -241,8 +294,10 @@ function UpdatePlot()
    }
 
    // Re-establish limits
-   bxy1.SetLogicalLimits( unitState.lim[0], unitState.lim[1], 
-                          unitState.lim[2], unitState.lim[3] );
+   bxy1.SetLogicalLimits( 
+                 unitState.lim[0],     unitState.lim[1], 
+                 (gDbRef - 10*gDbPer), gDbRef
+                        );
 
    // Force the length to be current total
    xyYvec.length = unitState.tpc;
@@ -250,6 +305,8 @@ function UpdatePlot()
 
    // Copy in the vectors to draw
    bxy1.SetXy( xyXvec, xyYvec );
+
+   bxy1.SetTitle("AdcHttpd " + unitState.time );
 
    // Draw it
    bxy1.Draw();
@@ -284,6 +341,23 @@ function TogglePeaks()
    bxy1.PeakPick( gPeaks );
 }
 
+function ToggleMarkers()
+{
+   bxy1.MarkersVisible( bxy1.MarkersIsVisible() ^ 1 );
+}
+
+var gActiveMem = 0;
+function Mstore()
+{
+   bxy1.TraceSave(gActiveMem);
+   bxy1.TraceVisible(gActiveMem,1);
+}
+
+function Mshow()
+{
+   bxy1.TraceVisible(gActiveMem,bxy1.TraceIsVisible(gActiveMem)^1);
+}
+
 function ToggleEnvelope()
 {
    if( bxy1.EnvIsEnable() ){
@@ -296,7 +370,38 @@ function ToggleEnvelope()
       bxy1.EnvVisible( 1 );
       // let the next draw show env
    }
+}
 
+function ToggleRef()
+{
+   if( gDbRef < -60 ){
+       gDbRef = 10;
+   }
+   else{
+       gDbRef = gDbRef - 10;
+   }
+   bxy1.Draw();
+}
+
+function ToggleDbPer()
+{
+   switch( gDbPer ){
+      case 15:
+        gDbPer = 10;
+        break;
+      case 10:
+        gDbPer = 6;
+        break;
+      case 6:
+        gDbPer = 3;
+        break;
+      case 3:
+        gDbPer = 15;
+        break;
+      default:
+        gDbPer = 10;
+   }
+   bxy1.Draw(); 
 }
 
 </script>
