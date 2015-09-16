@@ -46,6 +46,7 @@ class Xboard : public AdcIf, public MixerIf {
 private:
     int                      mXspiDbg;
     int                      mCSPS;    
+    int                      mFsHz;    
 
     ////////////////////////////////////////
     int                      mPidx;
@@ -64,6 +65,8 @@ private:
     int                      mTpg;
 
     void SetR3(); 
+
+    int SimGet2kSamples( short *bf ); 
 
 public:
     Xboard();

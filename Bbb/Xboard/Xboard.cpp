@@ -51,54 +51,60 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Internal Testing Simulation ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-// produces a 12 bit signed number
-static void SimGetAdcSample( short *bf )
+int 
+Xboard::SimGet2kSamples( short *bf )
 {
-    double x;
-    static double phi = 0.0;
-
-    phi = phi + (1.25e6*2*M_PI/10.0e6);
-    x   = sin(phi);
-    *bf = (short)( (2030*x) + random()%16);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-static void SimGetISample( short *bf )
-{
-    short adc,nco;
-    double x,prod;
-    static double phi = 0.0;
-
-    SimGetAdcSample( &adc );
-
-    // phi = phi + (1.25e6*2*M_PI/10.0e6);
-    phi = 0.0;
-    x   = sin(phi);
-    nco = (short)(2048*x);
-
-    prod = (double)nco * (double)adc;
-    *bf  = (short)(prod/256);
-
-    // *bf = nco;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-static int SimGet2kSamples( short *bf )
-{
-    int idx;
-    short v;
-
-    // NOTE: the output is always a signed 16 bit integer
+    static  double phi = 0.0;
+    static  double psi = 0.0;
+    int     idx;
+    short   adc,nco1,nco2;
+    double  iout,qout;
 
     for(idx=0;idx<2048;idx++){
-        SimGetAdcSample( &v ); 
-        // bf[idx] = v + 2048; // creates unsigned 12 bit
-        bf[idx] = v * 16;      // creates signed 16 bit (16)
 
-        // SimGetISample( &v ); bf[idx] = v + 32768;
-    }
+        psi  = psi + (2.500e6*2*M_PI/10.0e6);
+        adc  = (short)( 2030*sin(psi) + random()%8 );
+
+        phi  = phi + (0.625e6*2*M_PI/10.0e6);
+        nco1 = (short)(2048* sin(phi) );
+        nco2 = (short)(2048* cos(phi) );
+
+        iout = (short)( (double)nco1 * (double)adc / 256.0);
+        qout = (short)( (double)nco2 * (double)adc / 256.0);
+
+        switch( mFifoSrc ){
+            case XBOARD_FS_ADC      : 
+                *bf++ = adc; 
+                break;
+            case XBOARD_FS_NCO1     : 
+                *bf++ = nco1; 
+                break;
+            case XBOARD_FS_NCO2     : 
+                *bf++ = nco2; 
+                break;
+            case XBOARD_FS_I        : 
+                *bf++ = iout;
+                break;
+            case XBOARD_FS_Q        :
+                *bf++ = qout;
+                break;
+            case XBOARD_FS_CIC_I    :
+                *bf++ = iout;
+                break;
+            case XBOARD_FS_CIC_Q    :
+                *bf++ = qout;
+                break;
+            case XBOARD_FS_CIC_IQ   :
+            default                :
+                *bf++ = iout;
+                *bf++ = qout;
+                break;
+        }
+
+    } // End of loop over 2k samples
+
     us_sleep( 100000 );
-    return( 0 );
+    return(1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -149,9 +155,10 @@ static int SimGet2kSamples( short *bf )
 ////////////////////////////////////////////////////////////////////////////////
 Xboard::Xboard()
 {
-   mCSPS    = 0;
-   mTpg     = 0;
-   mFifoSrc = 0;
+    mTpg     = 0;
+    mFifoSrc = 0;
+    mFsHz    = 10000000; // Function of the board
+    mCSPS    = mFsHz;    // Function of board and channel selected
 }
 
 //------------------------------------------------------------------------------
@@ -473,9 +480,8 @@ Xboard::SetSim( int sim )
 int
 Xboard::SetComplexSampleRate( int complexSamplesPerSecond )
 {
-    mCSPS = complexSamplesPerSecond;
     printf("Xboard:SetComplexSampleRate %d CSPS\n",mCSPS);
-
+    printf("Xboard:SetComplexSampleRate %d CSPS\n",mCSPS);
     return(0);
 }
 
@@ -483,7 +489,35 @@ Xboard::SetComplexSampleRate( int complexSamplesPerSecond )
 int
 Xboard::GetComplexSampleRate()
 {
-    return( mCSPS );
+    switch( mFifoSrc ){
+        case XBOARD_FS_ADC      : 
+            return( mFsHz/2 );
+            break;
+        case XBOARD_FS_NCO1     : 
+            return( mFsHz/2 );
+            break;
+        case XBOARD_FS_NCO2     : 
+            return( mFsHz/2 );
+            break;
+        case XBOARD_FS_I        : 
+            return( mFsHz/2 );
+            break;
+        case XBOARD_FS_Q        :
+            return( mFsHz/2 );
+            break;
+        case XBOARD_FS_CIC_I    :
+            return( mFsHz/100 );
+            break;
+        case XBOARD_FS_CIC_Q    :
+            return( mFsHz/100 );
+            break;
+        case XBOARD_FS_CIC_IQ   :
+            return( mFsHz/100 );
+        default                 :
+            return( mFsHz );
+            break;
+    }
+    return( mFsHz );
 }
 
 //------------------------------------------------------------------------------
