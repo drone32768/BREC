@@ -63,6 +63,7 @@ private:
 
     int            mRun;         // on/off running with hw
     int            mNave ;       // Number of averages
+    int            mChnl;        // Selected chnl
     int            mParamChange; // Flag indicating state has changed
     char          *mCfgFname;
 
@@ -111,11 +112,12 @@ HwModel::HwModel()
 
     mRun        = 0;
     mNave       = 1;
+    mChnl       = 0;
     mParamChange= 0;
     mCfgFname   = strdup( "x.cfg" );
 
     mXyMaxLen   = 8192;
-    mXyCurLen   = 16;
+    mXyCurLen   = 256;
     mXvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
     mYvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
 
@@ -160,6 +162,8 @@ HwModel::WriteCfg()
  */
 void  HwModel::Main()
 {
+    static int chnl;
+ 
     // Read and restore saved configuration
     ReadCfg();
 
@@ -167,9 +171,15 @@ void  HwModel::Main()
     HwInit();
 
     // Main processing loop
+    chnl = -1;
     while( !mThreadExit ){
 
        if( mRun ){
+          // TODO revisit the chnl approach
+          if( mChnl!=chnl ){
+             ((Xboard*)( Dp()->Adc() ))->SetSource( mChnl );
+             chnl = mChnl;
+          }
           mPse.ProcessCoherentInterval( 
                     mNave,
                     mXyCurLen,
@@ -221,7 +231,7 @@ HwModel::SetState( char *name, char *value )
           int nPts;
           nPts = mXyCurLen;
           nPts = nPts * 2;
-          if( nPts>4096 ) nPts = 16;
+          if( nPts>4096 ) nPts = 256;
           mXyCurLen = nPts;
     }
 
@@ -231,6 +241,10 @@ HwModel::SetState( char *name, char *value )
           nAve = nAve * 2;
           if( nAve>8 ) nAve = 1;
           mNave = nAve;
+    }
+
+    else if( 0==strcmp(name,"chnl") ){
+          mChnl = (mChnl+1)%8;
     }
 
     else if( 0==strcmp(name,"ref") ){
@@ -319,6 +333,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     "\"run\"      : \"%s\","
                     "\"time\"     : \"%s\","
                     "\"nAve\"     : \"%d\","
+                    "\"chnl\"     : \"%d\","
                     "\"nPts\"     : \"%d\","
                     "\"ref\"      : \"%g\","
                     "\"tpc\"      : %d,"      
@@ -327,6 +342,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     mRun?"ON":"OFF",            // run
                     timeStr,                    // time
                     mNave,                      // nAve
+                    mChnl,                      // chnl
                     mXyCurLen,                  // nPts
                     mYmax,                      // ref
                     mXyCurLen,                  // total point count

@@ -197,8 +197,9 @@ Pse::PerformFft( int complexInput, short *inputData, int fftSize )
 void
 Pse::PerformOutputX( double *aXvec, int nPts, int csps, int isComplex )
 {
-    int idx;
-    
+    int    idx;
+    double last;
+ 
     if( mLog&PSE_LOG_OUTX ){
         printf("Pse:PerformOutputX: pts=%d,csps=%d,cmplx=%d\n",
                nPts,csps,isComplex);
@@ -206,14 +207,17 @@ Pse::PerformOutputX( double *aXvec, int nPts, int csps, int isComplex )
 
     if( isComplex ){
         aXvec[0] = - (csps/2.0);
+        last     = + (csps/2.0);
     }
     else{
         aXvec[0] = 0.0;
+        last     = csps;
     }
 
     for(idx=1;idx<nPts;idx++){
         aXvec[idx] = aXvec[0] + ((double)idx * (double)csps)/(double)nPts;
     }
+    aXvec[idx-1] = last;
 }
 
 void

@@ -41,9 +41,6 @@ button {
 
   <tr>
     <td align="center">
-      <button onclick="ToggleStateVar('run')"><div id="runDiv"></div></button>
-    </td>
-    <td align="center">
       <button onclick="ToggleEnvelope( )">Envelope</button>
     </td>
     <td align="center">
@@ -58,14 +55,11 @@ button {
     <td align="center">
       <button onclick="Mshow( )">Mshow</button>
     </td>
-    <td align="center">
-      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
+    <td>
+      <button onclick="ToggleRef()">dB ref</button>
     </td>
-    <td align="center">
-      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
-    </td>
-    <td align="center">
-      <button onclick="ToggleStateVar( 'savecfg' )">SaveCfg</button>
+    <td>
+      <button onclick="ToggleDbPer()">dB/div</button>
     </td>
   </tr>
 
@@ -83,19 +77,27 @@ button {
       <div align="center" id="nAveDiv"></div>
     </td>
     <td>
-      <button onclick="ToggleRef()">dB ref</button>
+      <button onclick="ToggleStateVar( 'chnl'    )">Chnl</button>
     </td>
     <td>
-      <div align="center" id="refDiv"></div>
-    </td>
-    <td>
-      <button onclick="ToggleDbPer()">dB/div</button>
-    </td>
-    <td>
-      <div align="center" id="dbPerDiv"></div>
+      <div align="center" id="chnlDiv"></div>
     </td>
   </tr>
 
+  <tr>
+    <td align="center">
+      <button onclick="ToggleStateVar('run')"><div id="runDiv"></div></button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'savecfg' )">SaveCfg</button>
+    </td>
+  </tr>
 </table>
 
 <!---------------------------------------------------------------------------->
@@ -121,19 +123,25 @@ var bxy1 = new BJGT.XyDisplay( document.getElementById("mainCanvas") );
 bxy1.SetTitle("Title");
 bxy1.SetXlabel("Freq(Hz)");
 bxy1.SetYlabel("dBFS16");
-bxy1.SetLogicalLimits( -100e3,100e3, -120,0 );
 bxy1.SetXticks( 8 );
 bxy1.SetYticks( 10 );
+bxy1.SetXfmt( 'i' );
+bxy1.SetYfmt( 'i' );
+bxy1.SetLogicalLimits( -100e3,100e3, -120,0 );
 bxy1.Layout();
 bxy1.EnableMouse();
 bxy1.MarkersVisible( 1 );
 bxy1.SetXy( xyXvec, xyYvec );
 
+// Local Display controls
 var gDbRef = 0;
-var gDbPer = 10;
+var gDbPer = 15;
 
-// Flag indicated state has recently been updated.
-var stateUpdatedOk;
+// Counter on state updates
+var stateUpdateCount = 0;
+
+// Indicator of connected and running
+var isActive = 0;
 
 // Contents of state returned from device
 var unitState;
@@ -226,24 +234,20 @@ function SetStateVar( aVarStateName, aVarDivName )
    xmlhttp.send();
 }
 
-//
-// This method updates the statusDiv specially.  If we have conducted
-// a successful UpdateState() since this methods last invokation, the
-// status div is updated as ok.  If this has not happened (i.e.
-// a UpdateState() has failed to succeed and the connection to device
-// is not valid) then marke the status as disconnected
-//
-function UpdateStatus()
+var lastStateUpdateCount = 0;
+function AssessStatus()
 {
-    if( stateUpdatedOk!=0 ){
+    if( stateUpdateCount != lastStateUpdateCount ){
        document.getElementById("statusDiv").innerHTML=
                        "Connected";
+       isActive = 1;
     }
     else{
        document.getElementById("statusDiv").innerHTML=
                        "<font color=red>DISCONNECTED</font>";
+       isActive = 0;
     }
-    stateUpdatedOk = 0;
+    lastStateUpdateCount = stateUpdateCount;
 }
 
 // This method issues a "getstate" GET request to the server, parses the
@@ -267,9 +271,8 @@ function UpdateState()
             document.getElementById("runDiv").innerHTML    =unitState.run;
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
             document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
-            document.getElementById("refDiv").innerHTML    =unitState.ref;
-
-            stateUpdatedOk = 1;
+            document.getElementById("chnlDiv").innerHTML   =unitState.chnl;
+            stateUpdateCount++;
          }
       }
       xmlhttp.open("GET","getstate",true);
@@ -279,14 +282,8 @@ function UpdateState()
 // This method must is to be invoked after the state is updated
 // It pull any recently received xy points from the state and
 // updates the display with them.
-function UpdatePlot()
+function DrawPlot()
 {
-   // If the state has not been updated then nothing to do
-   // if( 1!=stateUpdatedOk ) return;
-
-   // console.log( "UpdatePlot: npc = " + unitState.npc );
-   // console.log( "UpdatePlot: npi = " + unitState.npi );
-
    // Copy over any newly available display points
    for(sidx=0, didx=unitState.npi;sidx<unitState.npc;sidx++,didx++){
       xyXvec[didx] = unitState.npx[sidx];
@@ -316,17 +313,33 @@ function UpdatePlot()
 // This method is intended to be invoked periodically to update the display
 // and to query the device for its state (so it can be displayed on the
 // next invokation).
+var pollCount = 0;
 function PollDevice()
 {
     // Update the status display based on current state
-    UpdateStatus();
+    if( 0==(pollCount%10) ){
+      AssessStatus();
+    }
 
     // Issue a state update request to the device
     UpdateState();
 
     // Update the plot based on recent state data
-    UpdatePlot();
+    if( isActive ){
+       DrawPlot();
+    }
+
+    // Keep track of the polling count
+    pollCount++;
 }
+/*
+   TODO rethink polling, display, connect rates
+   Action             DisCon  Con  NotRun Running   
+   update display     0       500  500    100
+   update state       0       500  500    500
+   update connection  500     500  500    500 
+
+*/
 
 // This sets the device polling rate.  The display is updated
 // at this rate as well as the device being queried at this rate
