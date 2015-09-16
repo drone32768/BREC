@@ -285,6 +285,12 @@ BJGT.XyData.prototype.SetYValue = function( aIdx, aY )
    this.mYvec[ aIdx ] = aY;
 }; 
 
+BJGT.XyData.prototype.SetLength = function ( len )
+{
+   this.mXvec.length = len;
+   this.mYvec.length = len;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Markers ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -531,6 +537,8 @@ BJGT.Envelope.prototype.Update = function(xvec,yvec)
          this.mXyMax.SetXyValue( idx, xvec[idx], yvec[idx] ); 
          this.mXyMin.SetXyValue( idx, xvec[idx], yvec[idx] ); 
       }
+      this.mXyMin.SetLength( xvec.length );
+      this.mXyMax.SetLength( xvec.length );
       this.mReset = 0;
    }
  
@@ -553,6 +561,31 @@ BJGT.Envelope.prototype.Draw = function()
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Number formater ///////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+BJGT.Fmt = function()
+{
+   this.fmt = '3';
+};
+
+BJGT.Fmt.prototype.SetFmt = function ( fmt )
+{
+   this.fmt = fmt; 
+};
+
+BJGT.Fmt.prototype.GetNumber = function ( num )
+{
+   switch( this.fmt ){
+      case '3':
+         return( num.toFixed(3) );
+      case 'i':
+         return( num.toLocaleString() );
+      default:
+         return( num.toFixed(3) );
+   }
+};
+
+////////////////////////////////////////////////////////////////////////////////
 /// Reticle ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -572,6 +605,9 @@ BJGT.Reticle = function( aCanvas, a2Dtran )
 
    this.mXticks= 5;
    this.mYticks= 5;
+  
+   this.mXfmt  = new BJGT.Fmt();
+   this.mYfmt  = new BJGT.Fmt();
 };
 
 BJGT.Reticle.prototype.SetXticks = function( val )
@@ -584,7 +620,15 @@ BJGT.Reticle.prototype.SetYticks = function( val )
    this.mYticks = val;
 };
 
-// TODO - add a set format
+BJGT.Reticle.prototype.SetXfmt = function( val )
+{
+   this.mXfmt.SetFmt(val);
+};
+
+BJGT.Reticle.prototype.SetYfmt = function( val )
+{
+   this.mYfmt.SetFmt(val);
+};
 
 BJGT.Reticle.prototype.Draw = function()
 {
@@ -592,7 +636,6 @@ BJGT.Reticle.prototype.Draw = function()
    var xd,xl;
    var yd,yl;
    var idx;
-
 
    y0 = this.m2Dtran.YLtoP( this.m2Dtran.mYtrans.mLmin );
    y1 = this.m2Dtran.YLtoP( this.m2Dtran.mYtrans.mLmax  );
@@ -606,7 +649,7 @@ BJGT.Reticle.prototype.Draw = function()
       this.mCtx.lineTo( x0, y1 );
       this.mCtx.stroke();
 
-      this.mLabel.SetLabel(xl.toFixed(3));
+      this.mLabel.SetLabel( this.mXfmt.GetNumber(xl) );
       if( 0==idx ){
           this.mLabel.SetAnchor(12,x0+this.mLabel.Width()/2,y0+1);
       }
@@ -634,13 +677,14 @@ BJGT.Reticle.prototype.Draw = function()
       this.mCtx.lineTo( x1, y0 );
       this.mCtx.stroke();
 
-      this.mLabel.SetLabel(yl.toFixed(3));
+      this.mLabel.SetLabel( this.mYfmt.GetNumber(yl) );
       this.mLabel.SetAnchor(3,x0-1,y0);
       this.mLabel.Draw();
 
       yl += yd;
    }
 };
+
 ////////////////////////////////////////////////////////////////////////////////
 /// XyDisplay //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -672,7 +716,6 @@ BJGT.XyDisplay = function( aCanvas )
    this.mLabelTitle = new BJGT.Label( this.mCanvas );
    this.mLabelY     = new BJGT.Label( this.mCanvas );
    this.mLabelX     = new BJGT.Label( this.mCanvas );
-
  
    // Establish a reticle, markers, and core xy data trace
    this.mReticle    = new BJGT.Reticle( this.mCanvas, this.m2Dtran );
@@ -921,4 +964,14 @@ BJGT.XyDisplay.prototype.SetXticks = function( val )
 BJGT.XyDisplay.prototype.SetYticks = function( val )
 {
    this.mReticle.SetYticks( val );
+};
+
+BJGT.XyDisplay.prototype.SetXfmt = function( val )
+{
+   this.mReticle.SetXfmt( val );
+};
+
+BJGT.XyDisplay.prototype.SetYfmt = function( val )
+{
+   this.mReticle.SetYfmt( val );
 };
