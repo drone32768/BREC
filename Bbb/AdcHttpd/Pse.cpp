@@ -10,76 +10,6 @@
 #include "Pse.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * This is a simple fft from numerical recipes used as a reference and
- * as the fft method in cases where external numeric packages are not 
- * installed.  It is highly recommended to use the FFTW external library
- */
-/*
- Inputs:
-    data[] : array of complex* data points of size 2*NFFT+1.
-         data[0] is unused,
-         the n'th complex number x(n), for 0 <= n <= length(x)-1, is stored as:
-            data[2*n+1] = real(x(n))
-            data[2*n+2] = imag(x(n))
-    if length(Nx) < NFFT, the remainder of the array must be padded with zeros
-
-    nn : FFT order NFFT. This MUST be a power of 2 and >= length(x).
-    isign:  if set to 1, 
-                computes the forward FFT
-            if set to -1, 
-                computes Inverse FFT - in this case the output values have
-                to be manually normalized by multiplying with 1/NFFT.
- Outputs:
-    data[] : The FFT or IFFT results are stored in data, overwriting the input.
-*/
-static void four1(double data[], int nn, int isign)
-{
-#define TWOPI    (2.0*M_PI)
-    int n, mmax, m, j, istep, i;
-    double wtemp, wr, wpr, wpi, wi, theta;
-    double tempr, tempi;
-    
-    n = nn << 1;
-    j = 1;
-    for (i = 1; i < n; i += 2) {
-        if (j > i) {
-            tempr = data[j];     data[j] = data[i];     data[i] = tempr;
-            tempr = data[j+1]; data[j+1] = data[i+1]; data[i+1] = tempr;
-        }
-        m = n >> 1;
-        while (m >= 2 && j > m) {
-            j -= m;
-            m >>= 1;
-        }
-        j += m;
-    }
-    mmax = 2;
-    while (n > mmax) {
-        istep = 2*mmax;
-        theta = TWOPI/(isign*mmax);
-        wtemp = sin(0.5*theta);
-        wpr = -2.0*wtemp*wtemp;
-        wpi = sin(theta);
-        wr = 1.0;
-        wi = 0.0;
-        for (m = 1; m < mmax; m += 2) {
-            for (i = m; i <= n; i += istep) {
-                j =i + mmax;
-                tempr = wr*data[j]   - wi*data[j+1];
-                tempi = wr*data[j+1] + wi*data[j];
-                data[j]   = data[i]   - tempr;
-                data[j+1] = data[i+1] - tempi;
-                data[i] += tempr;
-                data[i+1] += tempi;
-            }
-            wr = (wtemp = wr)*wpr - wi*wpi + wr;
-            wi = wi*wpr + wtemp*wpi + wi;
-        }
-        mmax = istep;
-    }
-}
-
 Pse::Pse()
 {
     mLog        = 0x0;
@@ -87,10 +17,12 @@ Pse::Pse()
     mMaxFft     = 32768;
     mInput      = (short*)malloc(      mMaxSamp * sizeof(short)  );
     mWin        = (double*)malloc(     mMaxFft  * sizeof(double) );
-    mInOut      = (double*)malloc( 2 * mMaxFft  * sizeof(double) );
     mFftSum     = (double*)malloc( 2 * mMaxFft  * sizeof(double) );
-    mCurFftSize = -1; // invalid, ensure setup executes
-    mCurWinType = -1; // invalid, ensure setup executes
+    mFftCount   = 0;
+    mCurFftSize = -1;   // invalid, ensure setup executes
+    mCurWinType = -1;   // invalid, ensure setup executes
+    mFftwPlan   = NULL; // this is adjusted on the fly by setup
+    mFftwOutput = NULL; // this is adjusted on the fly by setup
 }
 
 void
@@ -104,11 +36,11 @@ Pse::PerformSetup( int winType, int fftSize )
     }
 
     // No matter what, zero the running fft sum
+    mFftCount=0;
     for(idx=0;idx<fftSize;idx++){
        mFftSum[ 2*idx    ] = 0.0;
        mFftSum[ 2*idx +1 ] = 0.0;
     }
-    mFftCount=0;
 
     // if the window type and fft size are the same we are done
     if( winType==mCurWinType && 
@@ -140,19 +72,35 @@ Pse::PerformSetup( int winType, int fftSize )
        a2 = 0.076849;
        sum = 0.0;
        for(idx=0;idx<mCurFftSize;idx++){
-           x = (TWOPI * idx)/(mCurFftSize-1);
+           x = (2.0*M_PI * idx)/(mCurFftSize-1);
            mWin[idx] = a0 - a1*cos(x) + a2*cos(2*x);
            sum+=mWin[idx];
        }
        mCoherentGain = sum / mCurFftSize;
     }
+
+    // Establish the fftw workspace
+    if( mFftwOutput ) {
+        fftw_free( mFftwOutput );
+        mFftwOutput=NULL;
+    }
+    mFftwOutput = (fftw_complex*)fftw_malloc(
+                                  sizeof(fftw_complex)*mCurFftSize );
+
+    // Establish the fftw plan
+    if( mFftwPlan ){
+       fftw_destroy_plan( mFftwPlan );
+       mFftwPlan=NULL;
+    }
+    mFftwPlan = fftw_plan_dft_1d(mCurFftSize, mFftwOutput, mFftwOutput,-1, 0 );
+
 }
 
 short * 
-Pse::PerformFft( int complexInput, short *inputData, int fftSize )
+Pse::PerformFft( int complexInput, int fftSize, short *inputData )
 {
     int    idx;
-    short *head;
+    short *newHead;
 
     if( mLog&PSE_LOG_FFT ){
         printf("Pse:PerformFft: Copying input\n");
@@ -161,44 +109,51 @@ Pse::PerformFft( int complexInput, short *inputData, int fftSize )
     // Prepare the input samples
     if( complexInput ){
        for(idx=0;idx<fftSize;idx++){
-          mInOut[2*idx+1] = inputData[2*idx    ] * mWin[idx];
-          mInOut[2*idx+2] = inputData[2*idx + 1] * mWin[idx];
+          mFftwOutput[idx][0] = inputData[2*idx    ] * mWin[idx];
+          mFftwOutput[idx][1] = inputData[2*idx + 1] * mWin[idx];
        }
-       head = inputData + 2*fftSize;
+       newHead = inputData + 2*fftSize;
     }
     else{
        for(idx=0;idx<fftSize;idx++){
-          mInOut[2*idx+1] = inputData[idx    ] * mWin[idx];
-          mInOut[2*idx+2] = 0.0;
+          mFftwOutput[idx][0] = inputData[idx] * mWin[idx];
+          mFftwOutput[idx][1] = 0.0;
        }
-       head = inputData + fftSize;
+       newHead = inputData + fftSize;
     }
 
     if( mLog&PSE_LOG_FFT_IN ){
         for(idx=1;idx<fftSize;idx++){
             printf("Pse:mInOut(in)[%d] %g %g\n",
-                idx,mInOut[2*idx],mInOut[2*idx+1] );
+                idx,mFftwOutput[idx][0],mFftwOutput[idx][1] );
         }
     }
 
     // Perform the fft
-    four1( mInOut,fftSize,1 );
+    fftw_execute( mFftwPlan );
 
     // Add the result into running coherent average
     for(idx=0;idx<fftSize;idx++){
-        mFftSum[ 2*idx    ] += mInOut[2*idx + 1 ];
-        mFftSum[ 2*idx + 1] += mInOut[2*idx + 2 ];
+        mFftSum[ 2*idx    ] += mFftwOutput[idx][0];
+        mFftSum[ 2*idx + 1] += mFftwOutput[idx][1];
         mFftCount++;
     }
  
-    return( head );
+    return( newHead );
 }
 
 void
-Pse::PerformOutputX( double *aXvec, int nPts, int csps, int isComplex )
+Pse::PerformOutputX( int isComplex, int fftSize, double *aXvec, int csps )
 {
     int    idx;
     double last;
+    int    nPts;
+
+
+    nPts = fftSize;
+
+#if 0
+    nPts = fftSize / 2;
  
     if( mLog&PSE_LOG_OUTX ){
         printf("Pse:PerformOutputX: pts=%d,csps=%d,cmplx=%d\n",
@@ -217,11 +172,17 @@ Pse::PerformOutputX( double *aXvec, int nPts, int csps, int isComplex )
     for(idx=1;idx<nPts;idx++){
         aXvec[idx] = aXvec[0] + ((double)idx * (double)csps)/(double)nPts;
     }
-    aXvec[idx-1] = last;
+    aXvec[idx-1] = last; // Force the last bin to end of extent
+#else
+    for(idx=0;idx<nPts;idx++){
+        aXvec[idx] = idx;
+    }
+
+#endif
 }
 
 void
-Pse::PerformOutputY( double *aYvec, int fftSize, int isComplex )
+Pse::PerformOutputY( int isComplex, int fftSize, double *aYvec )
 {
     double magSqr,normalize;
     int    nPts;
@@ -239,8 +200,10 @@ Pse::PerformOutputY( double *aYvec, int fftSize, int isComplex )
                 ;
 
 
-    // Figure out if we are taking all of fft or non-redundant half
-    nPts = isComplex?fftSize:(fftSize/2);
+    // nPts = fftSize/2;
+    nPts = fftSize;
+
+printf("out:cplx=%d, fft=%d, npts=%d\n",isComplex,fftSize,nPts);
 
     // Loop over output creating dBFS16
     for( idx=0;idx<nPts;idx++ ){
@@ -263,7 +226,7 @@ Pse::ProcessCoherentInterval(
 {
     short *dst;
     short *src;
-    int    cnt;
+    int    cnt,lim;
     int    csps;
     int    isComplex;
  
@@ -277,12 +240,9 @@ Pse::ProcessCoherentInterval(
 
     // Based on the desire number of points and the
     // format of the input data figure out the fft size
-    if( isComplex ){
-        fftSize = aPts;
-    }
-    else{
-        fftSize = 2 * aPts;
-    }
+    // fftSize = 2 * aPts;
+    fftSize = aPts;
+printf("cplx=%d, fft=%d\n",isComplex,fftSize);
 
     if( mLog&PSE_LOG_PCOHI ){
         printf("Pse:nav=%d,pts=%d,fft=%d,cmplx=%d,csps=%d\n",
@@ -290,7 +250,7 @@ Pse::ProcessCoherentInterval(
     }
 
     // Sanity check args to prevent downstream ambiguous errors
-    if( (aPts*aNave) >= mMaxSamp ){
+    if( (fftSize*aNave) >= mMaxSamp ){
         fprintf(stderr,"Pse::fft x ave > max samples\n");
         return;
     }
@@ -304,10 +264,15 @@ Pse::ProcessCoherentInterval(
     }
 
     // Capture the coherent number of required samples
+    // The adc interface is really 2k sample words so
+    // in complex cases we are really only getting 1k complex
+    // samples each time.
     dst = mInput;
     cnt = 0;
+    lim = fftSize * aNave;
+    lim = lim * isComplex?2:1;
     Dp()->Adc()->FlushSamples();
-    while( cnt<(aPts*aNave) ) {
+    while( cnt<lim ) {
        Dp()->Adc()->Get2kSamples( dst ); 
        dst += 2048;
        cnt += 2048;
@@ -328,15 +293,15 @@ Pse::ProcessCoherentInterval(
        if( mLog&PSE_LOG_PCOHI ){
            printf("Pse::ProcessCoherentInterval:fft[%d] %d\n",cnt,fftSize);
        }
-       src = PerformFft( isComplex, src, fftSize );
+       src = PerformFft( isComplex, fftSize, src );
        cnt = cnt + 1;
     }
 
     // Format and output the X values
-    PerformOutputX( aXvec, aPts, csps, isComplex );
+    PerformOutputX( isComplex, fftSize, aXvec, csps );
 
     // Format and output the Y values
-    PerformOutputY( aYvec, fftSize, isComplex );
+    PerformOutputY( isComplex, fftSize, aYvec );
 
 }
 

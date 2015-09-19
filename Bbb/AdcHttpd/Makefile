@@ -32,7 +32,7 @@ $(TGT)/AdcHttpd  : AdcHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
                 $(DEV_OBJS)   \
                 $(UTIL_OBJS)  \
                 $(EMUL_OBJS)  \
-                -lm -lpthread -lmicrohttpd \
+                -lm -lfftw3 -lpthread -lmicrohttpd \
                 -o $(TGT)/AdcHttpd
 
 $(TGT)/Devs.o	: Devs.cpp Devs.h | $(TGT)

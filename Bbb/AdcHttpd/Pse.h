@@ -1,8 +1,9 @@
-////////////////////////////////////////////////////////////////////////////////
-/// Processing  ////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+#ifndef __PSE__
+#define __PSE__
+#include <fftw3.h>
+
 /*
-The key input is number of points
+The key input is number of desired output points
 
 Output     Format   FftSize    NshortIn
 nPoints    complex    nPoints  2*nPoints
@@ -23,15 +24,17 @@ class Pse {
 
    short   *mInput;    // Input samples
 
-   double  *mWin;      // Windowing function, real
-   double  *mInOut;    // Fft working space, complex i/q
-   double  *mFftSum;   // Coherent fft sum
+   fftw_plan     mFftwPlan;
+   fftw_complex *mFftwOutput;
+
+   double  *mWin;          // Windowing function, real
+   double  *mFftSum;       // Coherent fft sum
+   int      mFftCount;     // Number of fft's in sum
 
    int      mCurFftSize;   // Currently configured fft size
    int      mCurWinType;   // Currently configured window type
    double   mCoherentGain; // Current coherent gain
 
-   int      mFftCount;
 public:
    Pse();
 
@@ -42,8 +45,9 @@ public:
       double *aYvec
     );
 
-    void   PerformSetup( int winType, int fftSize );
-    short* PerformFft( int isComplex, short *src, int fftSize );
-    void   PerformOutputX( double *aXvec, int nPts, int csps,  int isComplex );
-    void   PerformOutputY( double *aYvec, int fftSize, int isComplex );
+    void   PerformSetup(   int winType,   int fftSize );
+    short* PerformFft(     int isComplex, int fftSize, short *src );
+    void   PerformOutputX( int isComplex, int fftSize, double *aXvec,int csps );
+    void   PerformOutputY( int isComplex, int fftSize, double *aYvec );
 };
+#endif /* __PSE__ */
