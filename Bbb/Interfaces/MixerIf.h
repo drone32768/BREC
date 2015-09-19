@@ -39,7 +39,7 @@ class MixerIf {
 
 public:
     virtual int Open() = 0;
-    virtual int64_t SetFrequency( int64_t freqHz ) = 0;
+    virtual double SetLoFreqHz( double freqHz ) = 0;
 };
 
 #endif

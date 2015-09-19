@@ -62,10 +62,10 @@ Xboard::SimGet2kSamples( short *bf )
 
     for(idx=0;idx<2048;idx++){
 
-        psi  = psi + (2.500e6*2*M_PI/10.0e6);
+        psi  = psi + (2.50e6*2*M_PI/10.0e6);
         adc  = (short)( 2030*sin(psi) + random()%8 );
 
-        phi  = phi + (0.625e6*2*M_PI/10.0e6);
+        phi  = phi + (mLoFreqHz*2*M_PI/10.0e6);
         nco1 = (short)(2048* sin(phi) );
         nco2 = (short)(2048* cos(phi) );
 
@@ -98,6 +98,7 @@ Xboard::SimGet2kSamples( short *bf )
             default                :
                 *bf++ = iout;
                 *bf++ = qout;
+                idx++; // TODO double the points
                 break;
         }
 
@@ -190,7 +191,7 @@ Xboard::Open()
     printf("Xboard::Open::fw ver = 0x%08x\n",GetFwVersion());
 
     // Set startup default signal paramters
-    SetFrequency( 640000 );
+    SetLoFreqHz( 640000 );
     SetSource( 0 ); 
     SetTpg( 0 ); 
 
@@ -267,7 +268,7 @@ if( arg == 7 ) {
     }
     printf("Xboard:SetSource shift=%d add=%d\n",mOutFmtShift,mOutFmtAdd);
    
-    return(0);
+    return( arg );
 }
 
 //------------------------------------------------------------------------------
@@ -300,15 +301,16 @@ Xboard::GetFwVersion()
 }
 
 //------------------------------------------------------------------------------
-int64_t
-Xboard::SetFrequency( int64_t freqHz )
+double
+Xboard::SetLoFreqHz( double freqHz )
 {
     unsigned int   pincLo,pincHi;
-    uint64_t       hzMod,pinc;
+    long long      hzMod,pinc;
+    double         actHz;
 
-    printf("Xboard:SetFreq=%lld Hz\n",freqHz);
+    printf("Xboard:SetFreq=%f Hz\n",freqHz);
 
-    hzMod = freqHz % 10000000;
+    hzMod = ((long long)freqHz) % 10000000;
     pinc  = hzMod * 65536 / 10000000;;
     pincLo=       pinc & 0x0fff;
     pincHi= (pinc>>12) & 0x0fff;
@@ -326,7 +328,11 @@ Xboard::SetFrequency( int64_t freqHz )
 
     FlushSamples(); // Necessary to continue streaming
 
-    return( freqHz );
+    actHz     = pinc * 10000000 / 65536;
+    mLoFreqHz = actHz;
+    printf("Xboard:SetFreq= actual %f Hz\n",actHz);
+
+    return( actHz );
 }
 
 //------------------------------------------------------------------------------
@@ -506,13 +512,13 @@ Xboard::GetComplexSampleRate()
             return( mFsHz/2 );
             break;
         case XBOARD_FS_CIC_I    :
-            return( mFsHz/100 );
+            return( mFsHz/2 );
             break;
         case XBOARD_FS_CIC_Q    :
-            return( mFsHz/100 );
+            return( mFsHz/2 );
             break;
         case XBOARD_FS_CIC_IQ   :
-            return( mFsHz/100 );
+            return( mFsHz/2 );
         default                 :
             return( mFsHz );
             break;

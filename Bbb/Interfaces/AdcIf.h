@@ -48,6 +48,11 @@ public:
     virtual int GetRms( int nSamples, short *aSamples, double *rrms ) = 0;
     virtual int SetGain( int gn ) = 0;
     virtual int IsComplexFmt() = 0;
+
+    /** Returns source set */
+    virtual int SetSource( int sn ) = 0;  
+
+    /* GetSource? */
 };
 
 #endif

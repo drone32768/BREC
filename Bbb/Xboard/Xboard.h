@@ -47,6 +47,7 @@ private:
     int                      mXspiDbg;
     int                      mCSPS;    
     int                      mFsHz;    
+    double                   mLoFreqHz;
 
     ////////////////////////////////////////
     int                      mPidx;
@@ -87,7 +88,7 @@ public:
     int SetSim( int sim );
 
     // Mixer interfaces
-    int64_t SetFrequency( int64_t freqHz );
+    double SetLoFreqHz( double freqHz );
 
     // Non ADC interface methods
 
