@@ -39,6 +39,7 @@ button {
 <!-- Primary control buttons -->
 <table >
 
+  <!-- Local control buttons -->
   <tr>
     <td align="center">
       <button onclick="ToggleEnvelope( )">Envelope</button>
@@ -63,6 +64,7 @@ button {
     </td>
   </tr>
 
+  <!-- Remote parameter control buttons -->
   <tr>
     <td>
       <button onclick="ToggleStateVar( 'nPts' )"># Points</button>
@@ -82,8 +84,20 @@ button {
     <td>
       <div align="center" id="chnlDiv"></div>
     </td>
+    <td>
+      <button onclick="SetStateVar( 'f1Hz', 'f1HzInput' )">
+            F1(Hz)
+      </button>
+    </td>
+    <td>
+      <div align="center" id="f1HzDiv"></div>
+    </td>
+    <td>
+       <input type="text" name="f1HzInput" value="1.0e6">
+    </td>
   </tr>
 
+  <!-- Remote state control buttons -->
   <tr>
     <td align="center">
       <button onclick="ToggleStateVar('run')"><div id="runDiv"></div></button>
@@ -179,7 +193,7 @@ function ToggleStateVar( aVarStateName )
    var newValStr;
 
    curValStr= unitState[ aVarStateName ];
-   console.log("current = " + curValStr);
+   console.log(aVarStateName + " = " + curValStr);
 
    if( curValStr.toLowerCase() == "on" ){
       newValStr = "OFF";
@@ -188,7 +202,7 @@ function ToggleStateVar( aVarStateName )
       newValStr = "ON";
    }
 
-   console.log("new  = " + newValStr);
+   console.log(aVarStateName + " = " + newValStr);
 
    xmlhttp.onreadystatechange=function() 
    {
@@ -204,6 +218,30 @@ function ToggleStateVar( aVarStateName )
                  aVarStateName + 
                  ":" + 
                  newValStr,
+                 true);
+   xmlhttp.send();
+}
+
+
+function SetStateVar( aVarStateName, aVarDivName )
+{
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
+
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+      {
+            ;
+      }
+   }
+ 
+   // need to produce: setstate?v={ name:value }
+   xmlhttp.open("GET",
+                 "setstate?v=" + 
+                 aVarStateName + 
+                 ":" + 
+                 document.getElementsByName(aVarDivName)[0].value,
                  true);
    xmlhttp.send();
 }
@@ -272,6 +310,7 @@ function UpdateState()
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
             document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
             document.getElementById("chnlDiv").innerHTML   =unitState.chnl;
+            document.getElementById("f1HzDiv").innerHTML   =unitState.f1Hz;
             stateUpdateCount++;
          }
       }
