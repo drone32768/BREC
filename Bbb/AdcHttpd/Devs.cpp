@@ -59,24 +59,27 @@ Devs::Devs()
 //------------------------------------------------------------------------------
 int Devs::Open()
 {
+    // This just opens the dev(s).  See HwModel:HwInit() for initial
+    // parameters
+
     if( FindCapeByName("brecX")>0  ){
         printf("*********** Devs::Open Starting X board ****************\n");
         mAdc = new Xboard();
         mAdc->Open();
         mAdc->StartPrus();
-        mAdc->SetComplexSampleRate( 5000000 );
-        ((Xboard*)( mAdc ))->SetSource( 0 );
-        ((Xboard*)( mAdc ))->SetFrequency( 10640000 );
+
+        mMix = (Xboard*)mAdc;
     }
 
     // x86 simulation
 #   ifdef TGT_X86
     {
-       printf("*********** Devs::Open Starting x86 X board ****************\n");
-       mAdc = new Xboard();
-       mAdc->Open();
-       mAdc->StartPrus();
-       mAdc->SetComplexSampleRate( 100000 ); // FIXME
+        printf("********* Devs::Open Starting x86 X board ****************\n");
+        mAdc = new Xboard();
+        mAdc->Open();
+        mAdc->StartPrus();
+
+        mMix = (Xboard*)mAdc;
     }
 #   endif
 
@@ -84,5 +87,3 @@ int Devs::Open()
 
     return(0);
 }
-
-

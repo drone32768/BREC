@@ -45,6 +45,7 @@
 class Devs {
   private:
     AdcIf   *mAdc;
+    MixerIf *mMix;
 
   public:
 
@@ -52,6 +53,7 @@ class Devs {
 
     int      Open();
     AdcIf    *Adc()        { return(mAdc);    }
+    MixerIf  *Mx1()        { return(mMix);    } 
 };
 
 Devs *Dp();

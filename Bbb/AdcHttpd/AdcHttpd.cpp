@@ -77,6 +77,7 @@ private:
     double         mYmin,mYmax;  // y limits determined by processing
 
     Pse            mPse;         // power spectrum estimator object
+    double         mF1Hz;        // mixer 1 lo frequency
 
     // Internal support routines
     int            HwInit();
@@ -113,8 +114,9 @@ HwModel::HwModel()
     mRun        = 0;
     mNave       = 1;
     mChnl       = 0;
+    mF1Hz       = 2500000;
     mParamChange= 0;
-    mCfgFname   = strdup( "x.cfg" );
+    mCfgFname   = strdup( "local.cfg" );
 
     mXyMaxLen   = 8192;
     mXyCurLen   = 256;
@@ -162,7 +164,8 @@ HwModel::WriteCfg()
  */
 void  HwModel::Main()
 {
-    static int chnl;
+    int     chnl;
+    double  f1Hz;
  
     // Read and restore saved configuration
     ReadCfg();
@@ -172,24 +175,33 @@ void  HwModel::Main()
 
     // Main processing loop
     chnl = -1;
+    f1Hz = -1.0;
     while( !mThreadExit ){
 
        if( mRun ){
-          // TODO revisit the chnl approach
+
+          // Revisit any changed hw parameters
           if( mChnl!=chnl ){
-             ((Xboard*)( Dp()->Adc() ))->SetSource( mChnl );
+             Dp()->Adc()->SetSource( mChnl );
              chnl = mChnl;
           }
+          if( mF1Hz!=f1Hz ){
+             Dp()->Mx1()->SetLoFreqHz( mF1Hz );
+             f1Hz = mF1Hz;
+          }
+
+          // Conduct the specified processing
           mPse.ProcessCoherentInterval( 
                     mNave,
                     mXyCurLen,
                     mXvec,   
                     mYvec
           ); 
-       }
+       } // End of running
+
        else{
           sleep( 1 );
-       } 
+       } // End of not running
 
     } // End of main processing loop 
 }
@@ -247,13 +259,8 @@ HwModel::SetState( char *name, char *value )
           mChnl = (mChnl+1)%8;
     }
 
-    else if( 0==strcmp(name,"ref") ){
-          int yMax;
-
-          yMax = mYmax;
-          yMax = yMax - 10;
-          if( yMax < -50 ) yMax = 10;
-          mYmax = yMax;
+    else if( 0==strcmp(name,"f1Hz") ){
+          mF1Hz = atof( value );
     }
 
     else if( 0==strcmp(name,"swreset") && 0==strcmp(value,"ON") ){
@@ -335,7 +342,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     "\"nAve\"     : \"%d\","
                     "\"chnl\"     : \"%d\","
                     "\"nPts\"     : \"%d\","
-                    "\"ref\"      : \"%g\","
+                    "\"f1Hz\"     : \"%f\","
                     "\"tpc\"      : %d,"      
                     "\"npc\"      : %d,"      
                     "\"npi\"      : %d,"    ,
@@ -344,7 +351,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     mNave,                      // nAve
                     mChnl,                      // chnl
                     mXyCurLen,                  // nPts
-                    mYmax,                      // ref
+                    mF1Hz,                      // f1Hz
                     mXyCurLen,                  // total point count
                     npc,                        // new point count
                     npi                         // new point index
@@ -413,6 +420,14 @@ void HwModel::ShowState()
 int HwModel::HwInit()
 {
     Dp()->Open();
+
+    mChnl = Dp()->Adc()->SetSource( 0 );
+
+    mF1Hz = Dp()->Mx1()->SetLoFreqHz( 1.0e6 );
+
+    // TODO - complex and saving actual rate
+    Dp()->Adc()->SetComplexSampleRate( 5000000 );
+
     return(0);
 }
 
