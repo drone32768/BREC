@@ -62,7 +62,6 @@ public:
     int Open();
     int Flush();
     int FlushSamples();
-    int GetSamplePair( short *eo ); 
 
     int Get2kSamples( short *bf ); 
     int Get2kSamples_DownSample( short *bf ); 
@@ -72,8 +71,9 @@ public:
     int SetComplexSampleRate( int complexSamplesPerSecond );
     int GetComplexSampleRate();
     int StartPrus();
-    int GetRms( int nSamples, short *aSamples, double *rrms );
     int SetGain( int gn );
+    int SetSource( int src );
+    int IsComplexFmt();
 
     int SetSim( int sim );
 };

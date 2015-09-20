@@ -78,10 +78,6 @@ Device::Device()
         mAdc = new Hboard();
         mAdc->Open();
 
-	// NOTE: this is just the default.
-	// actual value will be set by sdr control sw
-        mAdc->SetComplexSampleRate(1250000);
-
         Iboard        *iBoard;
         Gpio6PinGroup *g6pg;
         Mboard        *mBoard;
@@ -109,13 +105,13 @@ Device::Device()
         mAdc = new Xboard();
         mAdc->Open();
         mAdc->StartPrus();
-        mAdc->SetComplexSampleRate( 5000000 );
 
         // Set initial down conversion frequency
-        ((Xboard*)mAdc)->SetFrequency( 10640000 );
+        // TODO think through how to update for DDC capble ADCs
+        ((Xboard*)mAdc)->SetLoFreqHz( 10640000 );
 
         // Set the source to be IQ signed 16 bit
-        ((Xboard*)mAdc)->SetSource ( 7 );
+        mAdc->SetSource ( 7 );
 
         Iboard        *iBoard;
         Gpio6PinGroup *g6pg;
@@ -157,9 +153,9 @@ int Device::TunerSet( long long freqHz )
 {
     printf("Device::TunerSet( %f Hz )\n",(double)freqHz);
 
-    // X board w/o mixer is a special case.  Integrated nco
+    // TODO X board w/o mixer is a special case.  Integrated nco
     if( mXboard ){
-        ((Xboard*)mAdc)->SetFrequency( freqHz );
+        ((Xboard*)mAdc)->SetLoFreqHz( freqHz );
         return( 0 );
     }
 

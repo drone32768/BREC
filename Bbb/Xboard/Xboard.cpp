@@ -105,7 +105,7 @@ Xboard::SimGet2kSamples( short *bf )
 
     } // End of loop over 2k samples
 
-    us_sleep( 100000 );
+    us_sleep( 205 ); // 2048  / 10MSPS ~ 205us
     return(1);
 }
 
@@ -380,15 +380,6 @@ Xboard::FlushSamples()
 }
 
 //------------------------------------------------------------------------------
-// NOTE this is only for test purposes, it will not support high sample rates
-int
-Xboard::GetSamplePair( short *eo )
-{
-   *eo = 0;
-   return( 0 );
-}
-
-//------------------------------------------------------------------------------
 int
 Xboard::Get2kSamples( short *bf )
 {
@@ -525,13 +516,6 @@ Xboard::GetComplexSampleRate()
             break;
     }
     return( mFsHz );
-}
-
-//------------------------------------------------------------------------------
-// NOTE: this adc interface is not supported
-int Xboard::GetRms( int nSamples, short *aSamples, double *rrms )
-{
-    return( 0 );
 }
 
 //------------------------------------------------------------------------------

@@ -38,21 +38,37 @@
 class AdcIf {
 
 public:
+
+    /** Required first operation */
     virtual int Open() = 0;
+
+    /** Starts internal processing for PRU based interfaces */
+    virtual int StartPrus() = 0;
+
+    /** Flush all hw and sw queued data */
     virtual int FlushSamples() = 0;
-    virtual int GetSamplePair( short *eo ) = 0; 
+
+    /** 
+     * Collects 2k short data words 
+     *  [ slight misnomer - implies real valued samples but
+     *  complex formats provide 1k samples/2k words ]
+     */
     virtual int Get2kSamples( short *bf ) = 0; 
+
+    /** TODO obsolete these */
     virtual int SetComplexSampleRate( int complexSamplesPerSecond ) = 0;
     virtual int GetComplexSampleRate( ) = 0;
-    virtual int StartPrus() = 0;
-    virtual int GetRms( int nSamples, short *aSamples, double *rrms ) = 0;
+
+    /** Internal gain control */ 
     virtual int SetGain( int gn ) = 0;
+
+    /** Returns non zero if complext */
     virtual int IsComplexFmt() = 0;
 
     /** Returns source set */
     virtual int SetSource( int sn ) = 0;  
 
-    /* GetSource? */
+    /** TODO GetSource? */
 };
 
 #endif

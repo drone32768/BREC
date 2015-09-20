@@ -218,23 +218,6 @@ void WbCtlIf::SvcCmd( TcpSvrCon *tsc, Cli *cli )
     }
 
     //////////////////////////////////////// 
-    if( 0==strcmp(cmdStr,"wb-get-rms")  ){
-        double mean, rms;
-        int nSamples;
-
-        arg1 = CliArgByIndex( cli, 1 );
-        if( !arg1 ) { SvcErr(tsc); return; }
-        nSamples= atoi(arg1);
-        if( nSamples > MAX_SAMPLE_SET ) nSamples = MAX_SAMPLE_SET;
-
-        mean = Dp()->Adc()->GetRms( nSamples, mSamples, &rms );
-
-        sprintf( lineBf,"%f, %f\n", rms, mean );
-        TcpSvrWrite(tsc,lineBf,strlen(lineBf));
-        return;
-    }
-
-    //////////////////////////////////////// 
     if( 0==strcmp(cmdStr,"wb-csps")  ){
         int csps;
 
@@ -389,7 +372,7 @@ void WbCtlIf::SvcCmd( TcpSvrCon *tsc, Cli *cli )
 
         Xboard *xBrd;
         xBrd = (Xboard*)( Dp()->Adc() );
-        xBrd->SetFrequency(  intVal );
+        xBrd->SetLoFreqHz(  intVal );
     }
 
     if( 0==strcmp(cmdStr,"x-tpg")  ){

@@ -318,15 +318,6 @@ void SiCtlIf::SvcCmd( TcpSvrCon *tsc, Cli *cli )
     }
 
     //////////////////////////////////////// 
-    if( 0==strcmp(cmdStr,"rms")  ){
-	double rms,mean;     
-        mean = Dp()->Adc()->GetRms( MAX_SAMPLES_PER_STEP, mSamples, &rms);
-	sprintf(lineBuffer,"rms dB=%f mean=%f\n",rms,mean);
-        TcpSvrWrite(tsc,lineBuffer,strlen(lineBuffer));
-        return;
-    }	     
-
-    //////////////////////////////////////// 
     if( 0==strcmp(cmdStr,"fmax-hz")  ){
         arg1 = CliArgByIndex( cli, 1 );
 
@@ -703,9 +694,10 @@ int SiCtlIf::SvcScan( TcpSvrCon *tsc )
 
 
     // Collect the samples
-    mAdcSw.Start();
-    for( idx=0; idx<mSampleCnt; idx+=2 ){
-        Dp()->Adc()->GetSamplePair( mSamples+idx );
+    idx = 0;
+    while( idx<mSampleCnt ){
+        Dp()->Adc()->Get2kSamples( mSamples+idx ); 
+        idx+=2048;
     }
     mAdcSw.StopWithHistory();
 

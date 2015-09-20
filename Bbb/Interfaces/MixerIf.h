@@ -38,8 +38,16 @@
 class MixerIf {
 
 public:
+
+    /** Required first operation */
     virtual int Open() = 0;
+
+    /** 
+     * Set LO frequency to specified as close as possible.
+     * Returns actual frequency in Hertz set.  
+     */
     virtual double SetLoFreqHz( double freqHz ) = 0;
+
 };
 
 #endif

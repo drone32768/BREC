@@ -95,6 +95,22 @@ Hboard::Open()
 }
 
 //------------------------------------------------------------------------------
+// No source selection, always 0
+int
+Hboard::SetSource( int src )
+{
+    return( 0 );
+}
+
+//------------------------------------------------------------------------------
+// Device samples are always real
+int
+Hboard::IsComplexFmt()
+{
+    return( 0 );
+}
+
+//------------------------------------------------------------------------------
 int
 Hboard::Flush()
 {
@@ -108,25 +124,6 @@ Hboard::FlushSamples()
 {
     mPidx = mPtrHead[0]/2;
     return(0);
-}
-
-//------------------------------------------------------------------------------
-// NOTE this is only for test purposes, it will not support high sample rates
-int
-Hboard::GetSamplePair( short *eo )
-{
-   int n,p;
-
-   for(p=0,n=0;n<2;n++){
-        //  printf("ptr 0x%08x 0x%08x\n",mPtrHead[0],mPidx);
-        while( mPidx == (mPtrHead[0]/2)  ){
-            us_sleep( 5000 );
-            p++;
-        }
-        eo[n] = ( mPtrPruSamples[ mPidx ] );
-        mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
-   }
-   return(p);
 }
 
 //------------------------------------------------------------------------------
@@ -490,64 +487,3 @@ Hboard::GetComplexSampleRate()
 {
     return( mCSPS );
 }
-
-//------------------------------------------------------------------------------
-/**
- * This method collects the specified number of samples, calculates the
- * rms level in dB relative to a 16 bit full scale and the mean value
- * placing both results in the provided locations.
- *
- * NOTE:
- * The samples are treated as 16 bit values.  The 12 bit adc results
- * are shifted up by 2 bits (e.g. multiply by 4).  The samples are also
- * unsigned shorts so range from 0*4 .. 4096*4=16k.  To remove the
- * DC bias (determined by the final opamp feedback which have mfg 
- * variation) and assess bias point and any potential oscillations or
- * instabilities, the DC results / mean are produced.  This should be
- * on the order of 2048 (half 12 bit scale) X 4 for the shift or 8192.
- * The AC value is the difference between successive samples, squared
- * and then averaged over the sample set.  This means the dB report
- * of AC value ranges from :
- *
- *    max = (0*4 - 4096*4)^2 / 65536^2, then log of this x 10 
- *        = 10 * log10( 16k^2 / 64k^2 ) = 10*log10( 0.0625 ) 
- *        = -12 dBFS16
- *
- *    min = ((8192-4) - (8192+4))^2 / 65536 ^2, then log of this x 10
- *        = 10 * log10( 8^2 / 65536^2 ) = 10*log10( 1.48E-8 )
- *        = -78 dBFS16
- *
- * In practice, once you get above -16dBFS16 the bias point shifts and
- * things seem to peg out at quarter scale or larger producing odd 
- * results (i.e. large signal values have significant non-linearities
- * and complex behavior, for reasonable results don't go beyond quarter scale)
- *
- */
-int Hboard::GetRms( int nSamples, short *aSamples, double *rrms )
-{
-    int    idx;
-    double delta,sum,rmsSum,mean;
-
-    Flush();
-
-    sum = 0.0;
-    for( idx=0; idx<nSamples; idx+=2 ){
-        GetSamplePair( aSamples+idx );
-        sum += aSamples[ idx   ];
-        sum += aSamples[ idx+1 ];
-    }
-    mean = sum / nSamples;
-
-    rmsSum = 0.0;
-    for( idx=1; idx<nSamples; idx++){
-        delta  = aSamples[idx] - mean;
-        rmsSum = rmsSum + (delta*delta);
-    }
-
-    *rrms = rmsSum / nSamples;
-    *rrms = *rrms / (65536.0*65536.0);
-    *rrms = 10 * log10( *rrms );
-
-    return( mean );
-}
-

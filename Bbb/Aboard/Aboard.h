@@ -52,13 +52,14 @@ public:
     int Open();
     int Flush();
     int FlushSamples();
-    int GetSamplePair( short *eo ); 
     int Get2kSamples( short *bf );
     int SetComplexSampleRate( int complexSamplesPerSecond );
     int GetComplexSampleRate( );
     int StartPrus();
     int GetRms( int nSamples, short *aSamples, double *rrms );
     int SetGain( int gn );
+    int SetSource( int src );
+    int IsComplexFmt();
 };
 
 #endif

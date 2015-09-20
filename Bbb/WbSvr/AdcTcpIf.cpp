@@ -69,18 +69,7 @@ void AdcTcpIf::RcvEvent( char *evtStr )
 void AdcTcpIf::ConfigureHw()
 {
     Dp()->Adc()->SetGain( 0 );
-
-    // Dp()->Adc()->SetComplexSampleRate( 500000 );  //  1.00MSPS /10
-    // Dp()->Adc()->SetComplexSampleRate( 555555 ); //  1.11MSPS /9
-    // Dp()->Adc()->SetComplexSampleRate( 625000 ); //  1.25MSPS /8
-    // Dp()->Adc()->SetComplexSampleRate( 714285 ); //  1.46MSPS /7
-    
-    // Dp()->Adc()->SetComplexSampleRate( 833333 );  //  1.66MSPS /6
-    // Dp()->Adc()->SetComplexSampleRate( 1000000 ); //  2.00MSPS /5
-    // Dp()->Adc()->SetComplexSampleRate( 1250000 ); //  2.50MSPS /4 **
-    // Dp()->Adc()->SetComplexSampleRate( 1428571 ); //  3.33MSPS /3
-    // Dp()->Adc()->SetComplexSampleRate( 2500000 ); //  5.00MSPS /2
-     Dp()->Adc()->SetComplexSampleRate( 5000000 ); // 10.00MSPS /1 **
+    Dp()->Adc()->SetComplexSampleRate( 5000000 ); // 10.00MSPS /1 **
 }
 
 //------------------------------------------------------------------------------
