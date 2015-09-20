@@ -132,7 +132,7 @@ for(n=0;n<xyPts;n++){
    xyYvec[n] = -30;
 }
 
-// This is the may xy plot
+// This is the xy plot
 var bxy1 = new BJGT.XyDisplay( document.getElementById("mainCanvas") );
 bxy1.SetTitle("Title");
 bxy1.SetXlabel("Freq(Hz)");
@@ -159,6 +159,9 @@ var isActive = 0;
 
 // Contents of state returned from device
 var unitState;
+
+// Contents of data returned from device
+var unitData;
 
 // This method is to be invoked on initial loading
 function BodyLoad()
@@ -218,30 +221,6 @@ function ToggleStateVar( aVarStateName )
                  aVarStateName + 
                  ":" + 
                  newValStr,
-                 true);
-   xmlhttp.send();
-}
-
-
-function SetStateVar( aVarStateName, aVarDivName )
-{
-   var xmlhttp;
-   xmlhttp=new XMLHttpRequest();
-
-   xmlhttp.onreadystatechange=function() 
-   {
-      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
-      {
-            ;
-      }
-   }
- 
-   // need to produce: setstate?v={ name:value }
-   xmlhttp.open("GET",
-                 "setstate?v=" + 
-                 aVarStateName + 
-                 ":" + 
-                 document.getElementsByName(aVarDivName)[0].value,
                  true);
    xmlhttp.send();
 }
@@ -310,11 +289,31 @@ function UpdateState()
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
             document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
             document.getElementById("chnlDiv").innerHTML   =unitState.chnl;
-            document.getElementById("f1HzDiv").innerHTML   =unitState.f1Hz;
+            document.getElementById("f1HzDiv").innerHTML   =
+                                               unitState.f1Hz.toLocaleString();
             stateUpdateCount++;
          }
       }
       xmlhttp.open("GET","getstate",true);
+      xmlhttp.send();
+}
+
+function UpdateData()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            // Display the raw input prior to parsing
+            // console.log( xmlhttp.responseText ); 
+
+            unitData = JSON.parse( xmlhttp.responseText );
+         }
+      }
+      xmlhttp.open("GET","getdata",true);
       xmlhttp.send();
 }
 
@@ -324,20 +323,20 @@ function UpdateState()
 function DrawPlot()
 {
    // Copy over any newly available display points
-   for(sidx=0, didx=unitState.npi;sidx<unitState.npc;sidx++,didx++){
-      xyXvec[didx] = unitState.npx[sidx];
-      xyYvec[didx] = unitState.npy[sidx];
+   for(sidx=0, didx=unitData.npi;sidx<unitData.npc;sidx++,didx++){
+      xyXvec[didx] = unitData.npx[sidx];
+      xyYvec[didx] = unitData.npy[sidx];
    }
 
    // Re-establish limits
    bxy1.SetLogicalLimits( 
-                 unitState.lim[0],     unitState.lim[1], 
+                 unitData.lim[0],     unitData.lim[1], 
                  (gDbRef - 10*gDbPer), gDbRef
                         );
 
    // Force the length to be current total
-   xyYvec.length = unitState.tpc;
-   xyXvec.length = unitState.tpc;
+   xyYvec.length = unitData.tpc;
+   xyXvec.length = unitData.tpc;
 
    // Copy in the vectors to draw
    bxy1.SetXy( xyXvec, xyYvec );
@@ -357,15 +356,18 @@ function PollDevice()
 {
     // Update the status display based on current state
     if( 0==(pollCount%10) ){
-      AssessStatus();
+        AssessStatus();
     }
 
     // Issue a state update request to the device
-    UpdateState();
+    if( 0==(pollCount%5) ){
+        UpdateState();
+    }
 
     // Update the plot based on recent state data
     if( isActive ){
-       DrawPlot();
+       UpdateData(); // Issue a data update request to the device
+       DrawPlot();   // Draw whatever data we have
     }
 
     // Keep track of the polling count
@@ -396,6 +398,7 @@ function TogglePeaks()
 function ToggleMarkers()
 {
    bxy1.MarkersVisible( bxy1.MarkersIsVisible() ^ 1 );
+   bxy1.Draw(); 
 }
 
 var gActiveMem = 0;
@@ -408,6 +411,7 @@ function Mstore()
 function Mshow()
 {
    bxy1.TraceVisible(gActiveMem,bxy1.TraceIsVisible(gActiveMem)^1);
+   bxy1.Draw(); 
 }
 
 function ToggleEnvelope()
