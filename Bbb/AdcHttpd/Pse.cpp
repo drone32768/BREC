@@ -182,7 +182,8 @@ Pse::PerformOutputY( int isComplex, int fftSize, double *aYvec, int aNave )
 
 
     // Update Y values
-    normalize =   20*log10( 32768 )            // Ref 16 signed bit
+    normalize =   -6                           // Half pwr in neg bins
+                  + 20*log10( 32768 )          // Ref 16 signed bit
                   + 20*log10( mCoherentGain )  // Remove Windowing
                   + 20*log10( fftSize )        // Remove  1/N^2 from dft
                   + 20*log10( aNave )          // Remove Averaging 
