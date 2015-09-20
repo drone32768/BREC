@@ -64,10 +64,14 @@ Xboard::SimGet2kSamples( short *bf )
 
         psi  = psi + (2.50e6*2*M_PI/10.0e6);
         adc  = (short)( 2030*sin(psi) + random()%8 );
+ 
+        // if ( psi > 2*M_PI ) psi = psi - (2*M_PI);
 
         phi  = phi + (mLoFreqHz*2*M_PI/10.0e6);
         nco1 = (short)(2048* sin(phi) );
         nco2 = (short)(2048* cos(phi) );
+
+        // if ( phi > 2*M_PI ) phi = phi - (2*M_PI);
 
         iout = (short)( (double)nco1 * (double)adc / 256.0);
         qout = (short)( (double)nco2 * (double)adc / 256.0);

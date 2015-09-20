@@ -46,8 +46,8 @@ public:
     );
 
     void   PerformSetup(   int winType,   int fftSize );
-    short* PerformFft(     int isComplex, int fftSize, short *src );
+    short* PerformFft(     int isComplex, int fftSize, short *src, int nave );
     void   PerformOutputX( int isComplex, int fftSize, double *aXvec,int csps );
-    void   PerformOutputY( int isComplex, int fftSize, double *aYvec );
+    void   PerformOutputY( int isComplex, int fftSize, double *aYvec,int aNave);
 };
 #endif /* __PSE__ */
