@@ -74,7 +74,6 @@ private:
     double         *mYvec;       // y values
 
     double         mXmin,mXmax;  // x limits determined by processing
-    double         mYmin,mYmax;  // y limits determined by processing
 
     Pse            mPse;         // power spectrum estimator object
     double         mF1Hz;        // mixer 1 lo frequency
@@ -98,6 +97,7 @@ public:
     // Primary public interface
     int    SetState( char *name, char *value );
     int    GetState( char *resultsStr, int resultsLen );
+    int    GetData( char *resultsStr, int resultsLen );
     int    SetCfg( const char *fname );
 };
 
@@ -123,10 +123,8 @@ HwModel::HwModel()
     mXvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
     mYvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
 
-    mXmin       = -50e3;
-    mXmax       =  50e3;
-    mYmin       = -160;
-    mYmax       = 0;
+    mXmin       = 1e6;
+    mXmax       = 1e6;
     for( idx=0; idx<mXyCurLen; idx++){
        mXvec[ idx ] = mXmin + ((double)idx/2048.0)*(mXmax-mXmin);
        mYvec[ idx ] = -40 + idx%10; 
@@ -301,7 +299,7 @@ HwModel::SetState( char *name, char *value )
 }
 
 /**
- * This is the primary external interface to the model.  It places
+ * This is one of the primary external interfaces to the model.  It places
  * the model state in a provided string.  The state is formated
  * as a JSON object.
  */
@@ -311,20 +309,12 @@ HwModel::GetState( char *resultsStr, int resultsLen )
     int    nBytes;
     char  *pos;
     int    len;
-    int    idx;
     time_t now;
     char   timeStr[128];
 
     time( &now );
     ctime_r( &now, timeStr );
     timeStr[ strlen(timeStr) - 1 ] = 0; // remove new line
-
-    int npc;
-    static int npi = 0; // FIXME
-
-#   define MAX_NPTS_PER_GET 512
-    npc = MAX_NPTS_PER_GET;
-    npi = (npi+npc)%mXyCurLen;
 
     // Setup the output position and residual length
     pos = resultsStr;
@@ -342,16 +332,56 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     "\"nAve\"     : \"%d\","
                     "\"chnl\"     : \"%d\","
                     "\"nPts\"     : \"%d\","
-                    "\"f1Hz\"     : \"%f\","
-                    "\"tpc\"      : %d,"      
-                    "\"npc\"      : %d,"      
-                    "\"npi\"      : %d,"    ,
+                    "\"f1Hz\"     : %d "
+                    ,
                     mRun?"ON":"OFF",            // run
                     timeStr,                    // time
                     mNave,                      // nAve
                     mChnl,                      // chnl
                     mXyCurLen,                  // nPts
-                    mF1Hz,                      // f1Hz
+                    (int)mF1Hz                  // f1Hz
+    );
+    pos += nBytes;
+    len -= nBytes;
+
+    nBytes = snprintf(pos, len, "}"); // End of main obj
+    pos += nBytes;
+    len -= nBytes;
+
+    return(0);
+}
+
+/**
+ * This is one of the primary external interfaces to the model.  It places
+ * the model data in a provided string.  The data is formated
+ * as a JSON object.
+ */
+int
+HwModel::GetData( char *resultsStr, int resultsLen )
+{
+    int    nBytes;
+    char  *pos;
+    int    len;
+    int    idx;
+
+    int npc;
+    static int npi = 0; // FIXME
+
+#   define MAX_NPTS_PER_GET 512
+    npc = MAX_NPTS_PER_GET;
+    npi = (npi+npc)%mXyCurLen;
+
+    // Setup the output position and residual length
+    pos = resultsStr;
+    len = resultsLen;
+
+    // Output the 
+    nBytes = snprintf(pos, len, 
+                "{ "
+                    "\"tpc\" : %d,"      
+                    "\"npc\" : %d,"      
+                    "\"npi\" : %d,"    
+                    ,
                     mXyCurLen,                  // total point count
                     npc,                        // new point count
                     npi                         // new point index
@@ -359,11 +389,10 @@ HwModel::GetState( char *resultsStr, int resultsLen )
     pos += nBytes;
     len -= nBytes;
 
-    // TODO - these should not be necessary
     mXmin = mXvec[0];
-    mXmax = mXvec[mXyCurLen-1]; // FIXME PSE should be able to set
-    nBytes = snprintf(pos, len, "\"lim\":[%g,%g,%g,%g],",
-                                    mXmin,mXmax,mYmin,mYmax);
+    mXmax = mXvec[mXyCurLen-1]; 
+    nBytes = snprintf(pos, len, "\"lim\":[%g,%g],",
+                                    mXmin,mXmax);
     pos += nBytes;
     len -= nBytes;
 
@@ -492,7 +521,7 @@ ahc_access_handler (void *cls,
    const char          *fname;
    FILE                *file;
    struct stat          buf;
-#  define MAX_RESP_BYTES 65536
+#  define MAX_RESP_BYTES (2*65536)
    char                 rstr[MAX_RESP_BYTES];
  
    if( gLogMask&LOG_MASK_ACCESS ){
@@ -502,14 +531,6 @@ ahc_access_handler (void *cls,
    if (0 != strcmp (method, MHD_HTTP_METHOD_GET)){
      return MHD_NO;             
    }
-
-   /*  TODO re-evaluate impacts of this
-   static int           aptr;
-   if (&aptr != *ptr) {
-       *ptr = &aptr;
-       return MHD_YES;
-   }
-   */
 
    /* reset when done */
    *ptr = NULL;                  
@@ -555,9 +576,19 @@ ahc_access_handler (void *cls,
    //////////////////////////////////////// 
    else if( 0==strcmp("getstate", &url[1]) ){
 
-      // printf("ahc_access_handler:getstate\n");
-
       gHwm->GetState(rstr, sizeof(rstr) - 1 );
+      response = MHD_create_response_from_buffer (strlen (rstr),
+ 						  (void *) rstr,
+ 						  MHD_RESPMEM_MUST_COPY);
+      ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+      MHD_destroy_response (response);
+      return ret;
+   }
+
+   //////////////////////////////////////// 
+   else if( 0==strcmp("getdata", &url[1]) ){
+
+      gHwm->GetData(rstr, sizeof(rstr) - 1 );
       response = MHD_create_response_from_buffer (strlen (rstr),
  						  (void *) rstr,
  						  MHD_RESPMEM_MUST_COPY);
