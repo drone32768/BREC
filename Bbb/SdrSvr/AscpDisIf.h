@@ -39,6 +39,7 @@
 #include "../Util/net.h"
 
 class AscpDisIf : public McF {
+    int           mLog;
     int           mThreadExit;
     int           mIpPort;
     char         *mIpStr;

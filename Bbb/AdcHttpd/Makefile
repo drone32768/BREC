@@ -5,8 +5,10 @@ ifeq ($(TGT),arm)
     PRU_INC=/home/root/am335x_pru_package-master/pru_sw/app_loader/include
     PRU_LIB=/home/root/am335x_pru_package-master/pru_sw/app_loader/lib
     PASM=/home/root/am335x_pru_package-master/pru_sw/utils/pasm
+    LIBS=-lprussdrv
 else
     PRU_INC=../PruEmul/
+    LIBS=
 endif
 
 ifeq ($(TGT),arm)
@@ -32,7 +34,7 @@ $(TGT)/AdcHttpd  : AdcHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
                 $(DEV_OBJS)   \
                 $(UTIL_OBJS)  \
                 $(EMUL_OBJS)  \
-                -lm -lfftw3 -lpthread -lmicrohttpd \
+                $(LIBS) -lm -lfftw3 -lpthread -lmicrohttpd \
                 -o $(TGT)/AdcHttpd
 
 $(TGT)/Devs.o	: Devs.cpp Devs.h | $(TGT)

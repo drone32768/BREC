@@ -62,7 +62,7 @@ Xboard::SimGet2kSamples( short *bf )
 
     for(idx=0;idx<2048;idx++){
 
-        psi  = psi + (2.50e6*2*M_PI/10.0e6);
+        psi  = psi + (1.25e6*2*M_PI/10.0e6);
         // adc  = (short)( 32767*sin(psi) );          // fs16
         adc  = (short)( 2045*sin(psi) + random()%2 ); // fs12 + noise
  
@@ -340,7 +340,7 @@ Xboard::SetLoFreqHz( double freqHz )
 int
 Xboard::FlushSamples()
 {
-    printf("Xboard:FlushSamples Enter\n");
+//    printf("Xboard:FlushSamples Enter\n");
 
 #   ifdef TGT_X86
     return(0);
@@ -504,13 +504,13 @@ Xboard::GetComplexSampleRate()
             return( mFsHz/2 );
             break;
         case XBOARD_FS_CIC_I    :
-            return( mFsHz/2 );
+            return( 100000 );     // FIXME - this should be relative to Fs
             break;
         case XBOARD_FS_CIC_Q    :
-            return( mFsHz/2 );
+            return( 100000  );
             break;
         case XBOARD_FS_CIC_IQ   :
-            return( mFsHz/2 );
+            return( 100000 );
         default                 :
             return( mFsHz );
             break;

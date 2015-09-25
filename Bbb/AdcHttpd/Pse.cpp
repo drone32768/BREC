@@ -110,8 +110,8 @@ Pse::PerformFft( int complexInput, int fftSize, short *inputData, int nave )
     // Prepare the input samples
     if( complexInput ){
        for(idx=0;idx<fftSize;idx++){
-          mFftwOutput[idx][0] = inputData[2*idx    ] * mWin[idx];
-          mFftwOutput[idx][1] = inputData[2*idx + 1] * mWin[idx];
+          mFftwOutput[idx][0] = inputData[2*idx + 1] * mWin[idx];
+          mFftwOutput[idx][1] = inputData[2*idx    ] * mWin[idx];
        }
        newHead = inputData + 2*fftSize;
     }
@@ -150,7 +150,7 @@ Pse::PerformOutputX( int isComplex, int fftSize, double *aXvec, int csps )
     double last;
     int    nPts;
 
-    nPts = fftSize / 2;
+    nPts = isComplex? (fftSize)  :(fftSize/2);
  
     if( isComplex ){
         aXvec[0] = - (csps/2.0);
@@ -190,8 +190,8 @@ Pse::PerformOutputY( int isComplex, int fftSize, double *aYvec, int aNave )
                 ;
 
     // Loop over output creating dBFS16
-    nPts = fftSize/2;
-    sidx = isComplex?(fftSize/4):0;
+    nPts = isComplex? (fftSize)  :(fftSize/2);
+    sidx = isComplex? (fftSize/2):0;
     didx = 0;
     if( mLog&PSE_LOG_OUTY ){
         printf("Pse:PerformOutputY: fft=%d,cmplx=%d,norm=%f\n",
@@ -206,7 +206,7 @@ Pse::PerformOutputY( int isComplex, int fftSize, double *aYvec, int aNave )
        aYvec[didx] = 10*log10(magSqr) - normalize;
 
        didx++;
-       sidx++;
+       sidx = (sidx+1)%fftSize;
     }
 }
 
@@ -234,7 +234,7 @@ Pse::ProcessCoherentInterval(
 
     // Based on the desire number of points and the
     // format of the input data figure out the fft size
-    fftSize = 2 * aPts;
+    fftSize = isComplex? aPts : (2 * aPts);
 
     if( mLog&PSE_LOG_PCOHI ){
         printf("Pse:nav=%d,pts=%d,fft=%d,cmplx=%d,csps=%d\n",

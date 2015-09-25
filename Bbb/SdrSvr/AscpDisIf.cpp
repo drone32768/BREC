@@ -42,9 +42,11 @@
 
 AscpDisIf::AscpDisIf()
 {
+#   define DIS_LOG_EVT 0x00000001
+    mLog        = 0xfffff;
     mThreadExit = 0;
     mIpPort     = 0;
-    mRadioName  = strdup("DefName");
+    mRadioName  = strdup("default");
 }
 
 //------------------------------------------------------------------------------
@@ -54,18 +56,27 @@ void AscpDisIf::RcvEvent( char *evtStr )
     char *argStr;
     char *tokr;
 
-    printf("AscpDisIf: rcv <%s>\n",evtStr);
+
+    if( mLog&DIS_LOG_EVT ){
+       printf("AscpDisIf:RcvEvent <%s>\n",evtStr);
+    }
 
     cmdStr = strtok_r( evtStr, " ", &tokr );
    
     if( 0==strcmp("ascp.dis.set-port",cmdStr) ){
        argStr = strtok_r(NULL, " ", &tokr);
        mIpPort =  atoi( argStr );
+       if( mLog&DIS_LOG_EVT ){
+          printf("AscpDisIf:Port is now <%d>\n",mIpPort);
+       }
     }
 
     if( 0==strcmp("radio-name",cmdStr) ){
        argStr = strtok_r(NULL, " ", &tokr);
        mRadioName =  strdup(argStr);
+       if( mLog&DIS_LOG_EVT ){
+          printf("AscpDisIf:Radio name is <%s>\n",mRadioName);
+       }
     }
 }
 
@@ -75,7 +86,11 @@ void AscpDisIf::SendResponse( UdpSvr *usv )
     int           nBytes;
     int           ret;
     unsigned char sndBytes[128];
-        
+
+    if( mLog&DIS_LOG_EVT ){
+       printf("AscpDisIf:Discover response %s\n",mRadioName);
+    }
+    
     nBytes = 56;
         
     sndBytes[0] = (unsigned char)( nBytes&0xff);
@@ -111,14 +126,15 @@ void AscpDisIf::SendResponse( UdpSvr *usv )
         if( ifap->ifa_addr->sa_family == AF_INET ){ 
            struct in_addr *inAddr;
 
-            printf("Dis if name = %s\n",ifap->ifa_name);
             inAddr = &( ((struct sockaddr_in*)(ifap->ifa_addr))->sin_addr ); 
             if( !inet_ntop( AF_INET,
                             inAddr,
                             ipStr,sizeof(ipStr)) ){
                 perror("inet_ntop");
             }
-            printf("   if uni addr=%s\n",ipStr);
+            if( mLog&DIS_LOG_EVT ){
+               printf("AscpDisIf:Respond on %s/%s\n",ifa->ifa_name,ipStr);
+            }
 
             // Tailor ip svc address to this interface
             sndBytes[40] = (inAddr->s_addr    ) & 0xff;
@@ -132,7 +148,9 @@ void AscpDisIf::SendResponse( UdpSvr *usv )
                             ipStr,sizeof(ipStr)) ){
                 perror("inet_ntop");
             }
-            printf("   if bst addr=%s\n",ipStr);
+            if( mLog&DIS_LOG_EVT ){
+               printf("AscpDisIf:   Broadcast response to %s\n",ipStr);
+            }
 
             // Send response to this interfaces broadcast address
             UdpSvrSendto( usv, ipStr, 48322, sndBytes, nBytes );

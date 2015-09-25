@@ -77,7 +77,7 @@ void IqpTest (Xboard *xbrd )
 
     printf("Starting iq pattern test\n");
 
-    xbrd->SetFrequency( 0 ); 
+    xbrd->SetLoFreqHz( 0 ); 
     xbrd->SetTpg( 1 );
     xbrd->SetSource( 7 );
 
@@ -108,7 +108,7 @@ void IqpTest (Xboard *xbrd )
         }
         if( 0==(cnt%4000) ){
            printf("changing lo...\n");
-           xbrd->SetFrequency( pinc ); 
+           xbrd->SetLoFreqHz( pinc ); 
            pinc = (pinc+1)%4096;
            reset= 1;
         }
@@ -171,7 +171,7 @@ void QuadTest (Xboard *xbrd )
 {
     short          bf[4096];
 
-    xbrd->SetFrequency( 1 ); 
+    xbrd->SetLoFreqHz( 1 ); 
     xbrd->SetSource( 7 );
 
     xbrd->FlushSamples();

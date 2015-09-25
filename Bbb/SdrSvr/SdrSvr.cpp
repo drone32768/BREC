@@ -86,6 +86,7 @@ int main( int argc, char *argv[] )
     // Set the name via event
     char lineBf[128];
     snprintf(lineBf,sizeof(lineBf)-1,"OEM-%d",getpid() );
+
     ascpCtl->SetRadioName( lineBf );
 
     while( 1 ){ sleep(10); }

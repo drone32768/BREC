@@ -44,7 +44,6 @@ unsigned short GetLeUint16( unsigned char *bytes )
     return( w );
 }
 
-
 //------------------------------------------------------------------------------
 unsigned int GetLeUint32( unsigned char *bytes )
 {
