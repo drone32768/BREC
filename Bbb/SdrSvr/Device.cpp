@@ -59,7 +59,7 @@ Device::Device()
     mHboard           = 0;
     mAboard           = 0;
 
-    if( FindCapeByName("brecA") ){
+    if( (FindCapeByName("brecA") > 0) ){
         mAboard = 1;
         mAdc = new Aboard();
         mAdc->Open();
@@ -72,7 +72,7 @@ Device::Device()
         mLo1 = bcBoard->GetAdf4351( 1 );
     }
 
-    if( FindCapeByName("brecH") ){
+    else if( (FindCapeByName("brecH") > 0) ){
         mHboard = 1;
 
         mAdc = new Hboard();
@@ -100,7 +100,9 @@ Device::Device()
         mLo1 = mBoard->GetAdf4351( 0 );
     }
 
-    if( FindCapeByName("brecX") ){
+    // default to Xboard if none others found
+    // else if( (FindCapeByName("brecX") > 0) ){
+    else{ 
         mXboard = 1;
         mAdc = new Xboard();
         mAdc->Open();
@@ -155,10 +157,13 @@ int Device::TunerSet( long long freqHz )
 
     // TODO X board w/o mixer is a special case.  Integrated nco
     if( mXboard ){
+        mDevLock.Lock();
         ((Xboard*)mAdc)->SetLoFreqHz( freqHz );
+        mDevLock.Unlock();
         return( 0 );
     }
 
+    mDevLock.Lock();
     switch( mNLO ){
 
        case 1:{
@@ -179,6 +184,7 @@ int Device::TunerSet( long long freqHz )
        }
 
     }// End of switch over mNLO
+    mDevLock.Unlock();
 
     return(0);
 }
@@ -458,9 +464,12 @@ void Device::GetSamples_X( short *sampPtr, int nComplexSamples )
 //
 void Device::GetSamples( short *sampPtr, int nComplexSamples )
 {
+   
    // TODO better approach to multiple board sets.
-   if( mXboard ) return( GetSamples_X(sampPtr,nComplexSamples) );
-   if( mHboard ) return( GetSamples_H(sampPtr,nComplexSamples) );
-   if( mAboard ) return( GetSamples_A(sampPtr,nComplexSamples) );
+   mDevLock.Lock();
+   // if( mHboard ) GetSamples_H(sampPtr,nComplexSamples);
+   // if( mAboard ) GetSamples_A(sampPtr,nComplexSamples);
+   if( mXboard ) GetSamples_X(sampPtr,nComplexSamples);
+   mDevLock.Unlock();
 }
 

@@ -52,6 +52,7 @@
 
 class Device : public McF {
   private:
+    SimpleMutex   mDevLock; // Mutex for all device accesses
     int           mThreadExit;
     int           mComplex;
     Fir           miF3;

@@ -48,6 +48,16 @@
 #include "pruss_intc_mapping.h"
 #include "pru_images.h"
 
+/**
+ * NOTE: The interfaces here are not mutex safe.  Specifically the
+ * get samples vs the flush.  In the case of I/Q data, it may misalign
+ * the I/Q samples to I(n),Q(n+1) depending on when the flush occurs
+ * relative to sample extraction.
+ *
+ * All callers must ensure mutex.
+ *
+ */
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Internal Testing Simulation ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +109,7 @@ Xboard::SimGet2kSamples( short *bf )
             default                :
                 *bf++ = iout;
                 *bf++ = qout;
-                idx++; // TODO double the points
+                idx++; // NOTE: double the points when in IQ format
                 break;
         }
 
@@ -157,7 +167,7 @@ Xboard::SimGet2kSamples( short *bf )
 ////////////////////////////////////////////////////////////////////////////////
 Xboard::Xboard()
 {
-    mTpg     = 0;
+    mTpg     = 2; // TODO - non zero for interim testing only;
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
     mCSPS    = mFsHz;    // Function of board and channel selected
@@ -221,14 +231,7 @@ Xboard::IsComplexFmt()
 int
 Xboard::SetSource( int arg )
 {
-
-// for sdr testing
-if( arg == 7 ) {
-   printf(" NOTE NOTE NOTE over ride to tpg=2 NOTE NOTE NOTE NOTE \n");
-   mTpg = 2;
-}
-
-    printf("Xboard:SetSource=%d\n",arg);
+    printf("Xboard:SetSource=%d (mTpg=%d)\n",arg,mTpg);
     mFifoSrc = arg;
     SetR3();
 
@@ -352,20 +355,11 @@ Xboard::FlushSamples()
     // Flush the fpga fifos
     XspiWrite( XSPI_FLUSH );
 
-    // TODO - not strictly necessary
-    us_sleep( 100 );
-    XspiWrite( XSPI_STOP );
-
-    // Reset the pru dram fifo
-    if(  (XBOARD_FS_CIC_IQ==mFifoSrc)  ){
-        ;  // Do nothing if IQ streaming
-    }
-    else{
-        mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
-        while( mPidx != (int)GetSramWord( SRAM_OFF_DRAM_HEAD )/2 ){
-           us_sleep( 100 );
-           mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
-        }
+    // Wait for the DRAM to drain to a constant spot
+    mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
+    while( mPidx != (int)GetSramWord( SRAM_OFF_DRAM_HEAD )/2 ){
+       us_sleep( 100 );
+       mPidx = GetSramWord( SRAM_OFF_DRAM_HEAD )/2;
     }
 
     // Start the fpga acquisition
