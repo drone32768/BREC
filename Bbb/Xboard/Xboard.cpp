@@ -204,7 +204,6 @@ Xboard::Open()
     // Set startup default signal paramters
     SetLoFreqHz( 640000 );
     SetSource( 0 ); 
-    SetTpg( 0 ); 
 
     printf("Xboard:Open exit\n");
 
@@ -343,7 +342,7 @@ Xboard::SetLoFreqHz( double freqHz )
 int
 Xboard::FlushSamples()
 {
-//    printf("Xboard:FlushSamples Enter\n");
+    // printf("Xboard:FlushSamples Enter\n");
 
 #   ifdef TGT_X86
     return(0);

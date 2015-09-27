@@ -207,34 +207,23 @@ clockbit:
     OR        rTmp2,rTmp2,rTmp2  // 11 nop
     OR        rTmp2,rTmp2,rTmp2  // 12 nop
     OR        rTmp2,rTmp2,rTmp2  // 13 nop
-    OR        rTmp2,rTmp2,rTmp2  // 14 nop
+    OR        r30, r30,SCLK_H    // 14 ** SCLK high
+
     OR        rTmp2,rTmp2,rTmp2  // 15 nop
     OR        rTmp2,rTmp2,rTmp2  // 16 nop
     OR        rTmp2,rTmp2,rTmp2  // 17 nop
     OR        rTmp2,rTmp2,rTmp2  // 18 nop
     OR        rTmp2,rTmp2,rTmp2  // 19 nop
-    OR        r30, r30,SCLK_H    // 20 ** SCLK high
-
+    OR        rTmp2,rTmp2,rTmp2  // 20 nop
     OR        rTmp2,rTmp2,rTmp2  // 21 nop
     OR        rTmp2,rTmp2,rTmp2  // 22 nop
     OR        rTmp2,rTmp2,rTmp2  // 23 nop
-    OR        rTmp2,rTmp2,rTmp2  // 24 nop
-    OR        rTmp2,rTmp2,rTmp2  // 25 nop
-    OR        rTmp2,rTmp2,rTmp2  // 26 nop
-    OR        rTmp2,rTmp2,rTmp2  // 27 nop
-    OR        rTmp2,rTmp2,rTmp2  // 28 nop
-    OR        rTmp2,rTmp2,rTmp2  // 29 nop
-    LSR       rTmp1,r31,MISO_B   // 30 ** Get MISO
+    LSR       rTmp1,r31,MISO_B   // 24 ** Get MISO
 
-    AND       rTmp1,rTmp1,1      // 31 mask of any other bits
-    LSL       rSI,rSI,1          // 32 shift running input up
-    OR        rSI,rSI,rTmp1      // 33 add the new bit to si 
-    OR        rTmp2,rTmp2,rTmp2  // 34 nop
-    OR        rTmp2,rTmp2,rTmp2  // 35 nop
-    OR        rTmp2,rTmp2,rTmp2  // 36 nop
-    OR        rTmp2,rTmp2,rTmp2  // 37 nop
-    OR        rTmp2,rTmp2,rTmp2  // 39 nop
-    AND       r30, r30,SCLK_L    // 40 ** SCLK LOW
+    AND       rTmp1,rTmp1,1      // 25 mask of any other bits
+    LSL       rSI,rSI,1          // 26 shift running input up
+    OR        rSI,rSI,rTmp1      // 27 add the new bit to si 
+    AND       r30, r30,SCLK_L    // 28 ** SCLK LOW
 
     LSL       rSO,rSO,1          // 01 shift SO to prep next bit
     SUB       rCnt,rCnt,1        // 02 dec the bit count
