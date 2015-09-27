@@ -154,8 +154,11 @@ var gDbPer = 15;
 // Counter on state updates
 var stateUpdateCount = 0;
 
-// Indicator of connected and running
+// Indicator of connected 
 var isActive = 0;
+
+// Indicator of running
+var isRunning = 0;
 
 // Contents of state returned from device
 var unitState;
@@ -251,18 +254,29 @@ function SetStateVar( aVarStateName, aVarDivName )
    xmlhttp.send();
 }
 
+// This method updates the top most status data including: 
+// isActve, isRunning and the statusDiv.
+// If the state has not been successfully updated since the last
+// summary update then the connection is assumed to be inactive/failed
 var lastStateUpdateCount = 0;
-function AssessStatus()
+function UpdateSummary()
 {
     if( stateUpdateCount != lastStateUpdateCount ){
        document.getElementById("statusDiv").innerHTML=
                        "Connected";
        isActive = 1;
+       if( unitState.run.toLowerCase() == "on" ){
+          isRunning= 1;
+       }
+       else {
+          isRunning= 0;
+       }
     }
     else{
        document.getElementById("statusDiv").innerHTML=
                        "<font color=red>DISCONNECTED</font>";
        isActive = 0;
+       isRunning= 0;
     }
     lastStateUpdateCount = stateUpdateCount;
 }
@@ -270,7 +284,7 @@ function AssessStatus()
 // This method issues a "getstate" GET request to the server, parses the
 // return JSON data and populates all of the known divs using the device
 // returned state.  If a good response has been received, parsed, and
-// updated then the global variable stateUpdateOk is set to 1.
+// updated then the global variable stateUpdateCount is incremented.
 function UpdateState()
 {
       var xmlhttp;
@@ -278,6 +292,7 @@ function UpdateState()
 
       xmlhttp.onreadystatechange=function() 
       {
+         // Done and status is ok
          if (xmlhttp.readyState==4 && xmlhttp.status==200) 
          {
             // Display the raw input prior to parsing
@@ -292,12 +307,24 @@ function UpdateState()
             document.getElementById("f1HzDiv").innerHTML   =
                                                unitState.f1Hz.toLocaleString();
             stateUpdateCount++;
+
+            bxy1.SetTitle(
+                          "AdcHttpd " + unitState.time +
+                          " Npt="     + unitState.nPts +
+                          " Ave="     + unitState.nAve +
+                          " Chn="     + unitState.chnl +
+                          " F1="      + unitState.f1Hz.toLocaleString() +
+                          " Hz"
+                         );
+
          }
       }
       xmlhttp.open("GET","getstate",true);
       xmlhttp.send();
 }
 
+// This method issues a "getdata" GET request to the server and parses the
+// response into unitData which can then be used by other methods.
 function UpdateData()
 {
       var xmlhttp;
@@ -317,8 +344,8 @@ function UpdateData()
       xmlhttp.send();
 }
 
-// This method must is to be invoked after the state is updated
-// It pull any recently received xy points from the state and
+// This method is to be invoked after the state is updated.
+// It pulls any recently received xy points from the state and
 // updates the display with them.
 function DrawPlot()
 {
@@ -341,38 +368,43 @@ function DrawPlot()
    // Copy in the vectors to draw
    bxy1.SetXy( xyXvec, xyYvec );
 
-   bxy1.SetTitle("AdcHttpd " + unitState.time );
-
    // Draw it
    bxy1.Draw();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // This method is intended to be invoked periodically to update the display
-// and to query the device for its state (so it can be displayed on the
-// next invokation).
+// and to query the device for its state.
 var pollCount = 0;
 function PollDevice()
 {
     // Update the status display based on current state
     if( 0==(pollCount%10) ){
-        AssessStatus();
+        UpdateSummary();
     }
 
     // Issue a state update request to the device
-    if( 0==(pollCount%5) ){
-        UpdateState();
+    if( isActive ){
+        if( 0==(pollCount%5) ){
+           UpdateState();
+        }
+    }
+    else{
+        if( 0==(pollCount%10) ){
+           UpdateState();
+        }
     }
 
     // Update the plot based on recent state data
-    if( isActive ){
-       UpdateData(); // Issue a data update request to the device
-       DrawPlot();   // Draw whatever data we have
+    if( isActive && isRunning ){
+        UpdateData(); // Issue a data update request to the device
+        DrawPlot();   // Draw whatever data we have
     }
 
     // Keep track of the polling count
     pollCount++;
 }
+
 /*
    TODO rethink polling, display, connect rates
    Action             DisCon  Con  NotRun Running   
@@ -386,6 +418,7 @@ function PollDevice()
 // at this rate as well as the device being queried at this rate
 setInterval(PollDevice,100);
 
+// This method toggles peak picking on and off
 var gPeaks = 0;
 function TogglePeaks()
 {
@@ -395,12 +428,14 @@ function TogglePeaks()
    bxy1.PeakPick( gPeaks );
 }
 
+// This method toggles markers on and off
 function ToggleMarkers()
 {
    bxy1.MarkersVisible( bxy1.MarkersIsVisible() ^ 1 );
    bxy1.Draw(); 
 }
 
+// This method stores the current trace into a memory
 var gActiveMem = 0;
 function Mstore()
 {
@@ -408,12 +443,14 @@ function Mstore()
    bxy1.TraceVisible(gActiveMem,1);
 }
 
+// This method toggles the display of the existing memory
 function Mshow()
 {
    bxy1.TraceVisible(gActiveMem,bxy1.TraceIsVisible(gActiveMem)^1);
    bxy1.Draw(); 
 }
 
+// This method toggles the value and display of the envelope.
 function ToggleEnvelope()
 {
    if( bxy1.EnvIsEnable() ){
@@ -428,6 +465,8 @@ function ToggleEnvelope()
    }
 }
 
+// This method toggles through reference values in increments of 10dB
+// from 0 to -70
 function ToggleRef()
 {
    if( gDbRef < -60 ){
@@ -439,6 +478,7 @@ function ToggleRef()
    bxy1.Draw();
 }
 
+// This method toggles through dB/div at 3,6,10, and 15
 function ToggleDbPer()
 {
    switch( gDbPer ){
