@@ -61,6 +61,18 @@ class McF {
     virtual void RcvEvent( char *evtStr ) = 0; 
 };
 
+// Simple mutex
+class SimpleMutex {
+
+private:
+   pthread_mutex_t mLock;
+
+public:
+   SimpleMutex();
+   int Lock();
+   int Unlock();
+};
+
 // Event Registry
 class EvR {
     private:
