@@ -57,7 +57,7 @@ fclose(fid);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Create plot to showed desired compenstation response
+% Create plot to show desired compensation response
 %
 figure(1)
 plot(f,Mf);
@@ -74,25 +74,27 @@ Hcic   = abs( sin( pi*M*FcicRd) ./ sin(pi*FcicRd/R) ) .^N;
 
 figure(2)
 subplot ( 3,1,1 );
-plot(FcicRd,20*log10(abs(Hcic)))
-axis( [0, R, -200, 200 ] );  
+y=10*log10(abs(Hcic));
+plot(FcicRd,y);
+axis( [0, R, max(y)-100, max(y) ] );  
 xlabel("f");ylabel("dB");title("Cic Response");
 
 subplot ( 3,1,2 );
-plot(FcicHz,20*log10(abs(Hcic)));
-axis( [0, Fs, -200, 200 ] );  
+plot(FcicHz,y);
+axis( [0, Fs, max(y)-100, max(y) ] );  
 xlabel("Hz");ylabel("dB");
 
 subplot ( 3,1,3 );
-plot(FcicNm,20*log10(abs(Hcic)));
-axis( [0, 1.0, -200, 200 ] );  
+plot(FcicNm,y);
+axis( [0, 1.0, max(y)-100, max(y) ] );  
 xlabel("Normalized to Fs");ylabel("dB");
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Create plots for aggregate response over 2nd Nyquist
 %
-[mh,mw]=freqz(h,1,length(f));
+% [mh,mw]=freqz(h,1,length(f));
+[mh,mw]=freqz(hz,1,length(f));
 
 mh2 = [mh' fliplr(mh')]';
 mh2(end)=mh2(end-1);
@@ -103,37 +105,37 @@ mt2 = mc2 .* mh2';
 
 figure(3)
 subplot ( 3,1,1 );
-y=20*log10(abs(mh2));
+y=10*log10(abs(mh2));
 plot(mf2,y)
 axis( [0, 1.0, max(y)-150, max(y) ] );  
 xlabel("Fs/R");ylabel("CFIR(dB)");title("Response Comparison");
 
 subplot ( 3,1,2 );
-y=20*log10(abs(mc2));
+y=10*log10(abs(mc2));
 plot(mf2,y);
 axis( [0, 1.0, max(y)-150, max(y) ] );  
 xlabel("Fs/R");ylabel("CIC(dB)");
 
 subplot ( 3,1,3 );
-y=20*log10(abs(mt2));
+y=10*log10(abs(mt2));
 plot(mf2,y);
 axis( [0, 1.0, max(y)-150, max(y) ] );  
 xlabel("Fs/R");ylabel("Combined(dB)");
 
 figure(4)
 subplot ( 3,1,1 );
-y=20*log10(abs(mh2));
+y=10*log10(abs(mh2));
 plot(mf2,y);
 axis( [0, 0.5, max(y)-80, max(y) ] );  
 xlabel("Fs/R");ylabel("CFIR(dB)");title("Response Comparison");
 
 subplot ( 3,1,2 );
-y=20*log10(abs(mt2));
+y=10*log10(abs(mt2));
 plot(mf2,y);
 axis( [0, 0.5, max(y)-80, max(y) ] );  
 xlabel("Fs/R");ylabel("Combined(dB)");
 
 subplot ( 3,1,3 );
-plot(mf2,20*log10(abs(mt2)))
+plot(mf2,y);
 axis( [0, 0.25, max(y)-10, max(y) ] );  
 xlabel("Fs/R");ylabel("Combined(dB)");
