@@ -11,6 +11,9 @@ B  = 16;    %% Coeffi. Bit-width
 
 Fs =  10e6; %% (High) Sampling freq in Hz before decimation
 Fc =  45e3; %% Pass band edge in Hz
+%Fc =  (Fs/R)/4; %% Pass band edge in Hz
+
+NFC = (Fc/(Fs/R));
 
 %%%%%%% fir2.m parameters %%%%%%
 L  = 96;      %% Filter order; must be even
@@ -56,12 +59,17 @@ fprintf(fid,";\n");
 fclose(fid);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+close all;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Create plot to show desired compensation response
 %
 figure(1)
 plot(f,Mf);
 xlabel("0.5 * Fs/R");ylabel("Resp Mag");title("CFIR Response");
+
+%print -dpng fig1.png
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -73,21 +81,26 @@ FcicNm = linspace(1e-5,1,512); % Frd / R
 Hcic   = abs( sin( pi*M*FcicRd) ./ sin(pi*FcicRd/R) ) .^N;
 
 figure(2)
+
 subplot ( 3,1,1 );
-y=10*log10(abs(Hcic));
+y=20*log10(abs(Hcic));
 plot(FcicRd,y);
-axis( [0, R, max(y)-100, max(y) ] );  
-xlabel("f");ylabel("dB");title("Cic Response");
+axis( [0, R, max(y)-200, max(y) ] );  
+xlabel("f");ylabel("dB");
+str=sprintf("CIC Response N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
+title(str);
 
 subplot ( 3,1,2 );
 plot(FcicHz,y);
-axis( [0, Fs, max(y)-100, max(y) ] );  
+axis( [0, Fs, max(y)-200, max(y) ] );  
 xlabel("Hz");ylabel("dB");
 
 subplot ( 3,1,3 );
 plot(FcicNm,y);
-axis( [0, 1.0, max(y)-100, max(y) ] );  
+axis( [0, 1.0, max(y)-200, max(y) ] );  
 xlabel("Normalized to Fs");ylabel("dB");
+
+%print -dpng fig2.png
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -99,43 +112,117 @@ xlabel("Normalized to Fs");ylabel("dB");
 mh2 = [mh' fliplr(mh')]';
 mh2(end)=mh2(end-1);
 
-mf2 = linspace(1e-3,1.0,length(mh2)); %
-mc2 = abs( sin( pi*M*(2*mf2)) ./ sin(pi*(2*mf2)/R) ) .^N;
+mh2 = [mh2' mh2']';
+
+% mf2 is normalized Fs/R FIXME ...
+mf2 = linspace(1e-3,2.0,length(mh2)); %
+mc2 = abs( sin( pi*M*(mf2)) ./ sin(pi*(mf2)/R) ) .^N;
 mt2 = mc2 .* mh2';
 
 figure(3)
 subplot ( 3,1,1 );
-y=10*log10(abs(mh2));
-plot(mf2,y)
-axis( [0, 1.0, max(y)-150, max(y) ] );  
-xlabel("Fs/R");ylabel("CFIR(dB)");title("Response Comparison");
-
-subplot ( 3,1,2 );
-y=10*log10(abs(mc2));
+y=20*log10(abs(mc2));
 plot(mf2,y);
-axis( [0, 1.0, max(y)-150, max(y) ] );  
+axis( [0, 2.0, max(y)-150, max(y) ] );  
 xlabel("Fs/R");ylabel("CIC(dB)");
-
-subplot ( 3,1,3 );
-y=10*log10(abs(mt2));
-plot(mf2,y);
-axis( [0, 1.0, max(y)-150, max(y) ] );  
-xlabel("Fs/R");ylabel("Combined(dB)");
-
-figure(4)
-subplot ( 3,1,1 );
-y=10*log10(abs(mh2));
-plot(mf2,y);
-axis( [0, 0.5, max(y)-80, max(y) ] );  
-xlabel("Fs/R");ylabel("CFIR(dB)");title("Response Comparison");
+str=sprintf("Resp Cmp (2x CIC Nyq) N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
+title(str);
 
 subplot ( 3,1,2 );
-y=10*log10(abs(mt2));
-plot(mf2,y);
-axis( [0, 0.5, max(y)-80, max(y) ] );  
-xlabel("Fs/R");ylabel("Combined(dB)");
+y=20*log10(abs(mh2));
+plot(mf2,y)
+axis( [0, 2.0, max(y)-150, max(y) ] );  
+xlabel("Fs/R");ylabel("CFIR(dB)");
 
 subplot ( 3,1,3 );
+y=20*log10(abs(mt2));
 plot(mf2,y);
-axis( [0, 0.25, max(y)-10, max(y) ] );  
-xlabel("Fs/R");ylabel("Combined(dB)");
+axis( [0, 2.0, max(y)-150, max(y) ] );  
+xlabel("Fs/R");ylabel("Composite(dB)");
+
+%print -dpng fig3.png
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure(4)
+
+subplot ( 3,1,1 );
+y=20*log10(abs(mc2));
+plot(mf2,y);
+axis( [0, 0.5, max(y)-80, max(y) ] );  
+xlabel("Fs/R");ylabel("CIC(dB)");
+str=sprintf("Resp Cmp (1x CIC Nyq) N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
+title(str);
+
+subplot ( 3,1,2 );
+y=20*log10(abs(mh2));
+plot(mf2,y);
+axis( [0, 0.5, max(y)-80, max(y) ] );  
+xlabel("Fs/R");ylabel("CFIR(dB)");
+
+subplot ( 3,1,3 );
+y=20*log10(abs(mt2));
+plot(mf2,y);
+axis( [0, 0.50, max(y)-10, max(y) ] );  
+xlabel("Fs/R");ylabel("Composite(dB)");
+
+%print -dpng fig4.png
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% single plot narrow
+figure(5)
+hold on;
+grid on;
+xlabel("Fs/R");ylabel("dB");
+
+y=20*log10(abs(mc2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'b');
+
+y=20*log10(abs(mh2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'g');
+
+y=20*log10(abs(mt2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'r');
+
+axis( [0, 0.5, -100, 10 ] );  
+
+legend("CIC", "CFIR", "Total");
+str=sprintf("Compsite Response(narrow) N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
+title(str);
+
+print -dpng fig5.png
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% single plot wide
+figure(6)
+hold on;
+grid on;
+xlabel("Fs/R");ylabel("dB");
+
+y=20*log10(abs(mc2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'b');
+
+y=20*log10(abs(mh2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'g');
+
+y=20*log10(abs(mt2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'r');
+
+axis( [0, 2.0, -100, 10 ] );  
+
+legend("CIC", "CFIR", "Total");
+str=sprintf("Compsite Response(wide) N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
+title(str);
+
+print -dpng fig6.png
