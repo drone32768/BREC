@@ -69,7 +69,7 @@ figure(1)
 plot(f,Mf);
 xlabel("0.5 * Fs/R");ylabel("Resp Mag");title("CFIR Response");
 
-%print -dpng fig1.png
+print -dpng fig1.png
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -100,7 +100,7 @@ plot(FcicNm,y);
 axis( [0, 1.0, max(y)-200, max(y) ] );  
 xlabel("Normalized to Fs");ylabel("dB");
 
-%print -dpng fig2.png
+print -dpng fig2.png
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -140,7 +140,7 @@ plot(mf2,y);
 axis( [0, 2.0, max(y)-150, max(y) ] );  
 xlabel("Fs/R");ylabel("Composite(dB)");
 
-%print -dpng fig3.png
+print -dpng fig3.png
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure(4)
@@ -165,7 +165,7 @@ plot(mf2,y);
 axis( [0, 0.50, max(y)-10, max(y) ] );  
 xlabel("Fs/R");ylabel("Composite(dB)");
 
-%print -dpng fig4.png
+print -dpng fig4.png
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % single plot narrow
@@ -227,6 +227,38 @@ title(str);
 
 print -dpng fig6.png
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % write out the composite response in csv
 xy =[ mf2' y' ];
 csvwrite( "resp.csv", xy );
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% single plot very narrow
+figure(7)
+hold on;
+grid on;
+xlabel("Fs/R");ylabel("dB");
+
+y=20*log10(abs(mc2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'b');
+
+y=20*log10(abs(mh2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'g');
+
+y=20*log10(abs(mt2));
+mx=max(y);
+y=y .- mx;
+plot(mf2,y,'r');
+
+axis( [0, 0.250, -2.5, 0.5 ] );  
+
+legend("CIC", "CFIR", "Total");
+str=sprintf("Compsite Response(pass) N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
+title(str);
+
+print -dpng fig7.png
+
