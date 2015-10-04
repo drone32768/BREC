@@ -226,3 +226,7 @@ str=sprintf("Compsite Response(wide) N=%d R=%d M=%d L=%d Fc=%f",N,R,M,L,NFC);
 title(str);
 
 print -dpng fig6.png
+
+% write out the composite response in csv
+xy =[ mf2' y' ];
+csvwrite( "resp.csv", xy );
