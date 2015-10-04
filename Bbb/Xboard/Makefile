@@ -36,7 +36,7 @@ $(TGT)/Xutil	: Xutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -I$(PRU_INC) -L$(PRU_LIB) Xutil.cpp \
                 $(LOCAL_OBJS) \
 		$(UTIL_OBJS) \
-                -lm -lprussdrv -lpthread -o $(TGT)/Xutil
+                -lm -lfftw3 -lprussdrv -lpthread -o $(TGT)/Xutil
 
 $(TGT)/pru00.bin : pru00.p Xpru.h PruConst.hp | $(TGT)
 	${PASM} -V3 -b pru00.p

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <fftw3.h>
 
 #include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
@@ -180,6 +181,86 @@ void QuadTest (Xboard *xbrd )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+double Mag2k(short *bf)
+{
+    int    idx;
+    double m2 =0.0;
+    for(idx=0;idx<2048;idx+=2){
+       m2 += (bf[idx]*bf[idx] + bf[idx+1]*bf[idx+1]);
+    }
+    return(m2);
+}
+
+static fftw_plan     mFftwPlan;
+static fftw_complex *mFftwOutput = NULL;
+
+double Peak2k(short *bf)
+{
+    int    idx;
+    int    fftSize = 1024;
+    double max,m2;
+
+    // if first fft setup
+    if( NULL==mFftwOutput ){
+       mFftwOutput = (fftw_complex*)fftw_malloc(
+                                  sizeof(fftw_complex)*fftSize );
+       mFftwPlan = fftw_plan_dft_1d(
+                  fftSize,
+                  mFftwOutput,
+                  mFftwOutput,
+                  FFTW_FORWARD,
+                  FFTW_ESTIMATE );
+
+    }
+
+    // setup fft input
+    for(idx=0;idx<fftSize;idx++){
+       mFftwOutput[idx][0] = bf[2*idx +1];
+       mFftwOutput[idx][1] = bf[2*idx   ];
+    }
+
+    // execute fft
+    fftw_execute( mFftwPlan );
+
+    // get max mag2
+    max = -1000;
+    for(idx=0;idx<fftSize;idx++){
+       m2 = (mFftwOutput[idx][0] * mFftwOutput[idx][0]) +
+            (mFftwOutput[idx][1] * mFftwOutput[idx][1]);
+       if( m2>max ) max=m2;
+    }
+  
+    // return peak value
+    return( max );
+}
+
+void FilterScanTest (Xboard *xbrd )
+{
+    short          bf[4096];
+    double         f,fstart,fend,fstep;
+    double         m2;
+
+    xbrd->SetTpg( 2 );
+    xbrd->SetSource( 7 );
+
+    fstart= 1.25e6;
+    fend  = fstart + 500e3;
+    fstep = 1e3;
+    f     = fstart;
+    printf("CSV,f(hz),m^2,del(Hz),10log10(m2)\n");
+    while( f<fend ){
+        xbrd->SetLoFreqHz( f ); 
+        xbrd->FlushSamples();
+        xbrd->Get2kSamples( bf );
+        // m2 = Mag2k(bf);
+        m2 = Peak2k(bf);
+        printf("CSV, %f, %f, %f, %f\n",f,m2,f-fstart,10*log10(m2));
+        f += fstep;
+    }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void usage( int exit_code )
 {
     printf("This utility uses the X board device interface software");
@@ -270,6 +351,9 @@ main( int argc, char *argv[] )
             QuadTest(xbrd);
         }
 
+        else if( 0==strcmp(argv[idx], "-filter-scan") ){
+            FilterScanTest(xbrd);
+        }
  
         ////////////////////////////////////////////////
         // the following tests need to be revisited ...
