@@ -191,8 +191,9 @@ double Mag2k(short *bf)
     return(m2);
 }
 
-static fftw_plan     mFftwPlan;
 static fftw_complex *mFftwOutput = NULL;
+static fftw_plan     mFftwPlan;
+static double       *mWin;
 
 double Peak2k(short *bf)
 {
@@ -202,8 +203,10 @@ double Peak2k(short *bf)
 
     // if first fft setup
     if( NULL==mFftwOutput ){
+
        mFftwOutput = (fftw_complex*)fftw_malloc(
                                   sizeof(fftw_complex)*fftSize );
+
        mFftwPlan = fftw_plan_dft_1d(
                   fftSize,
                   mFftwOutput,
@@ -211,12 +214,24 @@ double Peak2k(short *bf)
                   FFTW_FORWARD,
                   FFTW_ESTIMATE );
 
+       mWin = (double*)malloc( sizeof(double) * fftSize );
+       double x,a0,a1,a2,sum;
+       a0 = 0.42659;
+       a1 = 0.49656;
+       a2 = 0.076849;
+       sum = 0.0;
+       for(idx=0;idx<fftSize;idx++){
+           x = (2.0*M_PI * idx)/(fftSize-1);
+           mWin[idx] = a0 - a1*cos(x) + a2*cos(2*x);
+           sum+=mWin[idx];
+       }
+
     }
 
     // setup fft input
     for(idx=0;idx<fftSize;idx++){
-       mFftwOutput[idx][0] = bf[2*idx +1];
-       mFftwOutput[idx][1] = bf[2*idx   ];
+       mFftwOutput[idx][0] = bf[2*idx +1] * mWin[idx];
+       mFftwOutput[idx][1] = bf[2*idx   ] * mWin[idx];
     }
 
     // execute fft
@@ -234,27 +249,37 @@ double Peak2k(short *bf)
     return( max );
 }
 
-void FilterScanTest (Xboard *xbrd )
+void FilterScanTest (Xboard *xbrd, int wide )
 {
     short          bf[4096];
     double         f,fstart,fend,fstep;
-    double         m2;
+    double         m2,m2max;
 
     xbrd->SetTpg( 2 );
     xbrd->SetSource( 7 );
 
     fstart= 1.25e6;
-    fend  = fstart + 500e3;
-    fstep = 1e3;
+    if( wide ){
+        fend  = fstart + 500e3;
+        fstep = 1e3;
+    }
+    else{
+        fend  = fstart + 50e3;
+        fstep = 100;
+    }
     f     = fstart;
-    printf("CSV,f(hz),m^2,del(Hz),10log10(m2)\n");
+    printf("CSV,f(hz),m^2,del(Hz),10log10(m2),10log10(m2/m2[0])\n");
     while( f<fend ){
         xbrd->SetLoFreqHz( f ); 
         xbrd->FlushSamples();
         xbrd->Get2kSamples( bf );
         // m2 = Mag2k(bf);
         m2 = Peak2k(bf);
-        printf("CSV, %f, %f, %f, %f\n",f,m2,f-fstart,10*log10(m2));
+        if( f==fstart ){
+           m2max = m2;
+        }
+        printf("CSV, %f, %f, %f, %f, %f\n",
+                 f,m2,f-fstart,10*log10(m2),10*log10(m2/m2max));
         f += fstep;
     }
 
@@ -351,8 +376,12 @@ main( int argc, char *argv[] )
             QuadTest(xbrd);
         }
 
-        else if( 0==strcmp(argv[idx], "-filter-scan") ){
-            FilterScanTest(xbrd);
+        else if( 0==strcmp(argv[idx], "-filter-scan-wide") ){
+            FilterScanTest(xbrd,1);
+        }
+
+        else if( 0==strcmp(argv[idx], "-filter-scan-narrow") ){
+            FilterScanTest(xbrd,0);
         }
  
         ////////////////////////////////////////////////
