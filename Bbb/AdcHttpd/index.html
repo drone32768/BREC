@@ -42,30 +42,40 @@ button {
   <!-- Local control buttons -->
   <tr>
     <td align="center">
-      <button onclick="ToggleEnvelope( )">Envelope</button>
+      <button onclick="DispToggleEnvelope( )">Envelope</button>
     </td>
     <td align="center">
-      <button onclick="TogglePeaks( )">Peaks</button>
+      <button onclick="DispTogglePeaks( )">Peaks</button>
     </td>
     <td align="center">
-      <button onclick="ToggleMarkers( )">Markers</button>
+      <button onclick="DispToggleMarkers( )">Markers</button>
     </td>
     <td align="center">
-      <button onclick="Mstore( )">Mstore</button>
+      <button onclick="DispMstore( )">Mstore</button>
     </td>
     <td align="center">
-      <button onclick="Mshow( )">Mshow</button>
+      <button onclick="DispToggleMshow( )">Mshow</button>
     </td>
     <td>
-      <button onclick="ToggleRef()">dB ref</button>
+      <button onclick="DispToggleDbRef()">dB ref</button>
     </td>
     <td>
-      <button onclick="ToggleDbPer()">dB/div</button>
+      <button onclick="DispToggleDbPer()">dB/div</button>
+    </td>
+    <td>
+      <button onclick="DispToggleSpan1()">
+           <div id="span1Div"></div>
+      </button>
     </td>
   </tr>
 
   <!-- Remote parameter control buttons -->
   <tr>
+    <td>
+      <button onclick="ToggleStateVar( 'func' )">
+           <div id="funcDiv"></div>
+      </button>
+    </td>
     <td>
       <button onclick="ToggleStateVar( 'nPts' )"># Points</button>
     </td>
@@ -304,12 +314,24 @@ function UpdateState()
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
             document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
             document.getElementById("chnlDiv").innerHTML   =unitState.chnl;
+            document.getElementById("funcDiv").innerHTML   =unitState.func;
             document.getElementById("f1HzDiv").innerHTML   =
                                                unitState.f1Hz.toLocaleString();
+
+            if( unitState.func.toLowerCase() == "pse" ){
+               document.getElementById("span1Div").innerHTML="X";
+            }
+            else if( unitState.func.toLowerCase() == "his" ){
+               document.getElementById("span1Div").innerHTML="Y";
+            }
+            else if( unitState.func.toLowerCase() == "tim" ){
+               document.getElementById("span1Div").innerHTML="Z";
+            }
+
             stateUpdateCount++;
 
             bxy1.SetTitle(
-                          "AdcHttpd " + unitState.time +
+                          "AdcHttpd v2.0" + unitState.time +
                           " Npt="     + unitState.nPts +
                           " Ave="     + unitState.nAve +
                           " Chn="     + unitState.chnl +
@@ -420,7 +442,7 @@ setInterval(PollDevice,100);
 
 // This method toggles peak picking on and off
 var gPeaks = 0;
-function TogglePeaks()
+function DispTogglePeaks()
 {
    if( gPeaks>0 ) gPeaks = 0;
    else           gPeaks = 9;
@@ -429,7 +451,7 @@ function TogglePeaks()
 }
 
 // This method toggles markers on and off
-function ToggleMarkers()
+function DispToggleMarkers()
 {
    bxy1.MarkersVisible( bxy1.MarkersIsVisible() ^ 1 );
    bxy1.Draw(); 
@@ -437,21 +459,21 @@ function ToggleMarkers()
 
 // This method stores the current trace into a memory
 var gActiveMem = 0;
-function Mstore()
+function DispMstore()
 {
    bxy1.TraceSave(gActiveMem);
    bxy1.TraceVisible(gActiveMem,1);
 }
 
 // This method toggles the display of the existing memory
-function Mshow()
+function DispToggleMshow()
 {
    bxy1.TraceVisible(gActiveMem,bxy1.TraceIsVisible(gActiveMem)^1);
    bxy1.Draw(); 
 }
 
 // This method toggles the value and display of the envelope.
-function ToggleEnvelope()
+function DispToggleEnvelope()
 {
    if( bxy1.EnvIsEnable() ){
       bxy1.EnvVisible( 0 );
@@ -467,7 +489,7 @@ function ToggleEnvelope()
 
 // This method toggles through reference values in increments of 10dB
 // from 0 to -70
-function ToggleRef()
+function DispToggleDbRef()
 {
    if( gDbRef < -60 ){
        gDbRef = 10;
@@ -479,7 +501,7 @@ function ToggleRef()
 }
 
 // This method toggles through dB/div at 3,6,10, and 15
-function ToggleDbPer()
+function DispToggleDbPer()
 {
    switch( gDbPer ){
       case 15:
@@ -498,6 +520,10 @@ function ToggleDbPer()
         gDbPer = 10;
    }
    bxy1.Draw(); 
+}
+
+function DispToggleSpan1()
+{
 }
 
 </script>

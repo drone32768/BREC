@@ -67,6 +67,8 @@ private:
     int            mParamChange; // Flag indicating state has changed
     char          *mCfgFname;
 
+    const char    *mFuncStr;     // string representing current function
+
     int            mXyCurLen;    // number of points in xy vectors
     int            mXyMaxLen;    // maximum points in xy vectors
 
@@ -129,6 +131,8 @@ HwModel::HwModel()
        mXvec[ idx ] = mXmin + ((double)idx/2048.0)*(mXmax-mXmin);
        mYvec[ idx ] = -40 + idx%10; 
     }
+
+    mFuncStr    = "PSE";
 }
 
 int
@@ -237,6 +241,20 @@ HwModel::SetState( char *name, char *value )
           }
     }
 
+    else if( 0==strcmp(name,"func") ){
+
+         if( 0==strcmp(mFuncStr,"PSE") ){
+             mFuncStr = "HIS";
+         }
+         else if( 0==strcmp(mFuncStr,"HIS") ){
+             mFuncStr = "TIM";
+         }
+         else{
+             mFuncStr = "PSE";
+         }
+
+    }
+
     else if( 0==strcmp(name,"nPts") ){
           int nPts;
           nPts = mXyCurLen;
@@ -332,6 +350,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     "\"nAve\"     : \"%d\","
                     "\"chnl\"     : \"%d\","
                     "\"nPts\"     : \"%d\","
+                    "\"func\"     : \"%s\","
                     "\"f1Hz\"     : %d "
                     ,
                     mRun?"ON":"OFF",            // run
@@ -339,6 +358,7 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     mNave,                      // nAve
                     mChnl,                      // chnl
                     mXyCurLen,                  // nPts
+                    mFuncStr,                   // func
                     (int)mF1Hz                  // f1Hz
     );
     pos += nBytes;
