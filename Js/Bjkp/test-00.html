@@ -1,0 +1,99 @@
+<html>
+
+<style>
+
+/* CSS Sample 1 */
+#keypadOne {
+  background    : white;
+  border-radius : 1em;
+}
+#keypadOne .BJKP-button {
+  text-align    : center;
+  width         : 4em;
+  height        : 3em;
+  color         : green;
+  border-radius : 3px;
+  box-shadow    : 0 2px 10px rgba(0,0,0,0,0.8);
+}
+
+/* CSS Sample 2 */
+#keypadTwo {
+  background    : white;
+}
+#keypadTwo .BJKP-button {
+  color         : blue;
+  width         : 4em;
+  height        : 4em;
+}
+
+/* CSS Sample 3 */
+#keypadThree {
+  background    : black;
+  border-radius : 1em;
+}
+#keypadThree .BJKP-button {
+  color           : white;
+  background-color: black;
+
+  text-align      : center;
+  width           : 4em;
+  height          : 3em;
+  border-radius   : 3px;
+  box-shadow      : 0 2px 10px rgba(0,0,0,0,0.8);
+}
+#keypadThree .BJKP-button:hover{
+  color           : black;
+  background-color: green;
+}
+</style>
+
+<!-- Create some test buttons -->
+<button onclick="Test01()">Test01</button>
+<button onclick="Test02()">Test02</button>
+<button onclick="Test03()">Test03</button>
+
+<!-- Create a dialog to use -->
+<dialog id="keypadOne">AA</dialog>
+<dialog id="keypadTwo">BB</dialog>
+<dialog id="keypadThree">CC</dialog>
+
+<!-- Include the keypad module -->
+<script src="BJKP.js"></script>
+
+<script>
+
+// Create a keypad object
+var bkp1 = new BJKP.Keypad( document.getElementById("keypadOne") );
+var bkp2 = new BJKP.Keypad( document.getElementById("keypadTwo") );
+var bkp3 = new BJKP.Keypad( document.getElementById("keypadThree") );
+
+// Just open a keypad dialog
+function Test01()
+{
+  console.log("Test01");
+  bkp1.Show( "99", function( val ) {
+        console.log("Test01 callback val="+val);
+     }
+  );
+}
+
+function Test02()
+{
+  console.log("Test02");
+  bkp2.Show( "1e+6", function( val ) {
+        console.log("Test01 callback val="+val);
+     }
+  );
+}
+
+function Test03()
+{
+  console.log("Test03");
+  bkp3.Show( "2.2e+9", function( val ) {
+        console.log("Test02 callback val="+val);
+     }
+  );
+}
+
+</script>
+</html>

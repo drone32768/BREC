@@ -1,6 +1,6 @@
-This directory contains the graphing tool.  It is passive (requires no
-server) and can be used with the test scripts.  
+The modules here provide standalone javascript support functionality
+for various BREC projects.
 
-Passes with:
-jslint --eqeq --vars --plusplus --white
+BJGT - Basic javascript graphing tool
+BJKP - Basic javascript keypad
 
