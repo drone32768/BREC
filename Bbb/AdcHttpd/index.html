@@ -224,6 +224,12 @@ var gYmaxByFunc = [ 0,    32768, 4096 ];
 // current ymax saved by function index
 var gYminByFunc = [ -100, -32768, 0   ];
 
+// current y label saved by function index
+var gYlabelByFunc = [ "dBFS16", "Value", "Count"   ];
+
+// current x label saved by function index
+var gXlabelByFunc = [ "Hz", "Sample", "Bin"   ];
+
 // Last function displayed
 var gPrevFunc = "";
 
@@ -436,8 +442,11 @@ function FuncSwitch()
     if( unitState.func.toLowerCase() == "his" ){
         gFuncIdx = 2;
     }
+
     gYmax = gYmaxByFunc[ gFuncIdx ];
     gYmin = gYminByFunc[ gFuncIdx ];
+    bxy1.SetXlabel(gXlabelByFunc[ gFuncIdx ] );
+    bxy1.SetYlabel(gYlabelByFunc[ gFuncIdx ] );
 
     document.getElementById("yMaxValueDiv").innerHTML = gYmax;
     document.getElementById("yMinValueDiv").innerHTML = gYmin;
