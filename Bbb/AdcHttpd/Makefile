@@ -22,7 +22,9 @@ UTIL_OBJS=../Util/$(TGT)/mcf.o           \
 DEV_OBJS=../Iboard/$(TGT)/Iboard.o       \
          ../Xboard/$(TGT)/Xboard.o
 LOCAL_OBJS= $(TGT)/Devs.o                \
-            $(TGT)/Pse.o
+            $(TGT)/Pse.o                 \
+            $(TGT)/His.o                 \
+            $(TGT)/Tim.o
 
 all	:
 	make $(TGT)/AdcHttpd
@@ -42,6 +44,12 @@ $(TGT)/Devs.o	: Devs.cpp Devs.h | $(TGT)
 
 $(TGT)/Pse.o	: Pse.cpp Pse.h | $(TGT)
 	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Pse.cpp  -o $(TGT)/Pse.o
+
+$(TGT)/Tim.o	: Tim.cpp Tim.h | $(TGT)
+	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Tim.cpp  -o $(TGT)/Tim.o
+
+$(TGT)/His.o	: His.cpp His.h | $(TGT)
+	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c His.cpp  -o $(TGT)/His.o
 
 clean	:
 	rm -f $(TGT)/*

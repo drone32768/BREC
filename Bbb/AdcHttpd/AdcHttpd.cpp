@@ -46,6 +46,8 @@
 
 #include "Devs.h"
 #include "Pse.h"
+#include "Tim.h"
+#include "His.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// HwModel ////////////////////////////////////////////////////////////////////
@@ -67,7 +69,11 @@ private:
     int            mParamChange; // Flag indicating state has changed
     char          *mCfgFname;
 
+#   define         FUNC_PSE 1
+#   define         FUNC_TIM 2
+#   define         FUNC_HIS 3
     const char    *mFuncStr;     // string representing current function
+    int            mFunc;        // enumeration of function
 
     int            mXyCurLen;    // number of points in xy vectors
     int            mXyMaxLen;    // maximum points in xy vectors
@@ -78,6 +84,8 @@ private:
     double         mXmin,mXmax;  // x limits determined by processing
 
     Pse            mPse;         // power spectrum estimator object
+    Tim            mTim;         // time series collector
+    His            mHis;         // histogram 
     double         mF1Hz;        // mixer 1 lo frequency
 
     // Internal support routines
@@ -133,6 +141,7 @@ HwModel::HwModel()
     }
 
     mFuncStr    = "PSE";
+    mFunc       = FUNC_PSE;
 }
 
 int
@@ -193,12 +202,36 @@ void  HwModel::Main()
           }
 
           // Conduct the specified processing
-          mPse.ProcessCoherentInterval( 
+          if( FUNC_PSE == mFunc )
+          {
+              mPse.ProcessCoherentInterval( 
                     mNave,
                     mXyCurLen,
                     mXvec,   
                     mYvec
-          ); 
+              ); 
+          }
+
+          else if( FUNC_TIM == mFunc )
+          {
+              mTim.ProcessCoherentInterval( 
+                    mNave,
+                    mXyCurLen,
+                    mXvec,   
+                    mYvec
+              ); 
+          }
+
+          else if( FUNC_HIS == mFunc )
+          {
+              mHis.ProcessCoherentInterval( 
+                    mNave,
+                    mXyCurLen,
+                    mXvec,   
+                    mYvec
+              ); 
+          }
+
        } // End of running
 
        else{
@@ -245,12 +278,15 @@ HwModel::SetState( char *name, char *value )
 
          if( 0==strcmp(mFuncStr,"PSE") ){
              mFuncStr = "HIS";
+             mFunc    = FUNC_HIS;
          }
          else if( 0==strcmp(mFuncStr,"HIS") ){
              mFuncStr = "TIM";
+             mFunc    = FUNC_TIM;
          }
          else{
              mFuncStr = "PSE";
+             mFunc    = FUNC_PSE;
          }
 
     }

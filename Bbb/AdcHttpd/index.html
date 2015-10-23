@@ -2,11 +2,54 @@
 <html>
 
 <style>
-button {
-     border-radius: 10px;
-     width        : 85px;
-     height       : 35px;
+
+/*
+body {
+  color           : white;
+  background-color: black;
 }
+*/
+
+/* General buttons */
+button {
+  border-radius   : 10px;
+  width           : 85px;
+  height          : 35px;
+}
+
+button:hover {
+  color           : black;
+  background-color: white;
+}
+
+button.button-on{
+  background-color: green;
+}
+
+button.button-off{
+  background-color: grey;
+}
+
+/* Keypad */
+#bjkpKeypad {
+  background      : black;
+  border-radius   : 1em;
+}
+#bjkpKeypad .BJKP-button {
+  color           : white;
+  background-color: black;
+
+  text-align      : center;
+  width           : 4em;
+  height          : 3em;
+  border-radius   : 3px;
+  box-shadow      : 0 2px 10px rgba(0,0,0,0,0.8);
+}
+#bjkpKeypad .BJKP-button:hover{
+  color           : black;
+  background-color: green;
+}
+
 </style>
 
 <head>
@@ -42,13 +85,13 @@ button {
   <!-- Local control buttons -->
   <tr>
     <td align="center">
-      <button onclick="DispToggleEnvelope( )">Envelope</button>
+      <button onclick="DispToggleEnvelope(this)">Envelope</button>
     </td>
     <td align="center">
-      <button onclick="DispTogglePeaks( )">Peaks</button>
+      <button onclick="DispTogglePeaks(this)">Peaks</button>
     </td>
     <td align="center">
-      <button onclick="DispToggleMarkers( )">Markers</button>
+      <button onclick="DispToggleMarkers(this)">Markers</button>
     </td>
     <td align="center">
       <button onclick="DispMstore( )">Mstore</button>
@@ -56,24 +99,28 @@ button {
     <td align="center">
       <button onclick="DispToggleMshow( )">Mshow</button>
     </td>
+
     <td>
-      <button onclick="DispToggleDbRef()">dB ref</button>
+      <button onclick="SetYmax()">Ymax</button>
     </td>
     <td>
-      <button onclick="DispToggleDbPer()">dB/div</button>
+       <div align="center" id="yMaxValueDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetYmin()">Ymin</button>
     </td>
     <td>
-      <button onclick="DispToggleSpan1()">
-           <div id="span1Div"></div>
-      </button>
+      <div align="center" id="yMinValueDiv"></div>
     </td>
+
   </tr>
 
   <!-- Remote parameter control buttons -->
   <tr>
     <td>
       <button onclick="ToggleStateVar( 'func' )">
-           <div id="funcDiv"></div>
+        <div id="funcDiv"></div> 
       </button>
     </td>
     <td>
@@ -95,15 +142,10 @@ button {
       <div align="center" id="chnlDiv"></div>
     </td>
     <td>
-      <button onclick="SetStateVar( 'f1Hz', 'f1HzInput' )">
-            F1(Hz)
-      </button>
+      <button onclick="SetF1byKeypad()">F1(Hz)</button>
     </td>
     <td>
       <div align="center" id="f1HzDiv"></div>
-    </td>
-    <td>
-       <input type="text" name="f1HzInput" value="1.0e6">
     </td>
   </tr>
 
@@ -128,12 +170,24 @@ button {
 <!-- Status line -->
 <div id="statusDiv"></div>
 
+<!-- Dialog to use -->
+<dialog id="bjkpKeypad">DefaultValue</dialog>
+
 </body>
 
 <!----------------------------------------------------------------------------->
+<!-- Include the graphing tool module -->
 <script src="BJGT.js"></script>
+
+<!-- Include the keypad module -->
+<script src="BJKP.js"></script>
+
 <script>
 
+// This is the keypad
+var bkp1 = new BJKP.Keypad( document.getElementById("bjkpKeypad") );
+
+// Graph data default
 var xyXvec = [];
 var xyYvec = []
 var xyPts  = 2048;
@@ -158,8 +212,20 @@ bxy1.MarkersVisible( 1 );
 bxy1.SetXy( xyXvec, xyYvec );
 
 // Local Display controls
-var gDbRef = 0;
-var gDbPer = 15;
+var gYmin  = -120;
+var gYmax  = 0;
+
+// enumeration of current function
+var gFuncIdx = 0; 
+
+// current ymax saved by function index
+var gYmaxByFunc = [ 0,    32768, 4096 ];
+
+// current ymax saved by function index
+var gYminByFunc = [ -100, -32768, 0   ];
+
+// Last function displayed
+var gPrevFunc = "";
 
 // Counter on state updates
 var stateUpdateCount = 0;
@@ -241,7 +307,7 @@ function ToggleStateVar( aVarStateName )
 // This method is given a state variable name and a div name.  The
 // State variable is set at the device to the contents of the div name object
 //
-function SetStateVar( aVarStateName, aVarDivName )
+function SetStateVar( aVarStateName, aValue )
 {
    var xmlhttp;
    xmlhttp=new XMLHttpRequest();
@@ -259,10 +325,24 @@ function SetStateVar( aVarStateName, aVarDivName )
                  "setstate?v=" + 
                  aVarStateName + 
                  ":" + 
-                 document.getElementsByName(aVarDivName)[0].value,
+                 aValue,
                  true);
    xmlhttp.send();
-}
+};
+
+// This method sets the F1 frequency using a keypad for input
+var gLastF1Input="";
+function SetF1byKeypad()
+{
+   bkp1.Show(
+     gLastF1Input,
+     function( val ) {
+        // console.log("Keypad input = "+val);
+        gLastF1Input = val;
+        SetStateVar( 'f1Hz', val );
+     }
+   );
+};
 
 // This method updates the top most status data including: 
 // isActve, isRunning and the statusDiv.
@@ -318,20 +398,15 @@ function UpdateState()
             document.getElementById("f1HzDiv").innerHTML   =
                                                unitState.f1Hz.toLocaleString();
 
-            if( unitState.func.toLowerCase() == "pse" ){
-               document.getElementById("span1Div").innerHTML="X";
-            }
-            else if( unitState.func.toLowerCase() == "his" ){
-               document.getElementById("span1Div").innerHTML="Y";
-            }
-            else if( unitState.func.toLowerCase() == "tim" ){
-               document.getElementById("span1Div").innerHTML="Z";
+            if( gPrevFunc != unitState.func ){
+                FuncSwitch();
+                gPrevFunc = unitState.func;
             }
 
             stateUpdateCount++;
 
             bxy1.SetTitle(
-                          "AdcHttpd v2.0" + unitState.time +
+                          "AdcHttpd v2.1" + unitState.time +
                           " Npt="     + unitState.nPts +
                           " Ave="     + unitState.nAve +
                           " Chn="     + unitState.chnl +
@@ -343,6 +418,29 @@ function UpdateState()
       }
       xmlhttp.open("GET","getstate",true);
       xmlhttp.send();
+}
+
+// This method is be invoked when the funct (or mode) of the device changes.
+// It establishes maximums and minimums and provides the new function
+// enumeration
+function FuncSwitch()
+{
+    console.log("New function = "+unitState.func );
+    
+    if( unitState.func.toLowerCase() == "pse" ){
+        gFuncIdx = 0;
+    }
+    if( unitState.func.toLowerCase() == "tim" ){
+        gFuncIdx = 1;
+    }
+    if( unitState.func.toLowerCase() == "his" ){
+        gFuncIdx = 2;
+    }
+    gYmax = gYmaxByFunc[ gFuncIdx ];
+    gYmin = gYminByFunc[ gFuncIdx ];
+
+    document.getElementById("yMaxValueDiv").innerHTML = gYmax;
+    document.getElementById("yMinValueDiv").innerHTML = gYmin;
 }
 
 // This method issues a "getdata" GET request to the server and parses the
@@ -380,7 +478,7 @@ function DrawPlot()
    // Re-establish limits
    bxy1.SetLogicalLimits( 
                  unitData.lim[0],     unitData.lim[1], 
-                 (gDbRef - 10*gDbPer), gDbRef
+                 gYmin,gYmax
                         );
 
    // Force the length to be current total
@@ -451,7 +549,7 @@ function DispTogglePeaks()
 }
 
 // This method toggles markers on and off
-function DispToggleMarkers()
+function DispToggleMarkers( elem )
 {
    bxy1.MarkersVisible( bxy1.MarkersIsVisible() ^ 1 );
    bxy1.Draw(); 
@@ -473,7 +571,7 @@ function DispToggleMshow()
 }
 
 // This method toggles the value and display of the envelope.
-function DispToggleEnvelope()
+function DispToggleEnvelope( elem )
 {
    if( bxy1.EnvIsEnable() ){
       bxy1.EnvVisible( 0 );
@@ -487,43 +585,34 @@ function DispToggleEnvelope()
    }
 }
 
-// This method toggles through reference values in increments of 10dB
-// from 0 to -70
-function DispToggleDbRef()
+// This method uses a keypad to set the maximum Y axis value
+function SetYmax()
 {
-   if( gDbRef < -60 ){
-       gDbRef = 10;
-   }
-   else{
-       gDbRef = gDbRef - 10;
-   }
-   bxy1.Draw();
+   bkp1.Show( 
+     document.getElementById("yMaxValueDiv").innerHTML,
+     function( val ) {
+        console.log("Keypad input = "+val);
+        document.getElementById("yMaxValueDiv").innerHTML = val;
+        gYmax = Number(val);
+        gYmaxByFunc[ gFuncIdx ] = gYmax;
+        console.log("gYmax="+gYmax);
+     }
+   );
 }
 
-// This method toggles through dB/div at 3,6,10, and 15
-function DispToggleDbPer()
+// This method uses a keypad to set the maximum Y axis value
+function SetYmin()
 {
-   switch( gDbPer ){
-      case 15:
-        gDbPer = 10;
-        break;
-      case 10:
-        gDbPer = 6;
-        break;
-      case 6:
-        gDbPer = 3;
-        break;
-      case 3:
-        gDbPer = 15;
-        break;
-      default:
-        gDbPer = 10;
-   }
-   bxy1.Draw(); 
-}
-
-function DispToggleSpan1()
-{
+   bkp1.Show( 
+     document.getElementById("yMinValueDiv").innerHTML,
+     function( val ) {
+        console.log("Keypad input = "+val);
+        document.getElementById("yMinValueDiv").innerHTML = val;
+        gYmin = Number(val);
+        gYminByFunc[ gFuncIdx ] = gYmin;
+        console.log("gYmin="+gYmin);
+     }
+   );
 }
 
 </script>
