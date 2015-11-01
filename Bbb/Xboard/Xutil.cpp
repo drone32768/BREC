@@ -38,29 +38,42 @@ void Show2kIQ( short *bf, char fmt )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int IqpTest_Check2kPattern(unsigned short *ubf, unsigned short *key, int reset )
+int IqpTest_Check2kPattern(
+   unsigned short *ubf, 
+   unsigned short *key, 
+   int             reset,
+   int             showErrs )
 {
     int            idx,nErrs;
     unsigned short expt,find;
 
+#define IQ_INC 600 // 100 for 10MHz
+#define IQ_OFF  35
+
     if( reset ){
-       *key = ubf[0] - 100;
+       *key = ubf[0] - IQ_INC;
     }
 
     nErrs = 0;
     for(idx=0;idx<2048;idx+=2){
-        expt =  (*key + 100 ); // I(n) to I(n+1) = 100;
+        expt =  (*key + IQ_INC ); // I(n) to I(n+1) = IQ_INC;
         find =  ubf[idx];
         if( expt!=find ){
-            printf("%d seq error : expected 0x%hx found 0x%hx\n",idx,expt,find);
             nErrs++;
+            if( showErrs ){
+                printf("%d seq error : expected 0x%hx found 0x%hx\n",
+                              idx,expt,find);
+            }
         }
 
-        expt =  ubf[idx+1] + 35;
+        expt =  ubf[idx+1] + IQ_OFF;
         find =  ubf[idx];
         if( expt!=find ){
-            printf("%d iq phase : expected 0x%hx found 0x%hx\n",idx,expt,find);
             nErrs++;
+            if( showErrs ){
+                printf("%d iq phase : expected 0x%hx found 0x%hx\n",
+                              idx,expt,find);
+            }
         }
         *key = ubf[idx]; 
     }
@@ -75,6 +88,8 @@ void IqpTest (Xboard *xbrd )
     int            reset;
     unsigned short pinc;
     struct timeval tv1,tv2;
+    int            errs;
+    int            showErrs;
 
     printf("Starting iq pattern test\n");
 
@@ -86,14 +101,27 @@ void IqpTest (Xboard *xbrd )
     reset     = 1;
     pinc      = 1;
     icnt      = 0;
+    errs      = 0;
+    showErrs  = 1; // Also stops on first error
+    key       = 0;
+    xbrd->FlushSamples();
     gettimeofday( &tv1, NULL );
     while( 1 ){
+        // xbrd->FlushSamples();
+        // reset     = 1;
+
         xbrd->Get2kSamples( (short*)ubf );
-        nErrs=IqpTest_Check2kPattern(ubf,&key,reset);
+        nErrs=IqpTest_Check2kPattern(ubf,&key,reset,showErrs);
+
         if( nErrs ){
-            Show2kIQ( (short*)ubf, 'x' );
-            return;
+            errs++;
+            reset = 1;
+            if( showErrs ){
+                Show2kIQ( (short*)ubf, 'x' );
+                return;
+            }
         }
+
         cnt++;
         icnt++;
         reset=0;
@@ -102,8 +130,8 @@ void IqpTest (Xboard *xbrd )
            gettimeofday( &tv2, NULL );
            us = tv_delta_useconds( &tv2, &tv1 );
 
-           printf("%8d 2k words checked, t=%8d uS, i=%6d, %f k word/sec\n",
-                         cnt,us,icnt,(2.0*1e6*icnt/(double)us) );
+           printf("%8d 2k wrd checked,t=%8d uS,i=%d,%f kwd/sec,errs=%d\n",
+                         cnt,us,icnt,(2.0*1e6*icnt/(double)us),errs );
            icnt = 0;
            gettimeofday( &tv1, NULL );
         }

@@ -67,7 +67,7 @@ MAIN:
 //    zero the sram command
 //    return to main command loope
 // The stream loop does the following:
-//    clock out a 0x0 write and in the fifo sample
+//    clock out a read cmd and in the fifo sample
 //    store sample in sram buffer for other pru
 //    advance sample index
 //    read command word
@@ -207,8 +207,7 @@ clockbit:
     OR        rTmp2,rTmp2,rTmp2  // 11 nop
     OR        rTmp2,rTmp2,rTmp2  // 12 nop
     OR        rTmp2,rTmp2,rTmp2  // 13 nop
-    OR        r30, r30,SCLK_H    // 14 ** SCLK high
-
+    OR        rTmp2,rTmp2,rTmp2  // 14 nop
     OR        rTmp2,rTmp2,rTmp2  // 15 nop
     OR        rTmp2,rTmp2,rTmp2  // 16 nop
     OR        rTmp2,rTmp2,rTmp2  // 17 nop
@@ -218,18 +217,79 @@ clockbit:
     OR        rTmp2,rTmp2,rTmp2  // 21 nop
     OR        rTmp2,rTmp2,rTmp2  // 22 nop
     OR        rTmp2,rTmp2,rTmp2  // 23 nop
-    LSR       rTmp1,r31,MISO_B   // 24 ** Get MISO
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        r30, r30,SCLK_H    // 24 ** SCLK high
 
-    AND       rTmp1,rTmp1,1      // 25 mask of any other bits
-    LSL       rSI,rSI,1          // 26 shift running input up
-    OR        rSI,rSI,rTmp1      // 27 add the new bit to si 
-    AND       r30, r30,SCLK_L    // 28 ** SCLK LOW
+    OR        rTmp2,rTmp2,rTmp2  // 25 nop
+    OR        rTmp2,rTmp2,rTmp2  // 26 nop
+    OR        rTmp2,rTmp2,rTmp2  // 27 nop
+    OR        rTmp2,rTmp2,rTmp2  // 28 nop
+    OR        rTmp2,rTmp2,rTmp2  // 29 nop
+    OR        rTmp2,rTmp2,rTmp2  // 30 nop
+    OR        rTmp2,rTmp2,rTmp2  // 31 nop
+    OR        rTmp2,rTmp2,rTmp2  // 32 nop
+    OR        rTmp2,rTmp2,rTmp2  // 33 nop
+    OR        rTmp2,rTmp2,rTmp2  // 34 nop
+    OR        rTmp2,rTmp2,rTmp2  // 35 nop
+    OR        rTmp2,rTmp2,rTmp2  // 36 nop
+    OR        rTmp2,rTmp2,rTmp2  // 37 nop
+    OR        rTmp2,rTmp2,rTmp2  // 38 nop
+    LSR       rTmp1,r31,MISO_B   // 39 ** Get MISO
+
+    AND       rTmp1,rTmp1,1      // 40 mask of any other bits
+    LSL       rSI,rSI,1          // 41 shift running input up
+    OR        rSI,rSI,rTmp1      // 42 add the new bit to si 
+    OR        rTmp2,rTmp2,rTmp2  // 43 nop
+    OR        rTmp2,rTmp2,rTmp2  // 44 nop
+    OR        rTmp2,rTmp2,rTmp2  // 45 nop
+    OR        rTmp2,rTmp2,rTmp2  // 46 nop
+    OR        rTmp2,rTmp2,rTmp2  // 47 nop
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    OR        rTmp2,rTmp2,rTmp2  // +1 
+    AND       r30, r30,SCLK_L    // 48 ** SCLK LOW
 
     LSL       rSO,rSO,1          // 01 shift SO to prep next bit
     SUB       rCnt,rCnt,1        // 02 dec the bit count
     QBNE      clockbit,rCnt,0    // 03 if more bits, goto top of loop
 
-    OR        r30, r30, SS_HIGH  // ss high
+    OR        rTmp2,rTmp2,rTmp2  // nop
+    OR        rTmp2,rTmp2,rTmp2  // nop
+    OR        rTmp2,rTmp2,rTmp2  // nop
+    OR        rTmp2,rTmp2,rTmp2  // nop
+
+    OR        r30, r30, SS_HIGH  // ** SS HIGH
+    OR        rTmp2,rTmp2,rTmp2  // 01 nops to ensure slave statemachine exec
+    OR        rTmp2,rTmp2,rTmp2  // 02 nop
+    OR        rTmp2,rTmp2,rTmp2  // 03 nop
+    OR        rTmp2,rTmp2,rTmp2  // 04 nop
+    OR        rTmp2,rTmp2,rTmp2  // 05 nop
+    OR        rTmp2,rTmp2,rTmp2  // 06 nop
+    OR        rTmp2,rTmp2,rTmp2  // 07 nop
+    OR        rTmp2,rTmp2,rTmp2  // 08 nop
+    OR        rTmp2,rTmp2,rTmp2  // 09 nop
+    OR        rTmp2,rTmp2,rTmp2  // 10 nop
+    OR        rTmp2,rTmp2,rTmp2  // 11 nop
+    OR        rTmp2,rTmp2,rTmp2  // 12 nop
+    OR        rTmp2,rTmp2,rTmp2  // 13 nop
+    OR        rTmp2,rTmp2,rTmp2  // 14 nop
+    OR        rTmp2,rTmp2,rTmp2  // 15 nop
+    OR        rTmp2,rTmp2,rTmp2  // 16 nop
+    OR        rTmp2,rTmp2,rTmp2  // 17 nop
+    OR        rTmp2,rTmp2,rTmp2  // 18 nop
+    OR        rTmp2,rTmp2,rTmp2  // 19 nop
+    OR        rTmp2,rTmp2,rTmp2  // 21 nop
+    OR        rTmp2,rTmp2,rTmp2  // 22 nop
+    OR        rTmp2,rTmp2,rTmp2  // 23 nop
+    OR        rTmp2,rTmp2,rTmp2  // 24 nop
+    OR        rTmp2,rTmp2,rTmp2  // 25 nop
+    OR        rTmp2,rTmp2,rTmp2  // 26 nop
 xspi_wr_rd_out:
     MOV       rArg0,rSI          // move serial input to return
     RET
@@ -251,3 +311,4 @@ xspi_wr_rd_out:
 //      |         .         |                   |
 //      +-------------------+                   +------------
 //
+// NOTE: 10 inst between transitions -> 200k words / sec ok

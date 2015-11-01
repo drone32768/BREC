@@ -167,9 +167,13 @@ Xboard::SimGet2kSamples( short *bf )
 ////////////////////////////////////////////////////////////////////////////////
 Xboard::Xboard()
 {
-    mTpg     = 2; // TODO - non zero for interim testing only;
+    // 0 = no test pattern
+    // 2 = 1/8 Fs at half scale
+    // 4 = 1/4 Fs at +/- 4
+    mTpg     = 2; 
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
+    mFsDec   = 100000;   // Function of firmware
     mCSPS    = mFsHz;    // Function of board and channel selected
 }
 
@@ -178,6 +182,7 @@ int
 Xboard::Open()
 {
     int ret;
+    unsigned short fwVer;
 
     printf("Xboard:Open enter\n");
 
@@ -199,7 +204,21 @@ Xboard::Open()
     // Since we may just have powered on fpga let it load
     us_sleep( 100000 );
 
-    printf("Xboard::Open::fw ver = 0x%08x\n",GetFwVersion());
+    fwVer = GetFwVersion();
+    printf("Xboard::Open::fw ver = 0x%08x\n",fwVer);
+    if( 0x0700 == (fwVer&0xff00) ){
+       mFsHz    = 60000000; // Function of the board
+       mFsDec   = 100000;
+       mCSPS    = mFsHz;    
+    }
+    else{
+       mFsHz    = 10000000; // Function of the board
+       mFsDec   = 100000;
+       mCSPS    = mFsHz;    
+    }
+    printf("Xboard::Open::FsHz        = %d\n",mFsHz);
+    printf("Xboard::Open::mFsDec      = %d\n",mFsDec);
+    printf("Xboard::Open::CSPS        = %d\n",mCSPS);
 
     // Set startup default signal paramters
     SetLoFreqHz( 640000 );
@@ -313,8 +332,8 @@ Xboard::SetLoFreqHz( double freqHz )
 
     printf("Xboard:SetFreq=%f Hz\n",freqHz);
 
-    hzMod = ((long long)freqHz) % 10000000;
-    pinc  = hzMod * 65536 / 10000000;;
+    hzMod = ((long long)freqHz) % mFsHz;
+    pinc  = hzMod * 65536 / mFsHz;;
     pincLo=       pinc & 0x0fff;
     pincHi= (pinc>>12) & 0x0fff;
 
@@ -331,7 +350,7 @@ Xboard::SetLoFreqHz( double freqHz )
 
     FlushSamples(); // Necessary to continue streaming
 
-    actHz     = pinc * 10000000 / 65536;
+    actHz     = pinc * mFsHz / 65536;
     mLoFreqHz = actHz;
     printf("Xboard:SetFreq= actual %f Hz\n",actHz);
 
@@ -497,13 +516,13 @@ Xboard::GetComplexSampleRate()
             return( mFsHz/2 );
             break;
         case XBOARD_FS_CIC_I    :
-            return( 100000 );     // FIXME - this should be relative to Fs
+            return( mFsDec );     // FIXME - this should be relative to Fs
             break;
         case XBOARD_FS_CIC_Q    :
-            return( 100000  );
+            return( mFsDec  );
             break;
         case XBOARD_FS_CIC_IQ   :
-            return( 100000 );
+            return( mFsDec );
         default                 :
             return( mFsHz );
             break;

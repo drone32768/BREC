@@ -241,6 +241,26 @@ clockbit:
     QBNE      clockbit,rCnt,0    // 03 if more bits, goto top of loop
 
     OR        r30, r30, SS_HIGH  // ss high
+    OR        rTmp2,rTmp2,rTmp2  // 01 nops to ensure slave statemachine exec
+    OR        rTmp2,rTmp2,rTmp2  // 02 nop
+    OR        rTmp2,rTmp2,rTmp2  // 03 nop
+    OR        rTmp2,rTmp2,rTmp2  // 04 nop
+    OR        rTmp2,rTmp2,rTmp2  // 05 nop
+    OR        rTmp2,rTmp2,rTmp2  // 06 nop
+    OR        rTmp2,rTmp2,rTmp2  // 07 nop
+    OR        rTmp2,rTmp2,rTmp2  // 08 nop
+    OR        rTmp2,rTmp2,rTmp2  // 09 nop
+    OR        rTmp2,rTmp2,rTmp2  // 10 nop
+    OR        rTmp2,rTmp2,rTmp2  // 11 nop
+    OR        rTmp2,rTmp2,rTmp2  // 12 nop
+    OR        rTmp2,rTmp2,rTmp2  // 13 nop
+    OR        rTmp2,rTmp2,rTmp2  // 14 nop
+    OR        rTmp2,rTmp2,rTmp2  // 15 nop
+    OR        rTmp2,rTmp2,rTmp2  // 16 nop
+    OR        rTmp2,rTmp2,rTmp2  // 17 nop
+    OR        rTmp2,rTmp2,rTmp2  // 18 nop
+    OR        rTmp2,rTmp2,rTmp2  // 19 nop
+    OR        rTmp2,rTmp2,rTmp2  // 20 nop
 xspi_wr_rd_out:
     MOV       rArg0,rSI          // move serial input to return
     RET

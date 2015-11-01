@@ -47,6 +47,7 @@ private:
     int                      mXspiDbg;
     int                      mCSPS;    
     int                      mFsHz;    
+    int                      mFsDec;    
     double                   mLoFreqHz;
 
     ////////////////////////////////////////
