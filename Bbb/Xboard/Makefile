@@ -57,3 +57,4 @@ clean	:
 	rm -rf $(TGT)
 	rm -f *~
 	rm -f tmp
+	rm -f pru_images.h

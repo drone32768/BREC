@@ -145,6 +145,62 @@ void IqpTest (Xboard *xbrd )
 
 }
 
+void IqpTest2 (Xboard *xbrd )
+{
+    unsigned short ubf[4096];
+    unsigned short key;
+    int            nErrs,cnt,icnt,us;
+    int            reset;
+    unsigned short pinc;
+    struct timeval tv1,tv2;
+    int            errs;
+
+    printf("Starting iq pattern test\n");
+
+    xbrd->SetTpg( 1 );
+    xbrd->SetSource( 7 );
+    xbrd->SetLoFreqHz( 0 ); 
+
+    cnt       = 0;
+    reset     = 1;
+    pinc      = 1;
+    icnt      = 0;
+    errs      = 0;
+    key       = 0;
+    xbrd->FlushSamples();
+    gettimeofday( &tv1, NULL );
+    while( 1 ){
+        xbrd->FlushSamples();
+        xbrd->Get2kSamples( (short*)ubf );
+
+        reset     = 1;
+        nErrs=IqpTest_Check2kPattern(ubf,&key,reset,0);
+
+        if( nErrs ){
+            errs++;
+        }
+
+        cnt++;
+        icnt++;
+
+        if( 0==(cnt%300) ){
+           gettimeofday( &tv2, NULL );
+           us = tv_delta_useconds( &tv2, &tv1 );
+
+           printf("%8d 2k wrd checked,t=%8d uS,i=%d,%f kwd/sec,errs=%d\n",
+                         cnt,us,icnt,(2.0*1e6*icnt/(double)us),errs );
+           icnt = 0;
+           gettimeofday( &tv1, NULL );
+        }
+        if( 0==(cnt%4000) ){
+           printf("changing lo...\n");
+           xbrd->SetLoFreqHz( pinc ); 
+           pinc = (pinc+1)%4096;
+           reset= 1;
+        }
+    }
+
+}
 ////////////////////////////////////////////////////////////////////////////////
 void Histogram (Xboard *xbrd )
 {
@@ -398,6 +454,10 @@ main( int argc, char *argv[] )
 
         else if( 0==strcmp(argv[idx], "-iqp") ){
             IqpTest( xbrd );
+        }
+
+        else if( 0==strcmp(argv[idx], "-iqp2") ){
+            IqpTest2( xbrd );
         }
 
         else if( 0==strcmp(argv[idx], "-quad") ){

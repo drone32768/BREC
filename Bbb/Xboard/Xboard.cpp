@@ -170,7 +170,7 @@ Xboard::Xboard()
     // 0 = no test pattern
     // 2 = 1/8 Fs at half scale
     // 4 = 1/4 Fs at +/- 4
-    mTpg     = 2; 
+    mTpg     = 0; 
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
     mFsDec   = 100000;   // Function of firmware
@@ -558,7 +558,7 @@ Xboard::XspiWrite( int wval )
 
     // Wait for pru done with command
     bsy  = 1;
-    cnt  = 100;
+    cnt  = 2000;
     while( bsy && 0!=cnt ){
         bsy = GetSramWord( SRAM_OFF_CMD );
         if( bsy ){
