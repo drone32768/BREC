@@ -1,0 +1,53 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+	/* identification */
+	part-number = "brecX";
+	version = "00A0";
+
+	/* state the resources this cape uses */
+	exclusive-use =
+		/* the pin header uses */
+		"P9.25",	/* gpio3_21  */
+		"P9.27",	/* gpio3_19  */
+		"P9.28",	/* gpio3_17  */
+		"P9.29",	/* gpio3_15  */
+		"P9.30",	/* gpio3_16  */
+		"P9.31",	/* gpio3_14  */
+		"pru0";
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+
+			pru_pru_pins: pinmux_pru_pru_pins {
+				pinctrl-single,pins = <
+         /* See pad control registers section spruh73h p747 */
+         0x1ac 0x2e /* P9.25  MODE6 | RCVEN | PRU | nopull */
+         0x1a4 0x2e /* P9.27  MODE6 | RCVEN | PRU | nopull */
+         0x19c 0x2d /* P9.28  MODE5 | RCVEN | PRU | nopull */
+         0x194 0x2d /* P9.29  MODE5 | RCVEN | PRU | nopull */
+         0x198 0x2d /* P9.30  MODE5 | RCVEN | PRU | nopull */
+         0x190 0x2d /* P9.31  MODE5 | RCVEN | PRU | nopull */
+				>;
+			}; /* end of pru_pins */
+
+		}; /* end of __overlay__ */
+
+	}; /* end of fragment@0 */
+
+
+	fragment@2 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pru_pru_pins>;
+		};
+	};
+
+
+};
