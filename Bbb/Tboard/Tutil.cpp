@@ -15,6 +15,23 @@
 #include "../Iboard/Iboard.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+/*
+I2C items to remember:
+ a) Data can only change while scl is low
+
+ b) SDA and SCL remain high while the bus is not busy.
+    The pullups on both maintain this.
+    [ Max2112 p14 ]
+
+Questions:
+ 1.0 What do we leave SCL at on exit (what state is it left in - hi/lo)
+ 2.0 What do we leave SDA at on exit (input/output)
+ 3.0 On changing SDA in/out direction does this cause a state change
+     that could be misinterpreted
+ 4.0 How to avoid multiple entities driving SDA
+
+*/
+
 class UI2C {
 
 #   define UI2C_ERR_CFG       0x00000001
@@ -48,11 +65,6 @@ private:
     GpioUtil *mGpioSCL;
     GpioUtil *mGpioSDA;
 };
-
-/*
-I2C items to remember:
- a) data can only change while scl is low
-*/
 
 ////////////////////////////////////////////////////////////////////////////////
 UI2C::UI2C()
@@ -93,8 +105,9 @@ UI2C::Cfg( GpioUtil *scl, GpioUtil *sda )
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Assume we do not know the status of either line
 // START = SDA high -> low while SCL is high
+// Pre : SCL=high  SDA=???/high
+// Post: SCL=high  SDA=out/low
 //
 uint32_t
 UI2C::start()
@@ -113,8 +126,9 @@ UI2C::start()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Assume we do not know the status of either line
 // STOP = SDA low->high while SCL is high
+// Pre : SCL=high  SDA=???/??? 
+// Post: SCL=high  SDA=out/high
 //
 uint32_t
 UI2C::stop()
@@ -136,14 +150,14 @@ UI2C::stop()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Pre : SCL=high  SDA=out/??? 
+// Post: SCL=high  SDA=out/high
 uint32_t
 UI2C::write_cycle( uint8_t byte )
 {
     int           err = 0;
     int           cnt;
     int           ab;
-
-    mGpioSDA->SetDirInput(0);
 
     for(cnt=0;cnt<8;cnt++){
 
@@ -158,11 +172,15 @@ UI2C::write_cycle( uint8_t byte )
 
         byte = byte << 1;
     }
+
     // SCL = high
+    // SDA = output
 
     mGpioSDA->SetDirInput(1);   // prep for ack cycle where sda=input
 
     mGpioSCL->Set(0);           // start low of ack cycle
+    us_sleep( mUsHold );
+    mGpioSCL->Set(1);           // start high of ack cycle
     us_sleep( mUsHold );
 
     ab = mGpioSDA->Get();       // get ack from sda
@@ -170,15 +188,21 @@ UI2C::write_cycle( uint8_t byte )
         err |= UI2C_ERR_WRITE_ACK;
     }
 
-    mGpioSCL->Set(1);           // start high of ack cycle
+    mGpioSCL->Set(0);           // scl low to rest sda 
     us_sleep( mUsHold );
 
-    mGpioSCL->Set(0);           // end ack cycle
+    mGpioSDA->SetDirInput(0);   // return SDA to output
+    mGpioSDA->Set( 1 );
+    us_sleep( mUsHold );
+
+    mGpioSCL->Set(1);           // return SCL to high
 
     return( err );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Pre : SCL=high  SDA=out/??? 
+// Post: SCL=high  SDA=out/high
 uint32_t
 UI2C::read_cycle( uint8_t *bytePtr, int nack )
 {
@@ -188,10 +212,12 @@ UI2C::read_cycle( uint8_t *bytePtr, int nack )
     uint8_t       byte = 0;
 
     mGpioSDA->SetDirInput(1);
-
     us_sleep( mUsHold );  
 
     for(cnt=0;cnt<8;cnt++){
+
+        mGpioSCL->Set(0);
+        us_sleep( mUsHold );
 
         mGpioSCL->Set(1);
         us_sleep( mUsHold );
@@ -199,16 +225,17 @@ UI2C::read_cycle( uint8_t *bytePtr, int nack )
         bit = mGpioSDA->Get();
         us_sleep( mUsHold );
 
-        mGpioSCL->Set(0);
-        us_sleep( mUsHold );
-
-        byte = (byte | bit); // FIXME
+        byte = (byte<<1) | bit; 
     }
 
-    // SCL = low
+    // SCL = high
+    // SDA = input
+
+    mGpioSCL->Set(0);           // start ack cycle
+    us_sleep( mUsHold );
 
     mGpioSDA->SetDirInput(0);   // prep for ack cycle where sda=output
-    mGpioSDA->Set( 1 );         // set ack value
+    mGpioSDA->Set( !nack );     // set ack value
     us_sleep( mUsHold );
 
     mGpioSCL->Set(1);           // start high of ack cycle
@@ -217,10 +244,14 @@ UI2C::read_cycle( uint8_t *bytePtr, int nack )
     mGpioSCL->Set(0);           // end ack cycle
     us_sleep( mUsHold );
 
-    mGpioSDA->SetDirInput(1);
+    mGpioSDA->SetDirInput(0);   // return SDA to output
+    mGpioSDA->Set( 1 );
+    us_sleep( mUsHold );
+
+    mGpioSCL->Set(1);           // return SCL to high
+    us_sleep( mUsHold );
 
     *bytePtr = byte;
-
     return( err );
 }
 
@@ -229,19 +260,41 @@ uint32_t
 UI2C::Write( uint8_t devAddr, uint8_t regAddr, uint8_t *regBytes, int nBytes )
 {
     int           err = 0;
+    int           cerr;
     int           idx;
 
-    err |= start();
-
-    err |= write_cycle( (devAddr&0xfe) );
-
-    err |= write_cycle( (regAddr&0xff) );
-
-    for(idx=0;idx<nBytes;idx++){
-        err |= write_cycle( (regBytes[idx]&0xff) );
+    cerr = start();
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: start[1] 0x%08x\n",__FILE__,__LINE__,cerr);
     }
 
-    err |= stop();
+    cerr = write_cycle( (devAddr&0xfe) );
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: dev addr write cycle 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
+
+    cerr = write_cycle( (regAddr&0xff) );
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: reg addr write cycle 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
+
+    for(idx=0;idx<nBytes;idx++){
+        cerr = write_cycle( regBytes[idx] );
+        err |= cerr;
+        if( cerr && mDbg ){
+            printf("%s:%d: value write cycle idx=%d/%d 0x%08x\n",
+                            __FILE__,__LINE__,cerr,idx,nBytes);
+        }
+    }
+
+    cerr = stop();
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: stop 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
  
     return( err );
 }
@@ -251,23 +304,53 @@ uint32_t
 UI2C::Read( uint8_t devAddr, uint8_t regAddr, uint8_t *regBytes, int nBytes )
 {
     int           err = 0;
+    int           cerr;
     int           idx;
 
-    err |= start();
-
-    err |= write_cycle( (devAddr&0xfe) );
-
-    err |= write_cycle( (regAddr&0xff) );
-
-    err |= start();
-
-    err |= write_cycle( (devAddr&0xfe) | 1 );
-
-    for(idx=0;idx<nBytes;idx++){
-        err |= read_cycle( &(regBytes[idx]), (idx==(nBytes-1)?1:0) );
+    cerr = start();
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: start[1] 0x%08x\n",__FILE__,__LINE__,cerr);
     }
 
-    err |= stop();
+    cerr = write_cycle( (devAddr&0xfe) );
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: dev addr write cycle 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
+
+    cerr = write_cycle( (regAddr&0xff) );
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: reg addr write cycle 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
+
+    cerr = start();
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: start[2] 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
+
+    cerr = write_cycle( (devAddr&0xfe) | 1 );
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: write cycle R=1 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
+
+    for(idx=0;idx<nBytes;idx++){
+        cerr = read_cycle( &(regBytes[idx]), (idx==(nBytes-1)?1:0) );
+        err |= cerr;
+        if( cerr && mDbg ){
+            printf("%s:%d: read cycle idx=%d/%d 0x%08x\n",
+                            __FILE__,__LINE__,cerr,idx,nBytes);
+        }
+    }
+
+    cerr = stop();
+    err |= cerr;
+    if( cerr && mDbg ){
+        printf("%s:%d: stop 0x%08x\n",__FILE__,__LINE__,cerr);
+    }
 
     return( err );
 }
@@ -366,22 +449,40 @@ main( int argc, char *argv[] )
             if( !g6pg ) { usage(-1); }
             if( (idx+1) >= argc ){ usage(-1); }
 
+            uint8_t bytes[32];
             uint8_t devAddr = strtol(argv[idx+1],&end,0);
             uint8_t regAddr = strtol(argv[idx+2],&end,0);
-            
-            uint8_t bytes[32];
+
+            bytes[0] = strtol(argv[idx+3],&end,0);
+
+            printf("I2C Writing dev=0x%02x, reg=0x%02x\n",devAddr, regAddr);
+            printf("   val=0x%02x\n",bytes[0]);
             err = ui2c.Write( devAddr, regAddr, bytes, 1 );
 
             printf("err=0x%08x\n",err);
 
-            idx+=2;
-            continue;
+            break;
         }
 
+        else if( 0==strcmp(argv[idx], "-read") ){
+
+            if( !g6pg ) { usage(-1); }
+            if( (idx+1) >= argc ){ usage(-1); }
+
+            uint8_t bytes[32];
+            uint8_t devAddr = strtol(argv[idx+1],&end,0);
+            uint8_t regAddr = strtol(argv[idx+2],&end,0);
+
+            printf("I2C Reading dev=0x%02x, reg=0x%02x\n",devAddr, regAddr);
+            err = ui2c.Read( devAddr, regAddr, bytes, 1 );
+
+            printf("err=0x%08x, value=0x%02x\n",err,bytes[0]);
+
+            break;
+        }
         // Move to next command
         idx++;
     }
-
 
     printf("Ttst: Enter Exit\n");
 }
