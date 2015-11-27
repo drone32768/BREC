@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 	// re-setting alternate functions, making input/outputs).
 	//
 	
-	gpio_init();
+	// gpio_init();
 	
 	//
 	// Listen on port 2542.
@@ -296,8 +296,8 @@ int main(int argc, char **argv)
 					socklen_t nsize = sizeof(address);
 					
 					newfd = accept(s, (struct sockaddr*)&address, &nsize);
-					if (verbose)
-						printf("connection accepted - fd %d\n", newfd);
+					// if (verbose)
+				printf("connection accepted - fd %d\n", newfd);
 					if (newfd < 0)
 					{
 						perror("accept");
@@ -309,18 +309,21 @@ int main(int argc, char **argv)
 						}
 						FD_SET(newfd, &conn);
 					}
+	                                gpio_init();
 				}
 				//
 				// Otherwise, do work.
 				//
 				else if (handle_data(fd))
 				{
+	                                gpio_close();
+
 					//
 					// Close connection when required.
 					//
 					
-					if (verbose)
-						printf("connection closed - fd %d\n", fd);
+					// if (verbose)
+				printf("connection closed - fd %d\n", fd);
 					close(fd);
 					FD_CLR(fd, &conn);
 				}
@@ -330,8 +333,10 @@ int main(int argc, char **argv)
 			//
 			else if (FD_ISSET(fd, &except))
 			{
-				if (verbose)
-					printf("connection aborted - fd %d\n", fd);
+                                gpio_close();
+
+				// if (verbose)
+				printf("connection aborted - fd %d\n", fd);
 				close(fd);
 				FD_CLR(fd, &conn);
 				if (fd == s)

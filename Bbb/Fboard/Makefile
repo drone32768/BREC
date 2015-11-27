@@ -16,8 +16,14 @@ LOCAL_OBJS=$(TGT)/Fboard.o
 all	:
 	make $(TGT)/xvcSrvrSim
 	make $(TGT)/xvcSrvrF
+	make $(TGT)/Fctl
 ifeq ($(TGT),arm)
 endif
+
+$(TGT)/Fctl	: Fctl.cpp | $(TGT)
+	g++ Fctl.cpp \
+             $(UTIL_OBJS) \
+             -lpthread -o $(TGT)/Fctl
 
 $(TGT)/xvcSrvrSim	: $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioSim.o | $(TGT)
 	g++ $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioSim.o -o $(TGT)/xvcSrvrSim

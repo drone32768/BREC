@@ -7,10 +7,25 @@
 #include "../Util/gpioutil.h"
 
 GpioUtil gpios[ 4 ];
+GpioUtil progBgpio;
+GpioUtil doneGpio;
+GpioUtil initBgpio;
 
 void gpio_init(void)
 {
-   if( verbose ) printf("GPIO_INIT\n");
+   printf("GPIO_INIT\n");
+
+   progBgpio.Define( 50 /* gpio1_18 */ );
+   progBgpio.Export();
+   progBgpio.SetDirInput( 0 );
+
+   doneGpio.Define( 31 /* gpio0_31 */ );
+   doneGpio.Export();
+   doneGpio.SetDirInput( 1 );
+
+   initBgpio.Define( 30 /* gpio0_30 */ );
+   initBgpio.Export();
+   initBgpio.SetDirInput( 1 );
 
    gpios[ GPIO_TDI ].Define( 12 /* gpio0_12 */ );
    gpios[ GPIO_TDI ].Export();
@@ -32,11 +47,24 @@ void gpio_init(void)
    gpios[ GPIO_TMS ].SetDirInput( 0 );
    gpios[ GPIO_TMS ].Open();
    
+   // assert program_b
+   progBgpio.Set(0);
 }
 
 void gpio_close(void)
 {
-   if( verbose ) printf("GPIO_CLOSE\n");
+   printf("GPIO_CLOSE\n");
+
+   printf("done      = %d\n",doneGpio.Get() );
+   printf("init_b    = %d\n",initBgpio.Get() );
+   printf("program_b = %d\n",progBgpio.Get() );
+
+   // release program_b
+   progBgpio.Set(1);
+
+   progBgpio.Close();
+   doneGpio.Close();
+   initBgpio.Close();
    gpios[ GPIO_TDI ].Close();
    gpios[ GPIO_TDO ].Close();
    gpios[ GPIO_TCK ].Close();
