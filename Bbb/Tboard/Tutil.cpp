@@ -50,7 +50,7 @@ main( int argc, char *argv[] )
     MAX2112        tuner;
     int            err;
 
-    printf("Ttst: Enter Main\n");
+    printf("%s: Enter Main\n",__FILE__);
 
     portN   = 0;
     g6pg    = NULL;
@@ -95,7 +95,7 @@ main( int argc, char *argv[] )
             if( (idx+1) >= argc ){ usage(-1); }
             val = strtol(argv[idx+1],&end,0);
 
-            printf("enable port=%d enable=%d\n",portN,val);
+            printf("%s:enable port=%d enable=%d\n",__FILE__,portN,val);
             ibrd->EnablePort( portN, val );
 
             idx+=2;
@@ -107,39 +107,40 @@ main( int argc, char *argv[] )
             // IO1 = p7 = "ss2"   = SCL
             // IO2 = p8 = "stat"  = SDA
             err = ui2c.configure( g6pg->GetSs2(), g6pg->GetStat() );
-            printf("ui2c  configure err=0x%08x\n",err);
+            printf("%s:ui2c  configure err=0x%08x\n",__FILE__,err);
 
             err = dac.Configure( &ui2c );
-            printf("dac   configure err=0x%08x\n",err);
+            printf("%s:dac   configure err=0x%08x\n",__FILE__,err);
 
             err = tuner.Configure( &ui2c );
-            printf("tuner configure err=0x%08x\n",err);
+            printf("%s:tuner configure err=0x%08x\n",__FILE__,err);
         } 
-
-        else if( 0==strcmp(argv[idx], "-read") ){
-
-            if( !g6pg ) { usage(-1); }
-            if( (idx+1) >= argc ){ usage(-1); }
-
-            uint8_t bytes[32];
-            uint8_t devAddr = strtol(argv[idx+1],&end,0);
-            uint8_t regAddr = strtol(argv[idx+2],&end,0);
-
-            printf("I2C Reading dev=0x%02x, reg=0x%02x\n",devAddr, regAddr);
-            err =  dac.Read( devAddr, regAddr, bytes, 1 );
-
-            printf("err=0x%08x, value=0x%02x\n",err,bytes[0]);
-
-            break;
-        }
 
         else if( 0==strcmp(argv[idx], "-dac_write") ){
             if( (idx+1) >= argc ){ usage(-1); }
 
             val = strtol(argv[idx+1],&end,0);
-            printf("Set dac to 0x%04x\n",val);
 
             err = dac.Set( 0xC6, val );
+            printf("%s:dac_write val = 0x%04x err = 0x%08x\n",__FILE__,val,err);
+        }
+
+        else if( 0==strcmp(argv[idx], "-dac_read") ){
+            err = dac.Get( 0xC6, &val );
+            printf("%s:dac_read  val = 0x%04x err = 0x%08x\n",__FILE__,val,err);
+        }
+
+        else if( 0==strcmp(argv[idx], "-dac_mod") ){
+            int up = 1;
+            val = 0x0;
+            while( 1 ){
+                dac.Set( 0xC6, val  );
+                if( up ){ val = (val+32); }
+                else    { val = (val-32); }
+                if( val > 0xfff ) { up=0; val=0xfff; }
+                if( val < 0     ) { up=1; val=0x0; }
+                
+            }
         }
 
         // Move to next command
