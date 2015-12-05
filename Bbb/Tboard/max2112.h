@@ -41,19 +41,32 @@ public:
 
     uint32_t Configure( UI2C *ui2c );
 
-    uint32_t Write( uint8_t  devAddr, 
+    uint32_t WriteReg( 
+                    uint8_t  devAddr, 
                     uint8_t  regAddr, 
                     uint8_t *regBytes, 
                     int      nBytes );
 
-    uint32_t Read(  uint8_t  devAddr, 
+    uint32_t ReadReg(  
+                    uint8_t  devAddr, 
                     uint8_t  regAddr, 
                     uint8_t *regBytes, 
                     int      nBytes );
+
+    double SetFreqHz( double freqHz );
+    uint32_t Show();
     
+#define MAX2112_DBG_WRITE 0x00000001
+#define MAX2112_DBG_READ  0x00000002
 private:
     uint32_t         mDbg;
     UI2C            *mI2c;
+    int              mNdiv;    // integer divider
+    int              mFdiv;    // fractional divider
+    int              mDevAddr; // I2C device address
+    int              mXd;      // ref osc divider to use
+    int              mOscHz;   // ref osc freq in hertz
 
+    double           mFreqHz;  // frequency in hertz
 };
 

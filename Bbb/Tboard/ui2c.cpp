@@ -128,16 +128,21 @@ UI2C::start_cond()
         printf("%s:%d:start_cond issued \n",__FILE__,__LINE__);
     }
 
+    // We need to do this to allow any slave's who just 
+    // acked to release the bus.  This occurs if a start is issued
+    // before a stop has been issued.
+    pull_low( mGpioSCL ); 
+
     // Make sure SCL is high
     err = wait_high( mGpioSCL );
     if( err ){
-        return( UI2C_ERR_START_COND );
+        return( UI2C_ERR_START_CONDA );
     }
 
     // Make sure SDA is high
     err = wait_high( mGpioSDA );
     if( err ){
-        return( UI2C_ERR_START_COND );
+        return( UI2C_ERR_START_CONDB );
     }
 
     // Wait min time with SDA and SCL high
@@ -201,6 +206,12 @@ UI2C::write_cycle( uint8_t byte )
                   __FILE__,__LINE__,byte);
     }
 
+    // Verify SCL is high at start
+    err = wait_high( mGpioSCL );
+    if( err ){
+       return( UI2C_ERR_WRITE_A );
+    }
+
     for(cnt=0;cnt<8;cnt++){
 
         // SCL low
@@ -221,7 +232,7 @@ UI2C::write_cycle( uint8_t byte )
         // SCL high
         err = wait_high( mGpioSCL );
         if( err ){
-            return( UI2C_DBG_WRITE_CYCLE );
+            return( UI2C_ERR_WRITE_B );
         }
         us_sleep( mUsHold );
 
@@ -239,11 +250,14 @@ UI2C::write_cycle( uint8_t byte )
 
     // SCL high
     err = wait_high( mGpioSCL );
+    if( err ){
+        return( err );
+    }
 
     // Get SDA state to check slave ACK
     ab = mGpioSDA->Get();       
     if( ab ){
-        return( UI2C_DBG_WRITE_CYCLE );
+        return( UI2C_ERR_WRITE_C );
     }
 
     if( mDbg & UI2C_DBG_WRITE_CYCLE ){

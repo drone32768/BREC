@@ -46,7 +46,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 MAX2112::MAX2112()
 {
-   mDbg = 0x0;
+   mDbg  = 0xffffffff;
+
+   mNdiv    = 90;
+   mFdiv    = 0;
+   mDevAddr = 0xC0;
+   mXd      = 2;
+   mOscHz   = 20000000;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,55 +64,212 @@ MAX2112::Configure( UI2C *ui2c )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+uint32_t
+MAX2112::Show()
+{
+   int          idx;
+   uint8_t      bytes[32];
+   uint32_t     err = 0;
+
+   printf("%s:%d ----------------\n",__FILE__,__LINE__);
+   for(idx=0;idx<14;idx++){
+       err |= ReadReg( mDevAddr, idx, &(bytes[idx]), 1 );
+       printf("reg[%02d] = 0x%02x\n",idx,bytes[idx]);
+   }
+   printf("FRAC   = %d\n",
+                  (0x80&bytes[0])?1:0
+         );
+   printf("N      = %d\n", 
+                  (((int)(bytes[0]&0x7f))<<8) + bytes[1] 
+         );
+   printf("CPMP   = %d\n", 
+                  ( (bytes[2]>>6) & 0x3 ) 
+         );
+   printf("CPLIN  = %d\n", 
+                  ( (bytes[2]>>4) & 0x3 ) 
+         );
+   printf("F      = %d\n", 
+                  ( (((int)(bytes[2]&0x03))<<16)+ 
+                    (((int)(bytes[3]))<<8)      + 
+                    bytes[4]) 
+         );
+   printf("XD     = %d\n", 
+                  ( (bytes[5]>>5) & 0x7 ) 
+         );
+   printf("R      = %d\n", 
+                  ( (bytes[5]   ) & 0x1f ) 
+         );
+   printf("PLL D24= %d\n", 
+                  (0x80&bytes[6])?1:0
+         );
+   printf("PLL CPS= %d\n", 
+                  (0x40&bytes[6])?1:0
+         );
+   printf("PLL ICP= %d\n", 
+                  (0x20&bytes[6])?1:0
+         );
+   printf("VCO    = %d\n", 
+                  ( (bytes[7]>>2) & 0x1f ) 
+         );
+   printf("VAS    = %d\n", 
+                  (0x04&bytes[7])?1:0
+         );
+   printf("ADL    = %d\n", 
+                  (0x02&bytes[7])?1:0
+         );
+   printf("ADE    = %d\n", 
+                  (0x01&bytes[7])?1:0
+         );
+   printf("LPF    = %d\n", 
+                  bytes[8]
+         );
+   printf("STBY   = %d\n", 
+                  (0x80&bytes[9])?1:0
+         );
+   printf("PWDN   = %d\n", 
+                  (0x20&bytes[9])?1:0
+         );
+   printf("BBG    = %d\n", 
+                  (0x07&bytes[9])
+         );
+   printf("Shut   = %d\n", 
+                  bytes[10]
+         );
+   printf("Test   = %d\n", 
+                  bytes[11]
+         );
+   printf("POR    = %d\n", 
+                  (0x80&bytes[12])?1:0
+         );
+   printf("VASA   = %d\n", 
+                  (0x40&bytes[12])?1:0
+         );
+   printf("VASE   = %d\n", 
+                  (0x20&bytes[12])?1:0
+         );
+   printf("LD     = %d\n", 
+                  (0x10&bytes[12])?1:0
+         );
+   printf("VCOSBR = %d\n", 
+                  ( (bytes[13]>>3) & 0x1f ) 
+         );
+   printf("ADC    = %d\n", 
+                  ( (bytes[13]) & 0x7 ) 
+         );
+
+   return( err );
+} 
+
+////////////////////////////////////////////////////////////////////////////////
+double
+MAX2112::SetFreqHz( double freqHz )
+{
+   uint8_t      byte;
+   unsigned int refHz;
+   double       del;
+
+   refHz   = mOscHz / mXd;
+   mNdiv   = freqHz / refHz;
+   del     = ( freqHz - ( mNdiv * refHz ) );
+   mFdiv   = (1<<20) * del / refHz ;
+   mFreqHz = ( mNdiv * refHz ) + ( refHz * mFdiv / (1<<20) );
+
+   printf("Hz(tgt) = %f\n",freqHz);
+   printf("Ref(Hz) = %d\n",refHz);
+   printf("N       = %d\n",mNdiv);
+   printf("del(Hz) = %f\n",del);
+   printf("F       = %d\n",mFdiv);
+   printf("Hz(act) = %f\n",mFreqHz);
+
+   byte = 0x80 | ( (mNdiv>>8)&0x7f );
+   WriteReg( mDevAddr, 0x00, &byte, 1 );
+
+   byte = (mNdiv&0xff); 
+   WriteReg( mDevAddr, 0x01, &byte, 1 );
+
+   byte = 0x10 | ((mFdiv>>16)&0x0f); 
+   WriteReg( mDevAddr, 0x02, &byte, 1 );
+
+   byte = ((mFdiv>>8)&0xff); 
+   WriteReg( mDevAddr, 0x03, &byte, 1 );
+
+   byte = ((mFdiv   )&0xff); 
+   WriteReg( mDevAddr, 0x04, &byte, 1 );
+
+   byte = 0x01 | ((mXd<<5)&0xe0); 
+   WriteReg( mDevAddr, 0x05, &byte, 1 );
+
+   byte = 0x40 | ((mFreqHz>=1125e6)?0x00:0x80);
+   WriteReg( mDevAddr, 0x06, &byte, 1 );
+
+   byte = 0xCC; 
+   WriteReg( mDevAddr, 0x07, &byte, 1 );
+
+   byte = 0x00;  // TODO lpf filter bw
+   WriteReg( mDevAddr, 0x08, &byte, 1 );
+
+   byte = 0x00;  // TODO bbg
+   WriteReg( mDevAddr, 0x09, &byte, 1 );
+
+   byte = 0x00;  
+   WriteReg( mDevAddr, 0x0A, &byte, 1 );
+
+   byte = 0x08;  
+   WriteReg( mDevAddr, 0x0B, &byte, 1 );
+
+   ReadReg( mDevAddr, 0x0C, &byte, 1 );
+   printf("%s:%d:Status1 = 0x%02x\n",__FILE__,__LINE__,byte);
+
+   ReadReg( mDevAddr, 0x0D, &byte, 1 );
+   printf("%s:%d:Status2 = 0x%02x\n",__FILE__,__LINE__,byte);
+
+   return( mFreqHz );
+}
+
+////////////////////////////////////////////////////////////////////////////////
 uint32_t 
-MAX2112::Write( 
+MAX2112::WriteReg( 
    uint8_t  devAddr, 
    uint8_t  regAddr,  
    uint8_t *regBytes, 
    int      nBytes )
 {
     int           err = 0;
-    int           cerr;
     int           idx;
 
-    cerr = mI2c->start_cond();
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: err start[1] 0x%08x\n",__FILE__,__LINE__,cerr);
-        return( cerr );
+    err = mI2c->start_cond();
+    if( err && mDbg ){
+        printf("%s:%d: err start[1] 0x%08x\n",__FILE__,__LINE__,err);
+        return( err );
     }
 
-    cerr = mI2c->write_cycle( (devAddr&0xfe) );
-    err |= cerr;
-    if( cerr && mDbg ){
+    err = mI2c->write_cycle( (devAddr&0xfe) );
+    if( err && mDbg ){
         printf("%s:%d: err dev addr write cycle 0x%08x\n",
-                             __FILE__,__LINE__,cerr);
-        return( cerr );
+                             __FILE__,__LINE__,err);
+        return( err );
     }
 
-    cerr = mI2c->write_cycle( (regAddr&0xff) );
-    err |= cerr;
-    if( cerr && mDbg ){
+    err = mI2c->write_cycle( (regAddr&0xff) );
+    if( err && mDbg ){
         printf("%s:%d: err reg addr write cycle 0x%08x\n",
-                            __FILE__,__LINE__,cerr);
-        return( cerr );
+                            __FILE__,__LINE__,err);
+        return( err );
     }
 
     for(idx=0;idx<nBytes;idx++){
-        cerr = mI2c->write_cycle( regBytes[idx] );
-        err |= cerr;
-        if( cerr && mDbg ){
+        err = mI2c->write_cycle( regBytes[idx] );
+        if( err && mDbg ){
             printf("%s:%d: err value write cycle idx=%d/%d 0x%08x\n",
-                            __FILE__,__LINE__,cerr,idx,nBytes);
-        return( cerr );
+                            __FILE__,__LINE__,err,idx,nBytes);
+        return( err );
         }
     }
 
-    cerr = mI2c->stop_cond();
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: err stop_cond 0x%08x\n",__FILE__,__LINE__,cerr);
-        return( cerr );
+    err = mI2c->stop_cond();
+    if( err && mDbg ){
+        printf("%s:%d: err stop_cond 0x%08x\n",__FILE__,__LINE__,err);
+        return( err );
     }
  
     return( err );
@@ -114,59 +277,59 @@ MAX2112::Write(
 
 ////////////////////////////////////////////////////////////////////////////////
 uint32_t 
-MAX2112::Read( 
+MAX2112::ReadReg( 
    uint8_t  devAddr, 
    uint8_t  regAddr, 
    uint8_t *regBytes, 
    int      nBytes )
 {
     int           err = 0;
-    int           cerr;
     int           idx;
 
-    cerr = mI2c->start_cond();
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: start[1] 0x%08x\n",__FILE__,__LINE__,cerr);
+// printf("MAX2112:ReadReg: dev   = 0x%02x\n", devAddr );
+// printf("MAX2112:ReadReg: reg   = 0x%02x\n", regAddr );
+// printf("MAX2112:ReadReg: bytes = 0x%02x\n", nBytes );
+
+    err = mI2c->start_cond();
+    if( err && mDbg ){
+        printf("%s:%d: err start(1) 0x%08x\n",__FILE__,__LINE__,err);
     }
 
-    cerr = mI2c->write_cycle( (devAddr&0xfe) );
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: dev addr write cycle 0x%08x\n",__FILE__,__LINE__,cerr);
+    err = mI2c->write_cycle( (devAddr&0xfe) );
+    if( err && mDbg ){
+        printf("%s:%d: err dev addr write cycle 0x%08x\n",
+                             __FILE__,__LINE__,err);
     }
 
-    cerr = mI2c->write_cycle( (regAddr&0xff) );
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: reg addr write cycle 0x%08x\n",__FILE__,__LINE__,cerr);
+    err = mI2c->write_cycle( (regAddr&0xff) );
+    if( err && mDbg ){
+        printf("%s:%d: err reg addr write cycle 0x%08x\n",
+                             __FILE__,__LINE__,err);
     }
 
-    cerr = mI2c->start_cond();
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: start[2] 0x%08x\n",__FILE__,__LINE__,cerr);
+us_sleep( 10000 );
+
+    err = mI2c->start_cond();
+    if( err && mDbg ){
+        printf("%s:%d: err start(2) 0x%08x\n",__FILE__,__LINE__,err);
     }
 
-    cerr = mI2c->write_cycle( (devAddr&0xfe) | 1 );
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: write cycle R=1 0x%08x\n",__FILE__,__LINE__,cerr);
+    err = mI2c->write_cycle( (devAddr&0xfe) | 1 );
+    if( err && mDbg ){
+        printf("%s:%d: err write cycle R=1 0x%08x\n",__FILE__,__LINE__,err);
     }
 
     for(idx=0;idx<nBytes;idx++){
-        cerr = mI2c->read_cycle( &(regBytes[idx]), (idx==(nBytes-1)?1:0) );
-        err |= cerr;
-        if( cerr && mDbg ){
-            printf("%s:%d: read cycle idx=%d/%d 0x%08x\n",
-                            __FILE__,__LINE__,cerr,idx,nBytes);
+        err = mI2c->read_cycle( &(regBytes[idx]), (idx==(nBytes-1)?1:0) );
+        if( err && mDbg ){
+            printf("%s:%d: err read cycle idx=%d/%d 0x%08x\n",
+                            __FILE__,__LINE__,err,idx,nBytes);
         }
     }
 
-    cerr = mI2c->stop_cond();
-    err |= cerr;
-    if( cerr && mDbg ){
-        printf("%s:%d: stop_cond 0x%08x\n",__FILE__,__LINE__,cerr);
+    err = mI2c->stop_cond();
+    if( err && mDbg ){
+        printf("%s:%d: err stop_cond 0x%08x\n",__FILE__,__LINE__,err);
     }
 
     return( err );

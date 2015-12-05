@@ -143,6 +143,19 @@ main( int argc, char *argv[] )
             }
         }
 
+        else if( 0==strcmp(argv[idx], "-tune") ){
+            double hzTgt,hzAct;
+
+            if( (idx+1) >= argc ){ usage(-1); }
+            hzTgt = atof(argv[idx+1]);
+            hzAct = tuner.SetFreqHz( hzTgt  );
+            printf("HzTgt=%f, HzAct=%f\n",hzTgt,hzAct);
+
+        }
+        else if( 0==strcmp(argv[idx], "-tshow") ){
+            tuner.Show();
+        }
+
         // Move to next command
         idx++;
     }

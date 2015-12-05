@@ -43,11 +43,16 @@ public:
 
     /** Error flags */
 #   define UI2C_ERR_CFG          0x00000001
-#   define UI2C_ERR_START_COND   0x00000002
-#   define UI2C_ERR_STOP_COND    0x00000004
-#   define UI2C_ERR_WRITE_ACK    0x00000008
-#   define UI2C_ERR_READ_ACK     0x00000010
-#   define UI2C_ERR_HIGH_TOUT    0x00000020
+#   define UI2C_ERR_START_CONDA  0x00000002
+#   define UI2C_ERR_START_CONDB  0x00000004
+#   define UI2C_ERR_STOP_COND    0x00000008
+#   define UI2C_ERR_WRITE_ACK    0x00000010
+#   define UI2C_ERR_READ_ACK     0x00000020
+#   define UI2C_ERR_HIGH_TOUT    0x00000040
+
+#   define UI2C_ERR_WRITE_A      0x00001000
+#   define UI2C_ERR_WRITE_B      0x00002000
+#   define UI2C_ERR_WRITE_C      0x00004000
 
     UI2C();
 

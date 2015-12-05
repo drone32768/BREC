@@ -3,14 +3,15 @@ include ../common.mk
 UTIL_OBJS=../Util/$(TGT)/gpioutil.o \
           ../Util/$(TGT)/mcf.o \
           ../Iboard/$(TGT)/Iboard.o
-DEV_OBJS=
-LOCAL_OBJS=$(TGT)/ui2c.o $(TGT)/mcp4725.o $(TGT)/max2112.o
+LOCAL_OBJS=$(TGT)/ui2c.o \
+           $(TGT)/mcp4725.o \
+           $(TGT)/max2112.o
 
 all	:
 	make $(TGT)/Tutil
 
 
-$(TGT)/Tutil	: Tutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+$(TGT)/Tutil	: Tutil.cpp $(LOCAL_OBJS) $(UTIL_OBJS) | $(TGT)
 	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) Tutil.cpp \
                 $(LOCAL_OBJS) \
 		$(UTIL_OBJS) \
