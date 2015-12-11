@@ -66,7 +66,8 @@ private:
     int              mDevAddr; // I2C device address
     int              mXd;      // ref osc divider to use
     int              mOscHz;   // ref osc freq in hertz
-
+    int              mBbgDb;   // base band gain in db
+    double           mLpfHz;   // LPF 3dB point in hertz
     double           mFreqHz;  // frequency in hertz
 };
 
