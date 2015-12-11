@@ -1,5 +1,4 @@
 //
-//
 // This source code is available under the "Simplified BSD license".
 //
 // Copyright (c) 2015, J. Kleiner
@@ -48,11 +47,13 @@ MAX2112::MAX2112()
 {
    mDbg  = 0xffffffff;
 
+   mOscHz   = 20000000; // fixed by osc on board
+   mXd      = 0; // divide osc by one, fixed by loop filter on board
+   mDevAddr = 0xC0;
    mNdiv    = 90;
    mFdiv    = 0;
-   mDevAddr = 0xC0;
-   mXd      = 2;
-   mOscHz   = 20000000;
+   mBbgDb   = 0;
+   mLpfHz   = 4e6;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +90,7 @@ MAX2112::Show()
                   ( (bytes[2]>>4) & 0x3 ) 
          );
    printf("F      = %d\n", 
-                  ( (((int)(bytes[2]&0x03))<<16)+ 
+                  ( (((int)(bytes[2]&0x0f))<<16)+ 
                     (((int)(bytes[3]))<<8)      + 
                     bytes[4]) 
          );
@@ -157,6 +158,15 @@ MAX2112::Show()
                   ( (bytes[13]) & 0x7 ) 
          );
 
+   printf("mDevAddr = 0x%02x\n",mDevAddr);
+   printf("mNdiv    = %d\n",mNdiv);
+   printf("mFdiv    = %d\n",mFdiv);
+   printf("mXd      = %d\n",mXd);
+   printf("mOscHz   = %d\n",mOscHz);
+   printf("mFreqHz  = %f\n",mFreqHz);
+   printf("mLpfHz   = %f\n",mLpfHz);
+   printf("mBbgDb   = %d\n",mBbgDb);
+
    return( err );
 } 
 
@@ -168,11 +178,12 @@ MAX2112::SetFreqHz( double freqHz )
    unsigned int refHz;
    double       del;
 
-   refHz   = mOscHz / mXd;
+   refHz   = mOscHz; // NOTE: for xd = 0, div by 1
    mNdiv   = freqHz / refHz;
    del     = ( freqHz - ( mNdiv * refHz ) );
    mFdiv   = (1<<20) * del / refHz ;
-   mFreqHz = ( mNdiv * refHz ) + ( refHz * mFdiv / (1<<20) );
+   mFreqHz = ( (double)mNdiv * (double)refHz ) + 
+                  ( (double)refHz * (double)mFdiv / (double)(1<<20) );
 
    printf("Hz(tgt) = %f\n",freqHz);
    printf("Ref(Hz) = %d\n",refHz);
@@ -187,6 +198,35 @@ MAX2112::SetFreqHz( double freqHz )
    byte = (mNdiv&0xff); 
    WriteReg( mDevAddr, 0x01, &byte, 1 );
 
+   // See below for F
+
+   byte = 0x01 | ((mXd<<5)&0xe0); 
+   WriteReg( mDevAddr, 0x05, &byte, 1 );
+
+   byte = 0x40 | ((mFreqHz>=1125e6)?0x00:0x80);
+   WriteReg( mDevAddr, 0x06, &byte, 1 );
+
+   // NOTE: With VASA the VCO value is 
+   // the starting vco for auto select
+   // Use the power on default value of 11001
+   // and enable VAS
+   byte = 0xCC;  
+   WriteReg( mDevAddr, 0x07, &byte, 1 );
+
+   // LPF cutoff freq = 4MHz + ( LPF - 12 ) * 290kHz
+   byte = 0xff & (unsigned int)(12 + (mLpfHz - 4e6) / 290e3); 
+   WriteReg( mDevAddr, 0x08, &byte, 1 );
+
+   byte = (0x0f & mBbgDb); 
+   WriteReg( mDevAddr, 0x09, &byte, 1 );
+
+   byte = 0x00;  
+   WriteReg( mDevAddr, 0x0A, &byte, 1 );
+
+   byte = 0x08;  
+   WriteReg( mDevAddr, 0x0B, &byte, 1 );
+
+   /////////////////////
    byte = 0x10 | ((mFdiv>>16)&0x0f); 
    WriteReg( mDevAddr, 0x02, &byte, 1 );
 
@@ -195,27 +235,7 @@ MAX2112::SetFreqHz( double freqHz )
 
    byte = ((mFdiv   )&0xff); 
    WriteReg( mDevAddr, 0x04, &byte, 1 );
-
-   byte = 0x01 | ((mXd<<5)&0xe0); 
-   WriteReg( mDevAddr, 0x05, &byte, 1 );
-
-   byte = 0x40 | ((mFreqHz>=1125e6)?0x00:0x80);
-   WriteReg( mDevAddr, 0x06, &byte, 1 );
-
-   byte = 0xCC; 
-   WriteReg( mDevAddr, 0x07, &byte, 1 );
-
-   byte = 0x00;  // TODO lpf filter bw
-   WriteReg( mDevAddr, 0x08, &byte, 1 );
-
-   byte = 0x00;  // TODO bbg
-   WriteReg( mDevAddr, 0x09, &byte, 1 );
-
-   byte = 0x00;  
-   WriteReg( mDevAddr, 0x0A, &byte, 1 );
-
-   byte = 0x08;  
-   WriteReg( mDevAddr, 0x0B, &byte, 1 );
+   /////////////////////
 
    ReadReg( mDevAddr, 0x0C, &byte, 1 );
    printf("%s:%d:Status1 = 0x%02x\n",__FILE__,__LINE__,byte);
