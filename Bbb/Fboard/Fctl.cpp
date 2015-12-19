@@ -31,14 +31,17 @@ main( int argc, char *argv[] )
     progBgpio.Define( 50 /* gpio1_18 */ );
     progBgpio.Export();
     progBgpio.SetDirInput( 0 );
+    progBgpio.Open();
 
     doneGpio.Define( 31 /* gpio0_31 */ );
     doneGpio.Export();
     doneGpio.SetDirInput( 1 );
+    doneGpio.Open();
 
     initBgpio.Define( 30 /* gpio0_30 */ );
     initBgpio.Export();
     initBgpio.SetDirInput( 1 );
+    initBgpio.Open();
 
     idx = 1;
     while( idx < argc ){

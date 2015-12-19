@@ -5,7 +5,7 @@
 	compatible = "ti,beaglebone", "ti,beaglebone-black";
 
 	/* identification */
-	part-number = "brecH";
+	part-number = "brecI";
 	version     = "00A0";
 
         /*--------------------------------------------------------------------*/

@@ -105,7 +105,7 @@ int handle_data(int fd)
 	do
 	{
 		char cmd[16];
-		unsigned char buffer[2048], result[1024];
+		unsigned char buffer[65536], result[65536];
 		
 		if (sread(fd, cmd, 6) != 1)
 			return 1;

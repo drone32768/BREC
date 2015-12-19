@@ -34,13 +34,13 @@ $(TGT)/xvcSrvrF	: $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioF.o | $(TGT)
             -lpthread -o $(TGT)/xvcSrvrF
 
 $(TGT)/xvcSrvr.o	: xvcSrvr.cpp xvcSrvrGpio.h | $(TGT)
-	gcc -c xvcSrvr.cpp -o $(TGT)/xvcSrvr.o
+	gcc -c -O3 xvcSrvr.cpp -o $(TGT)/xvcSrvr.o
 
 $(TGT)/xvcSrvrGpioSim.o	: xvcSrvrGpioSim.cpp xvcSrvrGpio.h | $(TGT)
 	gcc -c xvcSrvrGpioSim.cpp -o $(TGT)/xvcSrvrGpioSim.o 
 
 $(TGT)/xvcSrvrGpioF.o	: xvcSrvrGpioF.cpp xvcSrvrGpio.h | $(TGT)
-	g++ -c xvcSrvrGpioF.cpp -o $(TGT)/xvcSrvrGpioF.o 
+	g++ -c -O3 xvcSrvrGpioF.cpp -o $(TGT)/xvcSrvrGpioF.o 
 
 clean	:
 	rm -f $(TGT)/*
