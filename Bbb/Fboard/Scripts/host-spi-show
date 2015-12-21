@@ -1,0 +1,19 @@
+
+echo "HOST_SS"
+cat /sys/class/gpio/gpio117/value
+
+echo "HOST_MOSI1"
+cat /sys/class/gpio/gpio115/value
+
+echo "HOST_MOSI0"
+cat /sys/class/gpio/gpio113/value
+
+echo "HOST_MISO0"
+cat /sys/class/gpio/gpio111/value
+
+echo "HOST_MISO1"
+cat /sys/class/gpio/gpio112/value
+
+echo "HOST_SCLK"
+cat /sys/class/gpio/gpio110/value
+

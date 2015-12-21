@@ -1,0 +1,14 @@
+echo 117 > /sys/class/gpio/export
+echo 115 > /sys/class/gpio/export
+echo 113 > /sys/class/gpio/export
+echo 111 > /sys/class/gpio/export
+echo 112 > /sys/class/gpio/export
+echo 110 > /sys/class/gpio/export
+
+echo out > /sys/class/gpio/gpio117/direction
+echo out > /sys/class/gpio/gpio115/direction
+echo out > /sys/class/gpio/gpio113/direction
+echo in  > /sys/class/gpio/gpio111/direction
+echo in  > /sys/class/gpio/gpio112/direction
+echo out > /sys/class/gpio/gpio110/direction
+

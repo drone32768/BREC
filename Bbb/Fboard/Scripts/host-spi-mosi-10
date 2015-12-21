@@ -1,0 +1,4 @@
+echo 1   > /sys/class/gpio/gpio115/value
+echo 0   > /sys/class/gpio/gpio113/value
+./host-spi-show
+
