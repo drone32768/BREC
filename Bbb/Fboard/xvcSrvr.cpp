@@ -20,60 +20,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include "xvcSrvrGpio.h"
 
 int verbose;
-
-//
-// JTAG state machine.
-//
-
-enum
-{
-	test_logic_reset, run_test_idle,
-
-	select_dr_scan, capture_dr, shift_dr,
-	exit1_dr, pause_dr, exit2_dr, update_dr,
-
-	select_ir_scan, capture_ir, shift_ir,
-	exit1_ir, pause_ir, exit2_ir, update_ir,
-
-	num_states
-};
-
-static const int next_state[num_states][2] =
-{
-	/* [test_logic_reset] =*/ {run_test_idle, test_logic_reset},
-	/* [run_test_idle] =   */ {run_test_idle, select_dr_scan},
-
-	/* [select_dr_scan] = */ {capture_dr, select_ir_scan},
-	/* [capture_dr] =     */ {shift_dr, exit1_dr},
-	/* [shift_dr] =       */ {shift_dr, exit1_dr},
-	/* [exit1_dr] =       */ {pause_dr, update_dr},
-	/* [pause_dr] =       */ {pause_dr, exit2_dr},
-	/* [exit2_dr] =       */ {shift_dr, update_dr},
-	/* [update_dr] =      */ {run_test_idle, select_dr_scan},
-
-	/* [select_ir_scan] = */ {capture_ir, test_logic_reset},
-	/* [capture_ir] =     */ {shift_ir, exit1_ir},
-	/* [shift_ir] =       */ {shift_ir, exit1_ir},
-	/* [exit1_ir] =       */ {pause_ir, update_ir},
-	/* [pause_ir] =       */ {pause_ir, exit2_ir},
-	/* [exit2_ir] =       */ {shift_ir, update_ir},
-	/* [update_ir] =      */ {run_test_idle, select_dr_scan}
-};
-
-static int jtag_state;
-
-static int jtag_step(int state, int tms)
-{
-	return next_state[state][tms];
-}
 
 static int sread(int fd, void *target, int len)
 {
@@ -99,24 +55,59 @@ static int sread(int fd, void *target, int len)
 //
 int handle_data(int fd)
 {
+        const char xvcInfo[] = "xvcServer_v1.0:2048\n";
 	int i;
-	int seen_tlr = 0;
 
 	do
 	{
-		char cmd[16];
-		unsigned char buffer[65536], result[65536];
+		char cmd[128];
+		unsigned char buffer[131072], result[131072];
 		
-		if (sread(fd, cmd, 6) != 1)
+		if (sread(fd, cmd, 2) != 1)
 			return 1;
 		
-		if (memcmp(cmd, "shift:", 6))
-		{
-			cmd[6] = 0;
-			fprintf(stderr, "invalid cmd '%s'\n", cmd);
-			return 1;
-		}
-		
+		if (memcmp(cmd, "ge", 2) == 0) {
+			if (sread(fd, cmd, 6) != 1)
+				return 1;
+			memcpy(result, xvcInfo, strlen(xvcInfo));
+			if (write(fd, result, strlen(xvcInfo)) != 
+                                   strlen(xvcInfo)) {
+				perror("write");
+				return 1;
+			}
+			if (verbose) {
+				printf(
+                        "%u : Received command: 'getinfo'\n", (int)time(NULL));
+				printf("\t Replied with %s\n", xvcInfo);
+			}
+			break;
+		} else if (memcmp(cmd, "se", 2) == 0) {
+			if (sread(fd, cmd, 9) != 1)
+				return 1;
+			memcpy(result, cmd + 5, 4);
+			if (write(fd, result, 4) != 4) {
+				perror("write");
+				return 1;
+			}
+			if (verbose) {
+				printf(
+                        "%u : Received command: 'settck'\n", (int)time(NULL));
+			printf("\t Replied with '%.*s'\n\n", 4, cmd + 5);
+			}
+			break;
+                } else if (memcmp(cmd, "sh", 2) == 0) {
+                        if (sread(fd, cmd, 4) != 1)
+                                return 1;
+                        if (verbose) {
+                          printf(
+                           "%u : Received command: 'shift'\n", (int)time(NULL));
+                        }
+                } else {
+
+                        fprintf(stderr, "invalid cmd '%s'\n", cmd);
+                        return 1;
+                }
+
 		int len;
 		if (sread(fd, &len, 4) != 1)
 		{
@@ -147,26 +138,6 @@ int handle_data(int fd)
 			printf("\n");
 		}
 
-		//
-		// Only allow exiting if the state is rti and the IR
-		// has the default value (IDCODE) by going through test_logic_reset.
-		// As soon as going through capture_dr or capture_ir no exit is
-		// allowed as this will change DR/IR.
-		//
-		seen_tlr = (seen_tlr || jtag_state == test_logic_reset) && (jtag_state != capture_dr) && (jtag_state != capture_ir);
-		
-		
-		//
-		// Due to a weird bug(??) xilinx impacts goes through another "capture_ir"/"capture_dr" cycle after
-		// reading IR/DR which unfortunately sets IR to the read-out IR value.
-		// Just ignore these transactions.
-		//
-		
-		if ((jtag_state == exit1_ir && len == 5 && buffer[0] == 0x17) || (jtag_state == exit1_dr && len == 4 && buffer[0] == 0x0b))
-		{
-			if (verbose)
-				printf("ignoring bogus jtag state movement in jtag_state %d\n", jtag_state);
-		} else
 			for (i = 0; i < len; ++i)
 			{
 				//
@@ -180,11 +151,6 @@ int handle_data(int fd)
 				gpio_set(GPIO_TDI, tdi);
 				gpio_set(GPIO_TCK, 1);
 				gpio_set(GPIO_TCK, 0);
-				
-				//
-				// Track the state.
-				//
-				jtag_state = jtag_step(jtag_state, tms);
 			}
 
 		if (write(fd, result, nr_bytes) != nr_bytes)
@@ -193,11 +159,7 @@ int handle_data(int fd)
 			return 1;
 		}
 		
-		if (verbose)
-		{
-			printf("jtag state %d\n", jtag_state);
-		}
-	} while (!(seen_tlr && jtag_state == run_test_idle));
+        } while( 1  );
 	return 0;
 }
 
@@ -297,7 +259,7 @@ int main(int argc, char **argv)
 					
 					newfd = accept(s, (struct sockaddr*)&address, &nsize);
 					// if (verbose)
-				printf("connection accepted - fd %d\n", newfd);
+				        printf("connection accepted - fd %d\n", newfd);
 					if (newfd < 0)
 					{
 						perror("accept");
@@ -307,8 +269,19 @@ int main(int argc, char **argv)
 						{
 							maxfd = newfd;
 						}
-						FD_SET(newfd, &conn);
 					}
+
+/*
+            	                        printf("setting TCP_NODELAY to 1\n");
+                                 	int flag = 1;
+                                 	int optResult = setsockopt(newfd,
+            			  	  	  	  	  	 IPPROTO_TCP,
+            			  	  	  	  	  	 TCP_NODELAY,
+            			  	  	  	  	  	 (char *)&flag,
+            			  	  	  	  	  	 sizeof(int));
+                                 	if (optResult < 0) perror("TCP_NODELAY error");
+*/
+                                        FD_SET(newfd, &conn);
 	                                gpio_init();
 				}
 				//

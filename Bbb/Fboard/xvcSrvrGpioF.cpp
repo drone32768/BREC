@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "xvcSrvrGpio.h"
+#include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
 
 GpioUtil gpios[ 4 ];
