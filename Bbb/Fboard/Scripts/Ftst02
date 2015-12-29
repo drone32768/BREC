@@ -1,0 +1,17 @@
+#!/bin/bash
+arm/Ftst  \
+-echo "This tests reads the counter via port1" \
+-write  0x8f24            \
+-write  0x0005            \
+-write  0x0009            \
+-echo   "Next read counter value is valid" \
+-echo   "You should expect incrementing values" \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0009            \
+-write  0x0004            \
+

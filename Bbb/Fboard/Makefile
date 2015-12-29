@@ -17,6 +17,8 @@ all	:
 	make $(TGT)/xvcSrvrSim
 	make $(TGT)/xvcSrvrF
 	make $(TGT)/Fctl
+	make $(TGT)/Ftst
+	make $(TGT)/Flash
 ifeq ($(TGT),arm)
 endif
 
@@ -24,6 +26,16 @@ $(TGT)/Fctl	: Fctl.cpp | $(TGT)
 	g++ Fctl.cpp \
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Fctl
+
+$(TGT)/Ftst	: Ftst.cpp | $(TGT)
+	g++ Ftst.cpp \
+             $(UTIL_OBJS) \
+             -lpthread -o $(TGT)/Ftst
+
+$(TGT)/Flash	: Flash.cpp | $(TGT)
+	g++ Flash.cpp \
+             $(UTIL_OBJS) \
+             -lpthread -o $(TGT)/Flash
 
 $(TGT)/xvcSrvrSim	: $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioSim.o | $(TGT)
 	g++ $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioSim.o -o $(TGT)/xvcSrvrSim
