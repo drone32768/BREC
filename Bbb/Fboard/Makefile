@@ -14,11 +14,11 @@ LOCAL_OBJS=$(TGT)/Fboard.o
 
 
 all	:
-	make $(TGT)/xvcSrvrSim
-	make $(TGT)/xvcSrvrF
+	make $(TGT)/Fxsvf
+	make $(TGT)/Fxvc
 	make $(TGT)/Fctl
 	make $(TGT)/Ftst
-	make $(TGT)/Flash
+	make $(TGT)/Fflash
 ifeq ($(TGT),arm)
 endif
 
@@ -32,27 +32,25 @@ $(TGT)/Ftst	: Ftst.cpp | $(TGT)
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Ftst
 
-$(TGT)/Flash	: Flash.cpp | $(TGT)
-	g++ Flash.cpp \
+$(TGT)/Fflash	: Fflash.cpp | $(TGT)
+	g++ Fflash.cpp \
              $(UTIL_OBJS) \
-             -lpthread -o $(TGT)/Flash
+             -lpthread -o $(TGT)/Fflash
 
-$(TGT)/xvcSrvrSim	: $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioSim.o | $(TGT)
-	g++ $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioSim.o -o $(TGT)/xvcSrvrSim
-
-$(TGT)/xvcSrvrF	: $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioF.o | $(TGT)
-	g++ $(TGT)/xvcSrvr.o $(TGT)/xvcSrvrGpioF.o \
+$(TGT)/Fxvc	: Fxvc.cpp $(TGT)/jtag_bs_f.o  | $(TGT)
+	g++ Fxvc.cpp $(TGT)/jtag_bs_f.o \
+            ../JtagTools/$(TGT)/xvcLib.o \
             $(UTIL_OBJS) \
-            -lpthread -o $(TGT)/xvcSrvrF
+            -lpthread -o $(TGT)/Fxvc
 
-$(TGT)/xvcSrvr.o	: xvcSrvr.cpp xvcSrvrGpio.h | $(TGT)
-	gcc -c -O3 xvcSrvr.cpp -o $(TGT)/xvcSrvr.o
+$(TGT)/Fxsvf	: Fxsvf.cpp $(TGT)/jtag_bs_f.o  | $(TGT)
+	g++ Fxsvf.cpp $(TGT)/jtag_bs_f.o \
+            ../JtagTools/$(TGT)/xsvfLib.o \
+            $(UTIL_OBJS) \
+            -lpthread -o $(TGT)/Fxsvf
 
-$(TGT)/xvcSrvrGpioSim.o	: xvcSrvrGpioSim.cpp xvcSrvrGpio.h | $(TGT)
-	gcc -c xvcSrvrGpioSim.cpp -o $(TGT)/xvcSrvrGpioSim.o 
-
-$(TGT)/xvcSrvrGpioF.o	: xvcSrvrGpioF.cpp xvcSrvrGpio.h | $(TGT)
-	g++ -c -O3 xvcSrvrGpioF.cpp -o $(TGT)/xvcSrvrGpioF.o 
+$(TGT)/jtag_bs_f.o	: jtag_bs_f.cpp | $(TGT)
+	g++ -c -O3 jtag_bs_f.cpp -o $(TGT)/jtag_bs_f.o
 
 clean	:
 	rm -f $(TGT)/*

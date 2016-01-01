@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "xvcSrvrGpio.h"
+#include "../JtagTools/jtag_bs.h"
+
+static int verbose = 0;
 
 enum
 {
@@ -157,36 +159,40 @@ void DevClk()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void gpio_init(void)
+void jtag_bs_open(void)
 {
-   printf("GPIO_INIT\n");
+   printf("JTAG_BS_OPEN( Sim ) \n");
 }
 
-void gpio_close(void)
+void jtag_bs_close(void)
 {
-   printf("GPIO_CLOSE\n");
+   printf("JTAG_BS_CLOSE( Sim )\n");
 }
 
-void gpio_set(int i, int val)
+void jtag_bs_set_tms( int v )
 {
-   switch( i ){
-      case GPIO_TDI: devTdi = val; break;
-      case GPIO_TDO: devTdo = val; break;
-      case GPIO_TCK: devTck = val; if(1==devTck) DevClk(); break;
-      case GPIO_TMS: devTms = val; break;
-   }
+     devTms = v;
 }
 
-int gpio_get(int i)
+void jtag_bs_set_tdi( int v )
 {
-   int bit;
+     devTdi = v;
+}
 
-   switch( i ){
-      case GPIO_TDI: bit = devTdi; break;
-      case GPIO_TDO: bit = devTdo; break;
-      case GPIO_TCK: bit = devTck; break;
-      case GPIO_TMS: bit = devTms; break;
-   }
-   return(bit);
+void jtag_bs_set_tck( int v )
+{
+    static unsigned int clock_count = 0;
+
+    clock_count++;
+    if( 0==(clock_count%10000) ){
+      printf("JTAG_BS CLK %d\n",clock_count);
+    }
+    devTck = v;
+    if(1==devTck) DevClk();
+}
+
+unsigned char jtag_bs_get_tdo()
+{
+  return( devTdo ); 
 }
 

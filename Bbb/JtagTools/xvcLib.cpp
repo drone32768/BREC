@@ -5,8 +5,15 @@
  * 
  * Many thanks!
  *
+ * This work is a derivative of  "xvcServer.c" 
+ * (https://github.com/Xilinx/XilinxVirtualCable)
+ * by Xlinx, used under CC0 1.0 Universal
+ * were incorporated.
+ *
  * The differences are factoring out the gpio to be used as a library
- * to support different boards (including test emulators)
+ * to support different boards (including test emulators).  Provide 
+ * a .o with jtag_bs interface specific to the board and link together to 
+ * form a server.
  *
  * Connect to this server with iMPACT using cable configure, selecting
  * "Open Cable Plugin" and entering the following line in the drop down
@@ -27,7 +34,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "xvcSrvrGpio.h"
+#include "jtag_bs.h"
 
 int verbose;
 
@@ -146,11 +153,11 @@ int handle_data(int fd)
 				
 				int tms = !!(buffer[i/8] & (1<<(i&7)));
 				int tdi = !!(buffer[nr_bytes + i/8] & (1<<(i&7)));
-				result[i / 8] |= gpio_get(GPIO_TDO) << (i&7);
-				gpio_set(GPIO_TMS, tms);
-				gpio_set(GPIO_TDI, tdi);
-				gpio_set(GPIO_TCK, 1);
-				gpio_set(GPIO_TCK, 0);
+				result[i / 8] |= jtag_bs_get_tdo() << (i&7);
+				jtag_bs_set_tms(tms);
+				jtag_bs_set_tdi(tdi);
+				jtag_bs_set_tck(1);
+				jtag_bs_set_tck(0);
 			}
 
 		if (write(fd, result, nr_bytes) != nr_bytes)
@@ -163,7 +170,7 @@ int handle_data(int fd)
 	return 0;
 }
 
-int main(int argc, char **argv)
+int xvc_main(int argc, char **argv)
 {
 	int i;
 	int s;
@@ -187,8 +194,6 @@ int main(int argc, char **argv)
 	// Initialize GPIOs (mapping them into the process, 
 	// re-setting alternate functions, making input/outputs).
 	//
-	
-	// gpio_init();
 	
 	//
 	// Listen on port 2542.
@@ -282,14 +287,14 @@ int main(int argc, char **argv)
                                  	if (optResult < 0) perror("TCP_NODELAY error");
 */
                                         FD_SET(newfd, &conn);
-	                                gpio_init();
+	                                jtag_bs_open();
 				}
 				//
 				// Otherwise, do work.
 				//
 				else if (handle_data(fd))
 				{
-	                                gpio_close();
+	                                jtag_bs_close();
 
 					//
 					// Close connection when required.
@@ -306,7 +311,7 @@ int main(int argc, char **argv)
 			//
 			else if (FD_ISSET(fd, &except))
 			{
-                                gpio_close();
+                                jtag_bs_close();
 
 				// if (verbose)
 				printf("connection aborted - fd %d\n", fd);
@@ -322,7 +327,7 @@ int main(int argc, char **argv)
 	// Un-map IOs.
 	//
 	
-	gpio_close();
+        jtag_bs_close();
 	
 	return 0;
 }

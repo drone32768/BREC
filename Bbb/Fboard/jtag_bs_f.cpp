@@ -3,18 +3,23 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "xvcSrvrGpio.h"
+#include "../JtagTools/jtag_bs.h"
 #include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
+
+#define GPIO_TDI 0
+#define GPIO_TDO 1
+#define GPIO_TCK 2
+#define GPIO_TMS 3
 
 GpioUtil gpios[ 4 ];
 GpioUtil progBgpio;
 GpioUtil doneGpio;
 GpioUtil initBgpio;
 
-void gpio_init(void)
+void jtag_bs_open(void)
 {
-   printf("GPIO_INIT\n");
+   printf("JTAG_BS_OPEN(F Board)\n");
 
    progBgpio.Define( 50 /* gpio1_18 */ );
    progBgpio.Export();
@@ -58,9 +63,9 @@ void gpio_init(void)
    printf("init_b    = %d\n",initBgpio.Get() );
 }
 
-void gpio_close(void)
+void jtag_bs_close(void)
 {
-   printf("GPIO_CLOSE\n");
+   printf("JTAG_BS_CLOSE(F Board)\n");
 
    printf("done      = %d\n",doneGpio.Get() );
    printf("init_b    = %d\n",initBgpio.Get() );
@@ -74,37 +79,29 @@ void gpio_close(void)
    gpios[ GPIO_TMS ].Close();
 }
 
-const char * jtag_to_str( int i )
+void jtag_bs_set_tms( int v )
 {
-   switch( i ){
-      case GPIO_TDI: return("tdi");
-      case GPIO_TDO: return("tdo");
-      case GPIO_TCK: return("tck");
-      case GPIO_TMS: return("tms");
-   }
+    gpios[GPIO_TMS].Set(v);
 }
 
-static int clock_count = 0;
-void gpio_set(int i, int val)
+void jtag_bs_set_tdi( int v )
 {
-
-   if( i == GPIO_TCK ){
-      clock_count++;
-      if( 0==(clock_count%10000) ){
-          printf("clk %d\r",clock_count);
-      }
-   }
-
-   // printf("set %s = %d\n",jtag_to_str(i),val);
-   gpios[i].Set( val );
+    gpios[GPIO_TDI].Set(v);
 }
 
-int gpio_get(int i)
+void jtag_bs_set_tck( int v )
 {
-   int val;
-   val = gpios[i].Get();
-   // printf("get %s = %d\n",jtag_to_str(i),val);
+    static unsigned int clock_count = 0;
 
-   return( val );
+    clock_count++;
+    if( 0==(clock_count%10000) ){
+      printf("JTAG_BS CLK %d\n",clock_count);
+    }
+    gpios[GPIO_TCK].Set(v);
+}
+
+unsigned char jtag_bs_get_tdo()
+{
+   return( gpios[GPIO_TDO].Get() );
 }
 
