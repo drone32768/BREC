@@ -22,8 +22,9 @@ all	:
 ifeq ($(TGT),arm)
 endif
 
-$(TGT)/Fctl	: Fctl.cpp | $(TGT)
+$(TGT)/Fctl	: Fctl.cpp $(LOCAL_OBJS) | $(TGT)
 	g++ Fctl.cpp \
+             $(LOCAL_OBJS) \
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Fctl
 
@@ -32,8 +33,9 @@ $(TGT)/Ftst	: Ftst.cpp | $(TGT)
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Ftst
 
-$(TGT)/Fflash	: Fflash.cpp | $(TGT)
+$(TGT)/Fflash	: Fflash.cpp $(LOCAL_OBJS) | $(TGT)
 	g++ Fflash.cpp \
+             $(LOCAL_OBJS) \
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Fflash
 
@@ -51,6 +53,9 @@ $(TGT)/Fxsvf	: Fxsvf.cpp $(TGT)/jtag_bs_f.o  | $(TGT)
 
 $(TGT)/jtag_bs_f.o	: jtag_bs_f.cpp | $(TGT)
 	g++ -c -O3 jtag_bs_f.cpp -o $(TGT)/jtag_bs_f.o
+
+$(TGT)/Fboard.o	: Fboard.cpp | $(TGT)
+	g++ -c Fboard.cpp -o $(TGT)/Fboard.o
 
 clean	:
 	rm -f $(TGT)/*

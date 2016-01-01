@@ -1,175 +1,66 @@
-/*
- *
- */
+//
+//
+// This source code is available under the "Simplified BSD license".
+//
+// Copyright (c) 2016, J. Kleiner
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without 
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, 
+//    this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright 
+//    notice, this list of conditions and the following disclaimer in the 
+//    documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the original author nor the names of its contributors 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
+// TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
+// OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
+#include "Fboard.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Basic flash operations /////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+Fboard        fbrd;
+unsigned char gSpiBf[512];
 
-int      fspiDbg = 0;
-
-GpioUtil hss;
-GpioUtil hsclk;
-GpioUtil hmosi[2];
-GpioUtil hmiso[2];
-
-int
-fspi_init( )
-{
-    hss.Define(      117 );
-    hsclk.Define(    110 );
-    hmosi[0].Define( 113 );
-    hmosi[1].Define( 115 );
-    hmiso[0].Define( 111 );
-    hmiso[1].Define( 112 );
-
-    hss.Export();
-    hsclk.Export();
-    hmosi[0].Export();
-    hmosi[1].Export();
-    hmiso[0].Export();
-    hmiso[1].Export();
-
-    hss.SetDirInput(      0 );
-    hsclk.SetDirInput(    0 );
-    hmosi[0].SetDirInput( 0 );
-    hmosi[1].SetDirInput( 0 );
-    hmiso[0].SetDirInput( 1 );
-    hmiso[1].SetDirInput( 1 );
-
-    hss.Open();
-    hsclk.Open();
-    hmosi[0].Open();
-    hmosi[1].Open();
-    hmiso[0].Open();
-    hmiso[1].Open();
-
-    hss.Set(1);
-    hsclk.Set(0);
-
-    return(0);
-}
-
-int 
-fspi_select()
-{
-    hss.Set( 0 );
-}
-
-int 
-fspi_deselect()
-{
-    hss.Set( 1 );
-}
-
-int 
-fspi_write_byte( int wval )
-{
-    int rval;
-    int obit,ibit,idx;
-
-    if( fspiDbg ){
-       printf("fspi_write: wval = 0x%04x\n",wval);
-    }
-
-    rval    = 0;
-
-    // expecting: sclk=0, ss=0
-
-    for( idx=7; idx>=0; idx-- ){
-        if( fspiDbg ){
-            printf("idx[%d]\n",idx);
-        }
-
-        if( wval&0x80 ) obit = 1;
-        else            obit = 0;
-
-        if( fspiDbg ){
-            printf("   obit = %d\n",obit);
-        }
-        hmosi[0].Set( obit );
-        hsclk.Set( 1 );
-        ibit = hmiso[0].Get( );
-        if( fspiDbg ){
-            printf("   ibit = %d\n",ibit);
-        }
-
-        hsclk.Set( 0 );
-
-        rval = (rval<<1) | ibit;
-        wval = (wval<<1);
-    }
-
-    // expecting: sclk=0, ss=1
-
-    return(rval);
-}
-
-int 
-fspi_read_byte( int wval )
-{
-    int rval;
-    int obit,ibit,idx;
-
-
-    rval    = 0;
-
-    // expecting: sclk=0, ss=0
-
-    for( idx=7; idx>=0; idx-- ){
-        if( fspiDbg ){
-            printf("idx[%d]\n",idx);
-        }
-
-        if( wval&0x80 ) obit = 1;
-        else            obit = 0;
-
-        if( fspiDbg ){
-            printf("   obit = %d\n",obit);
-        }
-        hmosi[0].Set( obit );
-        hsclk.Set( 1 );
-        ibit = hmiso[0].Get( );
-        if( fspiDbg ){
-            printf("   ibit = %d\n",ibit);
-        }
-
-        hsclk.Set( 0 );
-
-        rval = (rval<<1) | ibit;
-        wval = (wval<<1);
-    }
-
-    // expecting: sclk=0, ss=1
-
-    if( fspiDbg ){
-       printf("fspi_read: rval = 0x%04x\n",rval);
-    }
-
-    return(rval);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 int
 rdid( unsigned char *bytes )
 {
-   unsigned short rb;
+   gSpiBf[0] = 0x9F;
+   gSpiBf[1] = 0x00;
+   gSpiBf[2] = 0x00;
+   gSpiBf[3] = 0x00;
+   gSpiBf[4] = 0x00;
 
-   fspi_select();
-   fspi_write_byte( 0x9F );
-   bytes[0] = fspi_read_byte( 0 );
-   bytes[1] = fspi_read_byte( 0 );
-   bytes[2] = fspi_read_byte( 0 );
-   bytes[3] = fspi_read_byte( 0 );
-   fspi_deselect();
+   fbrd.SpiXfer( gSpiBf, 5 );
+
+   bytes[0]  = gSpiBf[1];
+   bytes[1]  = gSpiBf[2];
+   bytes[2]  = gSpiBf[3];
+   bytes[3]  = gSpiBf[4];
 
    return(0);
 }
@@ -177,22 +68,22 @@ rdid( unsigned char *bytes )
 int
 flash_rdsr( unsigned char *bytes )
 {
-   unsigned short rb;
+   gSpiBf[0] = 0x05;
+   gSpiBf[1] = 0x00;
 
-   fspi_select();
-   fspi_write_byte( 0x05 );
-   bytes[0] = fspi_read_byte( 0 );
-   fspi_deselect();
+   fbrd.SpiXfer( gSpiBf, 2 );
 
-   return( rb );
+   bytes[0]  = gSpiBf[1];
+
+   return( 0 );
 }
 
 int
 flash_wren()
 {
-   fspi_select();
-   fspi_write_byte( 0x06 );
-   fspi_deselect();
+   gSpiBf[0] = 0x06;
+
+   fbrd.SpiXfer( gSpiBf, 1 );
 
    return(0);
 }
@@ -200,45 +91,56 @@ flash_wren()
 int
 flash_be()
 {
-   fspi_select();
-   fspi_write_byte( 0xC7 );
-   fspi_deselect();
+   gSpiBf[0] = 0xC7;
+
+   fbrd.SpiXfer( gSpiBf, 1 );
 
    return(0);
 }
 
 int flash_write_page( unsigned int offset, unsigned char *bytes )
 {
-   int idx;
+   int idx,cnt;
 
-   fspi_select();
-   fspi_write_byte( 0x02 );
-   fspi_write_byte( (offset>>16)&0xff  );
-   fspi_write_byte( (offset>>8 )&0xff  );
-   fspi_write_byte( (offset    )&0xff  );
+   cnt = 0;
+   gSpiBf[cnt++] = 0x02;
+   gSpiBf[cnt++] = (unsigned char)(offset>>16)&0xff ;
+   gSpiBf[cnt++] = (unsigned char)(offset>>8 )&0xff ;
+   gSpiBf[cnt++] = (unsigned char)(offset    )&0xff ;
    for(idx=0;idx<256;idx++){
-       fspi_write_byte(bytes[idx]);
+      gSpiBf[cnt++] = bytes[idx];
    }
-   fspi_deselect();
+
+   fbrd.SpiXfer( gSpiBf, cnt );
 
    return(0);
 }
 
 int flash_read_page( unsigned int offset, unsigned char *bytes )
 {
-   int idx;
-   fspi_select();
-   fspi_write_byte( 0x03 );
-   fspi_write_byte( (offset>>16)&0xff  );
-   fspi_write_byte( (offset>>8 )&0xff  );
-   fspi_write_byte( (offset    )&0xff  );
+   int idx,cnt;
+
+   cnt = 0;
+   gSpiBf[cnt++] = 0x02;
+   gSpiBf[cnt++] = (unsigned char)(offset>>16)&0xff ;
+   gSpiBf[cnt++] = (unsigned char)(offset>>8 )&0xff ;
+   gSpiBf[cnt++] = (unsigned char)(offset    )&0xff ;
    for(idx=0;idx<256;idx++){
-       bytes[idx] = fspi_read_byte(0);
+      gSpiBf[cnt++] = 0x0;
    }
-   fspi_deselect();
+
+   fbrd.SpiXfer( gSpiBf, cnt );
+
+   for(idx=0;idx<256;idx++){
+      bytes[idx] = gSpiBf[ idx + 4 ];
+   }
+
    return(0);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// Intermediate flash operations //////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 int flash_wait_wip_clear()
 {
    unsigned char b;
@@ -254,6 +156,7 @@ int flash_wait_wip_clear()
           return(0);
        }
    }
+
    return(-1); 
 }
 
@@ -347,22 +250,24 @@ flash_program(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Main application ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
 void usage( int exit_code )
 {
+    printf("-write  <fname>  write the file to spi flash\n");
+    printf("\n");
+    printf("Other debug operations are:\n");
     printf("-usleep <M>  sleeps script execution for <M> micro seconds\n");
-    printf("-write  <N>  write the 16 bit word N\n");
     printf("-echo   <str> echo string <str>\n");
     printf("-rdid        read and display device id\n");
     printf("-rdsr        read and display device status register\n");
     printf("-wen         set write enable\n");
     printf("-be          start bulk erase\n");
     printf("\n");
-    printf("e.g. -write 0x00001\n");
+    printf("e.g. -rdid -write blinker.bin\n");
     exit( exit_code );
 }
+
 int
 main( int argc, char *argv[] )
 {
@@ -373,7 +278,8 @@ main( int argc, char *argv[] )
 
     printf("Flash: Enter Main\n");
 
-    fspi_init( );
+    fbrd.Open();
+    fbrd.Show();
  
     idx = 1;
     while( idx < argc ){

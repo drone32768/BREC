@@ -32,12 +32,29 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
-#include "../JtagTools/xvcLib.h"
+#ifndef __F_BOARD__
+#define __F_BOARD__
 
-int main( int argc, char *argv[] )
-{
-   // We could parse args looking for board specific
-   // values and apply them here.
+#include "../Util/mcf.h"
+#include "../Util/gpioutil.h"
 
-   return( xvc_main(argc,argv) );
-}
+class Fboard {
+
+private:
+    int                      mDbg;
+    int                      mUsePru;
+
+    GpioUtil                 mProgbGpio;
+    GpioUtil                 mDoneGpio;
+    GpioUtil                 mInitbGpio;
+
+public:
+    Fboard();
+    int     Open();
+    void    Close();
+    void    Reset();
+    void    Show();
+    void    SpiXfer( unsigned char *bf, int bfCount );
+};
+
+#endif
