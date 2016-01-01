@@ -32,6 +32,7 @@ all	:
 $(TGT)/AdcHttpd  : AdcHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ $(CPPFLAGS) AdcHttpd.cpp \
               -I$(PRU_INC)    \
+              -L$(PRU_LIB)    \
                 $(LOCAL_OBJS) \
                 $(DEV_OBJS)   \
                 $(UTIL_OBJS)  \
