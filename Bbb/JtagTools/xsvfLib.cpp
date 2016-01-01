@@ -21,10 +21,10 @@
 void setPort(short p,short val)
 {
     switch( p ){
-       case TMS: jtag_bs_set_tms(val);
-       case TDI: jtag_bs_set_tdi(val);
-       case TCK: jtag_bs_set_tck(val);
-       default:  printf("setPort unknown jtag signal%d\n",p);
+       case TMS: jtag_bs_set_tms(val);break;
+       case TDI: jtag_bs_set_tdi(val);break;
+       case TCK: jtag_bs_set_tck(val);break;
+       default:  printf("setPort unknown jtag signal %d\n",p);
     }
 }
 

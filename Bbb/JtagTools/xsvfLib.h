@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef __xsvfLib_h__
+#define __xsvfLib_h__
+
 // Client may access these
 extern int xsvfExecute();
 extern int xsvf_iDebugLevel;
@@ -30,3 +33,4 @@ extern int xsvf_iDebugLevel;
 // Client must supply this
 extern unsigned char xsvf_next_byte();
 
+#endif // __xsvfLib_h__

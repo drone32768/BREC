@@ -1,3 +1,8 @@
+/*
+ * This is a simple simulated jtag interface for test xvc.
+ * It will respond with a Spartan6 ID code.  It also shows the 
+ * boundary scan state machine transitions.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -90,17 +95,16 @@ inst_str( int inst )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-unsigned int devId = 0x04001093; //  0000 0100 0000 0000 0001 0000 1001 0011
-unsigned int devIr = 0x0;
-unsigned int devDr = 0x0;
+unsigned int devId       = 0x04001093; //0000 0100 0000 0000 0001 0000 1001 0011
+unsigned int devIr       = 0x0;
+unsigned int devDr       = 0x0;
 int          devIsBypass = 0;
-int devState = test_logic_reset;
-int devTdi = 0;
-int devTdo = 0;
-int devTck = 0;
-int devTms = 0;
-
-int devSelectIr = 0;
+int          devState    = test_logic_reset;
+int          devTdi      = 0;
+int          devTdo      = 0;
+int          devTck      = 0;
+int          devTms      = 0;
+int          devSelectIr = 0;
 
 void DevClk()
 {

@@ -10,7 +10,6 @@ UTIL_OBJS=
 DEV_OBJS=
 LOCAL_OBJS=
 
-
 all	:
 	make $(TGT)/xsvfLib.o
 	make $(TGT)/xvcLib.o
