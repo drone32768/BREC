@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h> // for ntohs
 
 #include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
@@ -121,7 +122,7 @@ int flash_read_page( unsigned int offset, unsigned char *bytes )
    int idx,cnt;
 
    cnt = 0;
-   gSpiBf[cnt++] = 0x02;
+   gSpiBf[cnt++] = 0x03;
    gSpiBf[cnt++] = (unsigned char)(offset>>16)&0xff ;
    gSpiBf[cnt++] = (unsigned char)(offset>>8 )&0xff ;
    gSpiBf[cnt++] = (unsigned char)(offset    )&0xff ;
@@ -141,6 +142,38 @@ int flash_read_page( unsigned int offset, unsigned char *bytes )
 ////////////////////////////////////////////////////////////////////////////////
 /// Intermediate flash operations //////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+int flash_establish_params()
+{
+   unsigned char bf[512];
+   const char   *str;
+   int           err;
+
+   rdid(bf);
+
+   err = 0;
+
+   printf("Flash Parameters:\n");
+   switch( bf[0] ){
+       case 0x20:{ err|=0; str = "Micron/Numonyx"; break; }
+       default:  { err|=1; str = "Unknown"; break; }
+   }
+   printf("    Manufacturer %s\n",str);
+
+   switch( bf[1] ){
+       case 0x20:{ err|=0; str = "M25"; break; }
+       default:  { err|=2; str = "Unknown"; break; }
+   }
+   printf("    Memory Type  %s\n",str);
+
+   switch( bf[2] ){
+       case 0x13:{ err|=0; str = "P40/512kBytes"; break; }
+       default:  { err|=4; str = "Unknown"; break; }
+   }
+   printf("    Capacity     %s\n",str);
+
+   return( err );
+}
+
 int flash_wait_wip_clear()
 {
    unsigned char b;
@@ -161,7 +194,7 @@ int flash_wait_wip_clear()
 }
 
 int
-flash_program( 
+flash_write( 
     unsigned char *pbytes, 
     int            pbyte_count, 
     int            verify,
@@ -170,16 +203,13 @@ flash_program(
 {
    unsigned int  offset;
    unsigned char page_bytes[256];
-   int           cnt,idx;
+   int           cnt,idx,err;
 
-   if(verbose){ printf("Progamming bytes %d \n",pbyte_count); }
+   if(verbose){ printf("Programming bytes %d \n",pbyte_count); }
    if(verbose){ printf("Verify is        %d \n",verify); }
 
-   rdid( page_bytes );
-   printf("mfg  = 0x%02x\n",page_bytes[0]);
-   printf("typ  = 0x%02x\n",page_bytes[1]);
-   printf("cap  = 0x%02x\n",page_bytes[2]);
-   printf("cfdl = 0x%02x\n",page_bytes[3]);
+   err = flash_establish_params();
+   if( err ) return( err );
 
    if(verbose){ printf("Starting bulk erase\n"); }
    flash_wren();
@@ -249,16 +279,146 @@ flash_program(
    return(0);
 }
 
+int
+flash_read( 
+    unsigned char *pbytes, 
+    int            pbyte_count,
+    int            verbose
+)
+{
+   unsigned int  offset;
+   unsigned char page_bytes[256];
+   int           cnt,idx,err;
+
+   if(verbose){ printf("Reading bytes %d \n",pbyte_count); }
+
+   err = flash_establish_params();
+   if( err ) return( err );
+
+   offset = 0;
+   while( offset < pbyte_count ){
+       if(verbose){ printf("   rpage @ %d    \n",offset); }
+       flash_read_page( offset, &(pbytes[offset]) );
+       offset += 256;
+   }
+   if(verbose){ printf("End read.\n"); }
+
+   return(0);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// File operations  ///////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// the exact specification of the headers is a bit sketchy, this is 
+// based on the commonly published description
+// NOTE: working buffer must be able to support at least 64k bytes
+int
+ReadBitHeaders( FILE *fh, unsigned char *bf, int verbose )
+{
+    unsigned short len;
+    unsigned int   bytes;
+
+    fread(bf,1,13,fh);
+
+    if(verbose) printf("Bitstream Headers:\n");
+    while( 1 ){
+        bytes = fread(bf,1,1,fh);
+        if( 1!=bytes ) return( bytes );
+        if(verbose) printf("  Header 0x%02x (%c) ",*bf,*bf);
+
+        if( 0x65 == *bf ){
+           bytes = fread(bf,1,4,fh);
+           if( 4!=bytes ) return( bytes );
+           bytes = ntohl( *( unsigned short *)bf );
+           if(verbose) printf("image bytes = %d\n",bytes);
+           return( bytes );
+        }
+        else{
+           bytes = fread(bf,1,2,fh);
+           if( 2!=bytes ) return( bytes );
+           len = ntohs( *( unsigned short *)bf );
+           if(verbose) printf("[0x%04x] ",len,len);
+        }
+    
+        bytes = fread(bf,1,len,fh);
+        if( len!=bytes ) return( bytes );
+        if(verbose) printf("\"%s\"\n",bf);
+    }
+
+}
+
+const char* ReadFile( 
+    const char    *fname, 
+    unsigned char *image, 
+    int            maxBytes,
+    int           *rBytes,
+    int            verbose
+   )
+{
+   FILE          *fh;
+   const char*    errStr = 0;
+   int            idx;
+
+   *rBytes = 0;
+
+   // Parse the file based on suffix alone
+   idx = strlen(fname);
+   if( idx<5 ){
+        return("No file suffix");
+   }
+
+   // This is a .bin file, just load it
+   if( 
+       'n'==fname[idx-1] &&
+       'i'==fname[idx-2] &&
+       'b'==fname[idx-3] &&
+       '.'==fname[idx-4] 
+     ){
+        if(verbose) printf("Processing .bin file...\n");
+        fh = fopen(fname,"rb");
+        if(!fh) return("cannot open .bin file");
+        *rBytes = fread(image,1,maxBytes,fh);
+        fclose(fh);
+   }
+
+   // This is an .bit file, skip the headers and load it
+   else if( 
+       't'==fname[idx-1] &&
+       'i'==fname[idx-2] &&
+       'b'==fname[idx-3] &&
+       '.'==fname[idx-4] 
+     ){
+        int ib;
+
+        if(verbose) printf("Processing .bit file...\n");
+        fh = fopen(fname,"rb");
+        if(!fh) return("cannot open .bit file");
+        ib = ReadBitHeaders(fh,image,1);
+        if( ib<0 ){
+           return("error in .bit header parsing");
+        }
+        *rBytes = fread(image,1,maxBytes,fh);
+        fclose(fh);
+   }
+
+   // This is an unrecognized file
+   else{
+        return("Unrecognized file suffix");
+   }
+
+   return(errStr);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Main application ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 void usage( int exit_code )
 {
     printf("-write  <fname>  write the file to spi flash\n");
+    printf("-read   <fname>  read flash contents into file\n");
     printf("\n");
     printf("Other debug operations are:\n");
     printf("-usleep <M>  sleeps script execution for <M> micro seconds\n");
-    printf("-echo   <str> echo string <str>\n");
     printf("-rdid        read and display device id\n");
     printf("-rdsr        read and display device status register\n");
     printf("-wen         set write enable\n");
@@ -298,10 +458,9 @@ main( int argc, char *argv[] )
             us_sleep( val );
         } 
 
-        else if( 0==strcmp(argv[idx], "-echo") ){
-            if( (idx+1) >= argc ){ usage(-1); }
-            printf("%s\n",argv[idx+1]);
-        } 
+        else if( 0==strcmp(argv[idx], "-id") ){
+            flash_establish_params();
+        }
 
         else if( 0==strcmp(argv[idx], "-rdid") ){
             rdid( bytes );
@@ -335,23 +494,18 @@ main( int argc, char *argv[] )
             int            rbytes;
             int            max_bytes = 1024*1024;
             int            err;
-
+            const char    *errStr    = "";
+            
             image = (unsigned char*)malloc( max_bytes );
-            fh = fopen(argv[idx+1],"r");
-            if( fh!=NULL ){
-                rbytes = fread(image,1,max_bytes,fh);
-            }else{
-                printf("failed to open input file %s\n",argv[idx+1]);
-                rbytes = -1;
-            }
+            errStr = ReadFile( argv[idx+1], image, max_bytes, &rbytes, 1 );
             if( rbytes>0 ){
-                err=flash_program( image, 
+                err=flash_write( image, 
                                    rbytes, 
                                    1 /*verify*/, 
                                    1 /*verbose*/ );
             }else{
                 err = -100;
-                printf("read %d bytes\n",rbytes);
+                printf("read %d bytes %s\n",rbytes,errStr);
             }
             printf("programmed %s with err = %d\n",argv[idx+1],err); 
 
@@ -359,6 +513,37 @@ main( int argc, char *argv[] )
             idx++;
         }
 
+        else if( 0==strcmp(argv[idx], "-read") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            printf("reading flash to file %s\n",argv[idx+1]);
+
+            unsigned char *image;
+            FILE          *fh;
+            int            rbytes;
+            int            max_bytes = 1024*1024;
+            int            err;
+
+            // rbytes = 512*1024;
+            rbytes = 1024;
+
+            image = (unsigned char*)malloc( max_bytes );
+            err = flash_read( image, rbytes, 1 /* verbose */ );
+
+            if( err ){
+                rbytes = 0;
+                printf("failed to read flash\n");
+            }
+
+            fh = fopen(argv[idx+1],"wb+");
+            if( fh!=NULL ){
+                fwrite(image,1,rbytes,fh);
+            }else{
+                printf("failed to open output file %s\n",argv[idx+1]);
+            }
+
+            free(image);
+            idx++;
+        }
         idx++;
     }
 
