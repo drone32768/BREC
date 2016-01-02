@@ -28,8 +28,9 @@ $(TGT)/Fctl	: Fctl.cpp $(LOCAL_OBJS) | $(TGT)
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Fctl
 
-$(TGT)/Ftst	: Ftst.cpp | $(TGT)
+$(TGT)/Ftst	: Ftst.cpp $(LOCAL_OBJS) | $(TGT)
 	g++ Ftst.cpp \
+             $(LOCAL_OBJS) \
              $(UTIL_OBJS) \
              -lpthread -o $(TGT)/Ftst
 
@@ -54,8 +55,17 @@ $(TGT)/Fxsvf	: Fxsvf.cpp $(TGT)/jtag_bs_f.o  | $(TGT)
 $(TGT)/jtag_bs_f.o	: jtag_bs_f.cpp | $(TGT)
 	g++ -c -O3 jtag_bs_f.cpp -o $(TGT)/jtag_bs_f.o
 
-$(TGT)/Fboard.o	: Fboard.cpp | $(TGT)
+$(TGT)/Fboard.o	: Fboard.cpp pru_images.h | $(TGT)
 	g++ -c Fboard.cpp -o $(TGT)/Fboard.o
+
+$(TGT)/pru00.bin : pru00.p pruinc.h pruconst.hp | $(TGT)
+	${PASM} -V3 -b pru00.p
+	mv pru00.bin $(TGT)/pru00.bin
+
+ifeq ($(TGT),arm)
+pru_images.h    : $(TGT)/pru00.bin | $(TGT)
+	../Util/$(TGT)/ccat -f $(TGT)/pru00.bin -n pru_image0 >  pru_images.h
+endif
 
 clean	:
 	rm -f $(TGT)/*

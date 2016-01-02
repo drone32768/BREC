@@ -523,8 +523,8 @@ main( int argc, char *argv[] )
             int            max_bytes = 1024*1024;
             int            err;
 
-            // rbytes = 512*1024;
-            rbytes = 1024;
+            rbytes = 512*1024;
+            // rbytes = 1024; // for quick testing
 
             image = (unsigned char*)malloc( max_bytes );
             err = flash_read( image, rbytes, 1 /* verbose */ );

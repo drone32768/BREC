@@ -4,7 +4,6 @@ echo "Before"
 cat /sys/devices/bone_capemgr.*/slots
 
 echo brecFjtag:00A0 > /sys/devices/bone_capemgr.*/slots 
-echo brecFpru:00A0  > /sys/devices/bone_capemgr.*/slots 
 
 echo "After"
 cat /sys/devices/bone_capemgr.*/slots

@@ -2,7 +2,7 @@ The source code is structured as follows:
 
 jtag_bs_f.cpp 
 This is the core jtag access primitives for the actual F board.  The
-interface is defined in ../JtagTools
+interface is defined in ../JtagTools.  
 
 Fxvc.cpp
 This is the outer wrapper for starting the Xilinx virtual cable application
@@ -13,6 +13,13 @@ Fxsvf.cpp
 This is the main loop to drive the Xilinx xsvf player and includes 
 code to read the image from local file.  It too relies on the jtag .o in 
 this directory and the general xsvf library in ../JtagTools
+
+Fboard.o
+This is the primary interface library used to access and control the fpga
+It exports a SPI interface.
+
+pru00.p, pruinc.h pruconst.hp
+These are the internal PRU support files for Fboard.o
 
 Tool Use:
 
@@ -33,9 +40,14 @@ To flash an image
          arm/Fflash -rdid
   c) Progam the image
          arm/Fflash -write Images/blinker.bin
+         OR
+         arm/Fflash -write Images/blinker.bit
+  d) Read the current flash image
+         arm/Fflash -read image.bin
 
 Misc fpga/driver operations
   a) Pull program low 
          arm/Fctl -reset
   b) Show state of fpga and software
-         amr/Fctl -show
+         arm/Fctl -show
+
