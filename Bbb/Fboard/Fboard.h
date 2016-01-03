@@ -44,6 +44,9 @@ private:
     int                      mDbg;
     int                      mUsePru;
 
+    volatile unsigned short *mPtrPruSamples;
+    volatile unsigned char  *mPtrPruSram;
+
     GpioUtil                 mProgbGpio;
     GpioUtil                 mDoneGpio;
     GpioUtil                 mInitbGpio;
@@ -54,6 +57,8 @@ public:
     void    Close();
     void    Reset();
     void    Show();
+
+    int     StartPru();
     void    SpiXfer( unsigned char *bf, int bfCount );
 };
 

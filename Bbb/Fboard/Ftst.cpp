@@ -94,6 +94,10 @@ main( int argc, char *argv[] )
             printf("%s\n",argv[idx+1]);
         } 
 
+        else if( 0==strcmp(argv[idx], "-show") ){
+            fbrd.Show();
+        }
+
         else if( 0==strcmp(argv[idx], "-write") ){
             unsigned char bf[256];
 

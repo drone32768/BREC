@@ -41,7 +41,13 @@
 #include <string.h>
 
 #include "../Util/gpioutil.h"
+#include "prussdrv.h"
+#include "pruss_intc_mapping.h"
+
 #include "Fboard.h"
+#include "pruinc.h"
+#include "pru_images.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Gpio base host spi port ////////////////////////////////////////////////////
@@ -145,6 +151,65 @@ fspi_xfer_byte( int wval )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+#define GetSramWord( off )    \
+      (*(volatile unsigned int*  )((mPtrPruSram + (off))) )
+#define SetSramWord( v,off )  \
+      (*(volatile unsigned int*  )((mPtrPruSram + (off))) = (v) )
+#define GetSramShort( off )   \
+      (*(volatile unsigned short*)((mPtrPruSram + (off))) )
+#define SetSramShort( v,off ) \
+      (*(volatile unsigned short*)((mPtrPruSram + (off))) = (v) )
+#define GetSramByte( off )    \
+      (*(volatile unsigned char*)((mPtrPruSram + (off))) )
+#define SetSramByte( v,off )  \
+      (*(volatile unsigned char*)((mPtrPruSram + (off))) = (v) )
+
+int
+Fboard::StartPru()
+{
+    int ret;
+    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+
+    printf("Fboard:StartPrus Enter\n");
+
+    // Open pruss driver
+    prussdrv_init();
+    ret = prussdrv_open(PRU_EVTOUT_0);
+    if( ret ){
+        fprintf(stderr,"prussdrv_open failed\n");
+        return(-1);
+    }
+
+    // Get pointers to dram and sram
+    prussdrv_map_extmem( (void**)( &mPtrPruSamples ) );
+    prussdrv_map_prumem( PRUSS0_PRU0_DATARAM, (void**)(&mPtrPruSram) );
+
+    // Stop the prus
+    prussdrv_pru_disable(0);
+
+    // Init pru data
+    prussdrv_pruintc_init(&pruss_intc_initdata);
+
+    // Clear pru sram
+    memset( (void*)mPtrPruSram, 0x0, 8192 );
+
+    // Set specific required values
+    SetSramWord( 0, SRAM_OFF_CMD1 );
+    SetSramWord( 0, SRAM_OFF_CMD2 );
+
+    // Write the instructions
+    prussdrv_pru_write_memory(PRUSS0_PRU0_IRAM,0,
+                             (unsigned int*)pru_image0,sizeof(pru_image0) );
+
+    // Run/Enable prus
+    prussdrv_pru_enable(0);
+
+    printf("Xboard:StartPrus Exit\n");
+    return( 0 );
+}
+////////////////////////////////////////////////////////////////////////////////
 /// External Methods ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 Fboard::Fboard()
@@ -176,6 +241,7 @@ Fboard::Open()
     // Figure out how we should access spi 
     if( FindCapeByName( "brecFpru" ) ) {
         mUsePru = 1;
+        StartPru();
     }
     else{ 
         mUsePru = 0;
@@ -234,12 +300,22 @@ Fboard::Show()
     printf("    LX9 init_b    = %d\n",mInitbGpio.Get() );
     printf("    brecFjtag DT  = %d\n",FindCapeByName( "brecFjtag" ) );
     printf("    brecFpru  DT  = %d\n",FindCapeByName( "brecFpru" ) );
+    if( mUsePru ){
+        printf("    PRU0 dbg1       0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
+        printf("    PRU0 dbg2       0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
+        printf("    PRU0 cmd1       0x%08x\n",GetSramWord( SRAM_OFF_CMD1 ) );
+        printf("    PRU0 cmd1+4     0x%08x\n",GetSramWord( SRAM_OFF_CMD1+4 ) );
+        printf("    PRU0 cmd2       0x%08x\n",GetSramWord( SRAM_OFF_CMD2 ) );
+        printf("    PRU0 cmd2+4     0x%08x\n",GetSramWord( SRAM_OFF_CMD2+4 ) );
+    }
 }
 
 //------------------------------------------------------------------------------
 void
 Fboard::SpiXfer( unsigned char *bf, int bfCount )
 {
+
+   // GPIO based xfer
    if( !mUsePru ){
       int idx;
 
@@ -249,8 +325,33 @@ Fboard::SpiXfer( unsigned char *bf, int bfCount )
       }
       fspi_deselect();
    }
+
+   // PRU based xfer
    else{
-      printf("Fboard::SpiXfer - pru not currently supported\n");
+      int idx,cnt,limit;
+
+      // Copy bytes in and issue byte count as command
+      for(idx=0;idx<bfCount;idx++){
+          SetSramByte( bf[idx], SRAM_OFF_CMD1+4+idx );
+      }
+      SetSramWord( bfCount, SRAM_OFF_CMD1 );
+
+      // Wait for the command to complete
+      cnt   = 0;
+      limit = 1000; // wait for this many times nominal expected xfer time
+      while( 0!=GetSramWord(SRAM_OFF_CMD1) && (cnt<1000) ){
+          us_sleep(1 * bfCount);  // assume nominal 1us/byte
+          cnt++;
+      }
+      if( cnt>=limit ){
+         printf("%s:%d SpiXfer pru timeout\n",__FILE__,__LINE__);
+      }
+
+      // Copy out the results
+      for(idx=0;idx<bfCount;idx++){
+          bf[idx] = GetSramByte( SRAM_OFF_CMD1+4+idx );
+      }
+
    }
 }
 

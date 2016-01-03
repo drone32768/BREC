@@ -6,6 +6,7 @@ ifeq ($(TGT),arm)
     PASM=/home/root/am335x_pru_package-master/pru_sw/utils/pasm
 else
     PRU_INC=../PruEmul/
+    PRU_LIB=../PruEmul/x86
 endif
 
 UTIL_OBJS=../Util/$(TGT)/gpioutil.o ../Util/$(TGT)/mcf.o 
@@ -22,24 +23,9 @@ all	:
 ifeq ($(TGT),arm)
 endif
 
-$(TGT)/Fctl	: Fctl.cpp $(LOCAL_OBJS) | $(TGT)
-	g++ Fctl.cpp \
-             $(LOCAL_OBJS) \
-             $(UTIL_OBJS) \
-             -lpthread -o $(TGT)/Fctl
-
-$(TGT)/Ftst	: Ftst.cpp $(LOCAL_OBJS) | $(TGT)
-	g++ Ftst.cpp \
-             $(LOCAL_OBJS) \
-             $(UTIL_OBJS) \
-             -lpthread -o $(TGT)/Ftst
-
-$(TGT)/Fflash	: Fflash.cpp $(LOCAL_OBJS) | $(TGT)
-	g++ Fflash.cpp \
-             $(LOCAL_OBJS) \
-             $(UTIL_OBJS) \
-             -lpthread -o $(TGT)/Fflash
-
+# 
+# JTAG only targets
+# 
 $(TGT)/Fxvc	: Fxvc.cpp $(TGT)/jtag_bs_f.o  | $(TGT)
 	g++ Fxvc.cpp $(TGT)/jtag_bs_f.o \
             ../JtagTools/$(TGT)/xvcLib.o \
@@ -55,8 +41,32 @@ $(TGT)/Fxsvf	: Fxsvf.cpp $(TGT)/jtag_bs_f.o  | $(TGT)
 $(TGT)/jtag_bs_f.o	: jtag_bs_f.cpp | $(TGT)
 	g++ -c -O3 jtag_bs_f.cpp -o $(TGT)/jtag_bs_f.o
 
+# 
+# HSPI only targets
+# 
+$(TGT)/Fctl	: Fctl.cpp $(LOCAL_OBJS) | $(TGT)
+	g++ Fctl.cpp \
+             $(LOCAL_OBJS) \
+             $(UTIL_OBJS) \
+             -L$(PRU_LIB) \
+             -lprussdrv -lpthread -o $(TGT)/Fctl
+
+$(TGT)/Ftst	: Ftst.cpp $(LOCAL_OBJS) | $(TGT)
+	g++ Ftst.cpp \
+             $(LOCAL_OBJS) \
+             $(UTIL_OBJS) \
+             -L$(PRU_LIB) \
+             -lprussdrv -lpthread -o $(TGT)/Ftst
+
+$(TGT)/Fflash	: Fflash.cpp $(LOCAL_OBJS) | $(TGT)
+	g++ Fflash.cpp \
+             $(LOCAL_OBJS) \
+             $(UTIL_OBJS) \
+             -L$(PRU_LIB) \
+             -lprussdrv -lpthread -o $(TGT)/Fflash
+
 $(TGT)/Fboard.o	: Fboard.cpp pru_images.h | $(TGT)
-	g++ -c Fboard.cpp -o $(TGT)/Fboard.o
+	g++ -c -I$(PRU_INC) Fboard.cpp -o $(TGT)/Fboard.o
 
 $(TGT)/pru00.bin : pru00.p pruinc.h pruconst.hp | $(TGT)
 	${PASM} -V3 -b pru00.p
