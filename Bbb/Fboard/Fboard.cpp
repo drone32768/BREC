@@ -312,7 +312,7 @@ Fboard::Show()
 
 //------------------------------------------------------------------------------
 void
-Fboard::SpiXfer( unsigned char *bf, int bfCount )
+Fboard::SpiXfer8( unsigned char *bf, int bfCount )
 {
 
    // GPIO based xfer
@@ -344,7 +344,7 @@ Fboard::SpiXfer( unsigned char *bf, int bfCount )
           cnt++;
       }
       if( cnt>=limit ){
-         printf("%s:%d SpiXfer pru timeout\n",__FILE__,__LINE__);
+         printf("%s:%d SpiXfer8 pru timeout\n",__FILE__,__LINE__);
       }
 
       // Copy out the results

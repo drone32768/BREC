@@ -174,21 +174,45 @@ clockbit:
 
     OR        rTmp2,rTmp2,rTmp2  // 10 nop
     OR        rTmp2,rTmp2,rTmp2  // 11 nop
-    OR        r30, r30,SCLK_H    // 12 ** SCLK high
-
+    OR        rTmp2,rTmp2,rTmp2  // 12 nop
     OR        rTmp2,rTmp2,rTmp2  // 13 nop
     OR        rTmp2,rTmp2,rTmp2  // 14 nop
     OR        rTmp2,rTmp2,rTmp2  // 15 nop
     OR        rTmp2,rTmp2,rTmp2  // 16 nop
     OR        rTmp2,rTmp2,rTmp2  // 17 nop
-    LSR       rTmp1,r31,MISO_B   // 18 ** Get MISO
-
-    AND       rTmp1,rTmp1,1      // 19 mask of any other bits
-    LSL       rSI,rSI,1          // 20 shift running input up
-    OR        rSI,rSI,rTmp1      // 21 add the new bit to si 
+    OR        rTmp2,rTmp2,rTmp2  // 18 nop
+    OR        rTmp2,rTmp2,rTmp2  // 19 nop
+    OR        rTmp2,rTmp2,rTmp2  // 20 nop
+    OR        rTmp2,rTmp2,rTmp2  // 21 nop
     OR        rTmp2,rTmp2,rTmp2  // 22 nop
     OR        rTmp2,rTmp2,rTmp2  // 23 nop
-    AND       r30, r30,SCLK_L    // 24 ** SCLK LOW
+    OR        r30, r30,SCLK_H    // 24 ** SCLK high
+
+    OR        rTmp2,rTmp2,rTmp2  // 25 nop
+    OR        rTmp2,rTmp2,rTmp2  // 26 nop
+    OR        rTmp2,rTmp2,rTmp2  // 27 nop
+    OR        rTmp2,rTmp2,rTmp2  // 28 nop
+    OR        rTmp2,rTmp2,rTmp2  // 29 nop
+    OR        rTmp2,rTmp2,rTmp2  // 30 nop
+    OR        rTmp2,rTmp2,rTmp2  // 31 nop
+    OR        rTmp2,rTmp2,rTmp2  // 32 nop
+    OR        rTmp2,rTmp2,rTmp2  // 33 nop
+    OR        rTmp2,rTmp2,rTmp2  // 34 nop
+    OR        rTmp2,rTmp2,rTmp2  // 35 nop
+    OR        rTmp2,rTmp2,rTmp2  // 36 nop
+    OR        rTmp2,rTmp2,rTmp2  // 37 nop
+    OR        rTmp2,rTmp2,rTmp2  // 38 nop
+    LSR       rTmp1,r31,MISO_B   // 39 ** Get MISO
+
+    AND       rTmp1,rTmp1,1      // 40 mask of any other bits
+    LSL       rSI,rSI,1          // 41 shift running input up
+    OR        rSI,rSI,rTmp1      // 42 add the new bit to si 
+    OR        rTmp2,rTmp2,rTmp2  // 43 nop
+    OR        rTmp2,rTmp2,rTmp2  // 44 nop
+    OR        rTmp2,rTmp2,rTmp2  // 45 nop
+    OR        rTmp2,rTmp2,rTmp2  // 46 nop
+    OR        rTmp2,rTmp2,rTmp2  // 47 nop
+    AND       r30, r30,SCLK_L    // 48 ** SCLK LOW
 
     LSL       rSO,rSO,1          // 01 shift SO to prep next bit
     SUB       rBc,rBc,1          // 02 dec the bit count

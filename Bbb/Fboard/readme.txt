@@ -23,6 +23,12 @@ These are the internal PRU support files for Fboard.o
 
 Tool Use:
 
+Installing device tree
+  a) To enable jtag boundary scan interface 
+         Dt/dt-install-jtag
+  b) To enable pru based host port spi
+         Dt/dt-install-pru
+
 To connect with iMAPCT
   a) Start the virtual cable server
          arm/Fxvc
@@ -50,4 +56,5 @@ Misc fpga/driver operations
          arm/Fctl -reset
   b) Show state of fpga and software
          arm/Fctl -show
+
 

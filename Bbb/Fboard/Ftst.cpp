@@ -43,19 +43,84 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
 
 #include "../Util/mcf.h"
 #include "../Util/gpioutil.h"
 #include "Fboard.h"
 
+Fboard         fbrd;
+
 void usage( int exit_code )
 {
-    printf("-usleep <M>  sleeps script execution for <M> micro seconds\n");
-    printf("-write  <N>  write the 16 bit word N\n");
+    printf("-usleep <M>   sleeps script execution for <M> micro seconds\n");
     printf("-echo   <str> echo string <str>\n");
+    printf("-write  <N>   write the 16 bit word N\n");
+    printf("-show         show state of sw and device\n");
     printf("\n");
     printf("e.g. -write 0x00001\n");
     exit( exit_code );
+}
+
+void pat01()
+{
+    int            idx;
+    unsigned short sbf[128];
+    unsigned short vAct,vExp;
+    unsigned int   totCnt,errCnt,intCnt;
+    int            us;
+    struct timeval tv0, tv1;
+
+    printf("NOTE: This test does not self terminate.\n");
+
+    sbf[0] = ntohs( 0x8f24 );
+    fbrd.SpiXfer8( (unsigned char*)sbf, 2 );
+
+    sbf[0] = ntohs( 0x0005 );
+    fbrd.SpiXfer8( (unsigned char*)sbf, 2 );
+
+    totCnt     = 0;
+    errCnt     = 0;
+    intCnt     = 0;
+    vExp       = 0;
+    gettimeofday( &tv0, NULL );
+    while( 1 ){
+
+        sbf[0] = ntohs( 0x0009 );
+        fbrd.SpiXfer8( (unsigned char*)sbf, 2 );
+
+        vAct = htons( sbf[0] );
+
+        if( vAct!=vExp ){
+               printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) \n",
+                         vAct,
+                         vAct,
+                         vExp,
+                         vExp
+                     );
+               if( errCnt > 30 ) exit( -1 );
+               errCnt++;
+               vExp = vAct;
+        }
+        totCnt++;
+        intCnt++;
+        vExp++;
+
+        gettimeofday( &tv1, NULL );
+        if( (tv1.tv_sec-tv0.tv_sec) > 3 ){
+           us = tv_delta_useconds( &tv1, &tv0 );
+           printf("Total=%d, err=%d, M16rw/sec=%f\n",
+                      totCnt,
+                      errCnt,
+                      (double)intCnt/(double)us
+                 );
+           tv0 = tv1;
+           intCnt=0;
+        }
+
+    } // end of infinite loop
+
 }
 
 int
@@ -65,7 +130,6 @@ main( int argc, char *argv[] )
     int            val;
     char          *end;
     unsigned short rd;
-    Fboard         fbrd;
 
     printf("Ftst: Enter Main\n");
 
@@ -98,6 +162,10 @@ main( int argc, char *argv[] )
             fbrd.Show();
         }
 
+        else if( 0==strcmp(argv[idx], "-pat01") ){
+            pat01();
+        }
+
         else if( 0==strcmp(argv[idx], "-write") ){
             unsigned char bf[256];
 
@@ -106,7 +174,7 @@ main( int argc, char *argv[] )
             
             bf[0] = (val>>8)&0xff;
             bf[1] = (val   )&0xff;
-            fbrd.SpiXfer( bf, 2 );
+            fbrd.SpiXfer8( bf, 2 );
             rd    = bf[0];
             rd    = (rd<<8 ) + bf[1];
 
