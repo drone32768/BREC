@@ -75,10 +75,10 @@ void pat01()
     printf("NOTE: This test does not self terminate.\n");
 
     sbf[0] = ntohs( 0x8f24 );
-    fbrd.SpiXfer8( (unsigned char*)sbf, 2 );
+    fbrd.SpiXferStream8( (unsigned char*)sbf, 2 );
 
     sbf[0] = ntohs( 0x0005 );
-    fbrd.SpiXfer8( (unsigned char*)sbf, 2 );
+    fbrd.SpiXferStream8( (unsigned char*)sbf, 2 );
 
     totCnt     = 0;
     errCnt     = 0;
@@ -88,7 +88,7 @@ void pat01()
     while( 1 ){
 
         sbf[0] = ntohs( 0x0009 );
-        fbrd.SpiXfer8( (unsigned char*)sbf, 2 );
+        fbrd.SpiXferStream8( (unsigned char*)sbf, 2 );
 
         vAct = htons( sbf[0] );
 
@@ -106,6 +106,71 @@ void pat01()
         totCnt++;
         intCnt++;
         vExp++;
+
+        gettimeofday( &tv1, NULL );
+        if( (tv1.tv_sec-tv0.tv_sec) > 3 ){
+           us = tv_delta_useconds( &tv1, &tv0 );
+           printf("Total=%d, err=%d, M16rw/sec=%f\n",
+                      totCnt,
+                      errCnt,
+                      (double)intCnt/(double)us
+                 );
+           tv0 = tv1;
+           intCnt=0;
+        }
+
+    } // end of infinite loop
+
+}
+
+void pat02()
+{
+    int            idx;
+    unsigned short sbf[1024];
+    unsigned short vAct,vExp;
+    unsigned int   totCnt,errCnt,intCnt,xferCnt;
+    int            us;
+    struct timeval tv0, tv1;
+
+    printf("NOTE: This test does not self terminate.\n");
+
+    sbf[0] = 0x8f24;
+    fbrd.SpiXferArray16( sbf, 1 );
+
+    sbf[0] = 0x0005;
+    fbrd.SpiXferArray16( sbf, 1 );
+
+    totCnt     = 0;
+    errCnt     = 0;
+    intCnt     = 0;
+    vExp       = 0;
+    xferCnt    = 512;
+    gettimeofday( &tv0, NULL );
+    while( 1 ){
+
+        for(idx=0;idx<xferCnt;idx++){
+            sbf[idx] = 0x0009;
+        }
+
+        fbrd.SpiXferArray16( sbf, xferCnt );
+
+        for(idx=0;idx<xferCnt;idx++){
+            vAct = sbf[idx];
+            if( vAct!=vExp ){
+                   printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) \n",
+                         vAct,
+                         vAct,
+                         vExp,
+                         vExp
+                     );
+               if( errCnt > 30 ) return;
+               errCnt++;
+               vExp = vAct;
+            }
+            totCnt++;
+            intCnt++;
+            vExp++;
+        }
 
         gettimeofday( &tv1, NULL );
         if( (tv1.tv_sec-tv0.tv_sec) > 3 ){
@@ -166,6 +231,10 @@ main( int argc, char *argv[] )
             pat01();
         }
 
+        else if( 0==strcmp(argv[idx], "-pat02") ){
+            pat02();
+        }
+
         else if( 0==strcmp(argv[idx], "-write") ){
             unsigned char bf[256];
 
@@ -174,7 +243,7 @@ main( int argc, char *argv[] )
             
             bf[0] = (val>>8)&0xff;
             bf[1] = (val   )&0xff;
-            fbrd.SpiXfer8( bf, 2 );
+            fbrd.SpiXferStream8( bf, 2 );
             rd    = bf[0];
             rd    = (rd<<8 ) + bf[1];
 

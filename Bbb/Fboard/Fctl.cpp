@@ -92,7 +92,7 @@ main( int argc, char *argv[] )
            bf[4] = 0x00;
 
            fbrd.Open();
-           fbrd.SpiXfer8( bf, 5 );
+           fbrd.SpiXferStream8( bf, 5 );
            fbrd.Close();
 
            printf("bf[0]=0x%02x\n",bf[0]);

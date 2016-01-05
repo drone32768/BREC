@@ -65,17 +65,16 @@ MAIN:
 //-----------------------------------------------------------------------------
 #define       rDbg1Ptr           r1
 #define       rDbg2Ptr           r2
-#define       rCmd1Ptr           r3
-#define       rCmd2Ptr           r4
+#define       rCmdPtr            r3
 
-#define       rPtr               r5
-#define       rCnt               r6
-#define       rBytePtr           r7
+#define       rCmdCode           r4
+#define       rCnt               r5
+#define       rDataPtr           r6
 
-#define       rArg0              r8
-#define       rSO                r9
-#define       rSI                r10
-#define       rBc                r11
+#define       rArg0              r7
+#define       rSO                r8
+#define       rSI                r9
+#define       rBc                r10
 
 #define       rTmp1              r25
 #define       rTmp2              r26
@@ -84,12 +83,11 @@ MAIN:
 
     MOV       rDbg1Ptr,          (0x0000 + SRAM_OFF_DBG1)
     MOV       rDbg2Ptr,          (0x0000 + SRAM_OFF_DBG2)
-    MOV       rCmd1Ptr,          (0x0000 + SRAM_OFF_CMD1) 
-    MOV       rCmd2Ptr,          (0x0000 + SRAM_OFF_CMD2) 
+    MOV       rCmdPtr,           (0x0000 + SRAM_OFF_CMD1) 
 
-    MOV       rPtr,              0x0
+    MOV       rCmdCode,          0x0
     MOV       rCnt,              0x0
-    MOV       rBytePtr,          0x0
+    MOV       rDataPtr,          0x0
 
     MOV       rArg0,             0x0
     MOV       rSO,               0x0
@@ -101,8 +99,7 @@ MAIN:
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main loop
-// ARG: rCm1Ptr = pointer to command 1
-// ARG: rCm2Ptr = pointer to command 1
+// ARG: rCm1Ptr = pointer to 32 bit command 
 // ARG: rDbg1Ptr= pointer to debug 1 word
 // ARG: rDbg2Ptr= pointer to debug 2 word 
 //
@@ -110,85 +107,110 @@ main_loop:
 
     // increment dbg1 every main loop pass
     LD32      rTmp1, rDbg1Ptr
-    ADD       rTmp1, rTmp1,1
+    ADD       rTmp1, rTmp1, 1
     ST32      rTmp1, rDbg1Ptr
 
-    // check and process cmd1
-    LD32      rCnt,  rCmd1Ptr   
-    MOV       rPtr,  rCmd1Ptr
-    QBNE      do_cmd,rCnt,0    
-
-    // check and process cmd2
-    LD32      rCnt,  rCmd2Ptr  
-    MOV       rPtr,  rCmd2Ptr
-    QBNE      do_cmd,rCnt,0  
-
-    JMP       main_loop          // top of loop to re-check command
+    // load and dispatch command
+    LD16      rCmdCode, rCmdPtr            // load the command code
+    ADD       rTmp1,rCmdPtr,2              // get pointer to xfer count
+    LD16      rCnt, rTmp1                  // load the xfer count
+    QBEQ      xfer_byte_stream,rCmdCode,PRU0_CMD_8STREAM    
+    QBEQ      xfer_short_array,rCmdCode,PRU0_CMD_16ARRAY    
+    JMP       main_loop          
 
 ////////////////////////////////////////////////////////////////////////////////
-// Execute a single command transfer
-// ARG:   rPtr     = poiner to cmd (bytes start 4 after this)
-// ARG:   rCnt     = number of bytes
-// LOCAL: rBytePtr = pointer to current byte
+// Execute a series of 16 bit transfers each with its own slave select
+// ARG:   rCnt     = number of words
+// ARG:   rCmdPtr  = pointer to cmd word (data is +4 from this)
+// LOCAL: rDataPtr = pointer to current words
 //
-do_cmd: 
-    LD32      rTmp1, rDbg2Ptr
-    ADD       rTmp1, rTmp1,1
-    ST32      rTmp1, rDbg2Ptr
+xfer_short_array:
+    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
 
-    ADD       rBytePtr, rPtr, 4   // bytes start 4 bytes after count
+    LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value
+    ADD       rTmp1, rTmp1, 1     // DBG2 - increment alue
+    ST32      rTmp1, rDbg2Ptr     // DBG2 - store value
+
+xfer_short:
+    LD16      rArg0, rDataPtr     // load the next word to send
+    LSL       rArg0,rArg0,16      // place bits in upper most position
+    MOV       rBc, 16             // set number of bits to shift
+    AND       r30, r30, SS_L      // ss low
+    CALL      shiftbits           // shift out/in a byte
+    OR        r30, r30, SS_H      // ss high
+    ST16      rArg0, rDataPtr     // save the received byte
+    ADD       rDataPtr,rDataPtr,2 // inc the xfer byte pointer
+    OR        rTmp2,rTmp2,rTmp2   // nop +01
+    SUB       rCnt,rCnt,1         // dec the xfer count
+    QBNE      xfer_short,rCnt,0   // loop if there are more bytes to xfer
+
+    MOV       rTmp1,0             // load a zero
+    ST16      rTmp1, rCmdPtr      // clear command bytes
+    JMP       main_loop           // return to main loop 
+
+////////////////////////////////////////////////////////////////////////////////
+// Execute a single command transfer with an arbitrary number of bytes
+// under a single slave select
+// ARG:   rCnt     = number of bytes
+// ARG:   rCmdPtr  = pointer to cmd word (data is +4 from this)
+// LOCAL: rDataPtr = pointer to current words
+//
+xfer_byte_stream: 
+    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
     AND       r30, r30, SS_L      // ss low
 
+    LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value
+    ADD       rTmp1, rTmp1, 2     // DBG2 - increment alue
+    ST32      rTmp1, rDbg2Ptr     // DBG2 - store value
+
 xfer_byte:
-    LD8       rArg0, rBytePtr     // load the next byte to send
-    CALL      shift8              // shift out/in a byte
-    ST8       rArg0, rBytePtr     // save the received byte
-    ADD       rBytePtr,rBytePtr,1 // inc the xfer byte pointer
-    SUB       rCnt,rCnt,1         // dec the xfer byte count
+    LD8       rArg0, rDataPtr     // load the next byte to send
+    LSL       rArg0,rArg0,24      // place bits in upper most position
+    MOV       rBc, 8              // set number of bits to shift
+    CALL      shiftbits           // shift out/in a byte
+    ST8       rArg0, rDataPtr     // save the received byte
+    ADD       rDataPtr,rDataPtr,1 // inc the xfer byte pointer
+    SUB       rCnt,rCnt,1         // dec the xfer count
     QBNE      xfer_byte,rCnt,0    // loop if there are more bytes to xfer
 
     OR        r30, r30, SS_H      // ss high
-    MOV       rTmp1,0
-    ST32      rTmp1, rPtr         // clear command bytes
+    MOV       rTmp1,0             // load a zero
+    ST16      rTmp1, rCmdPtr      // clear command bytes
     JMP       main_loop           // return to main loop 
 
 //-----------------------------------------------------------------------------
-// Shift out and in 8 bits
-// ARG   : rArg0 = byte to shift out (in entry), byte shifted in (on exit)
+// Shift out and in up to 32 bits
+// ARG   : rArg0 = bits to shift out (starting at msb), shifted in bits on ret
+// ARG   : rBc   = number of bits
 // LOCAL : rSO
 // LOCAL : rSI
-// LOCAL : rBc
-shift8:
+shiftbits:
 
     MOV       rSO, rArg0         // setup output word
     MOV       rSI, 0             // setup input word
-    MOV       rBc,8              // initialize bit counter
 
 clockbit:
-    LSR       rTmp1,rSO,7        // 04 get so msb at bit 0
+    LSR       rTmp1,rSO,31       // 04 get so msb at bit 0
     AND       rTmp1,rTmp1,1      // 05 mask bit 0
     LSL       rTmp1,rTmp1,MOSI_B // 06 move msb to mosi bit loc
     MOV       r30,rTmp1          // 07 ** Set MOSI
     OR        rTmp2,rTmp2,rTmp2  // 08 nop
     OR        rTmp2,rTmp2,rTmp2  // 09 nop
-
     OR        rTmp2,rTmp2,rTmp2  // 10 nop
-    OR        rTmp2,rTmp2,rTmp2  // 11 nop
-    OR        r30, r30,SCLK_H    // 12 ** SCLK high
+    OR        r30, r30,SCLK_H    // 11 ** SCLK high
 
+    OR        rTmp2,rTmp2,rTmp2  // 12 nop
     OR        rTmp2,rTmp2,rTmp2  // 13 nop
     OR        rTmp2,rTmp2,rTmp2  // 14 nop
     OR        rTmp2,rTmp2,rTmp2  // 15 nop
     OR        rTmp2,rTmp2,rTmp2  // 16 nop
-    OR        rTmp2,rTmp2,rTmp2  // 17 nop
-    LSR       rTmp1,r31,MISO_B   // 18 ** Get MISO
+    LSR       rTmp1,r31,MISO_B   // 17 ** Get MISO
 
-    AND       rTmp1,rTmp1,1      // 19 mask of any other bits
-    LSL       rSI,rSI,1          // 20 shift running input up
-    OR        rSI,rSI,rTmp1      // 21 add the new bit to si 
-    OR        rTmp2,rTmp2,rTmp2  // 22 nop
-    OR        rTmp2,rTmp2,rTmp2  // 23 nop
-    AND       r30, r30,SCLK_L    // 24 ** SCLK LOW
+    AND       rTmp1,rTmp1,1      // 18 mask of any other bits
+    LSL       rSI,rSI,1          // 19 shift running input up
+    OR        rSI,rSI,rTmp1      // 20 add the new bit to si 
+    OR        rTmp2,rTmp2,rTmp2  // 21 nop
+    AND       r30, r30,SCLK_L    // 22 ** SCLK LOW
 
     LSL       rSO,rSO,1          // 01 shift SO to prep next bit
     SUB       rBc,rBc,1          // 02 dec the bit count
@@ -197,21 +219,22 @@ clockbit:
     MOV       rArg0,rSI          // move serial input to return
     RET
 
-//      000000000011111111112222222222333333333344444444444
-//      012345678901234567890123456789012345678901234567890
-//                .         .         .         .
-// MOSI 0000000VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV000
-//                .         .         .         .
-// MISO ------------------------------S-------------
-//                .         .         .         .
-//      +         .         .         .         .
-// SS   |         .         .         .         .
-//      |         .         .         .         .
-//      +------------------------------------------------------
-//                .         .         .         .
-//      +         .         +-------------------+
-// SCLK |         .         |                   |
-//      |         .         |                   |
-//      +-------------------+                   +------------
+//      000000000011111111112222222222
+//      012345678901234567890123456789
+//             .    .     .     .
+// MOSI 0000000VVVVVVVVVVVVVVVVVVVVV000
+//             .    .     .     .
+// MISO ------------------S------------
+//             .    .     .     .
+//   ---+      .    .     .     .
+// SS   |      .    .     .     .
+//      |      .    .     .     .
+//      +------------------------------
+//             .    .     .     .
+//   ---+      .    +-----------+
+// SCLK |      .    |     .     |
+//      |      .    |     .     |
+//      +-----------+     .     +------
+//    SCLK    Set  SCLK   Get   SCLK
+//    LOW    MOSI  HIGH  MISO   LOW
 //
-// NOTE: 10 inst between transitions -> 200k words / sec ok

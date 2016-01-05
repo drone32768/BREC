@@ -56,7 +56,7 @@ rdid( unsigned char *bytes )
    gSpiBf[3] = 0x00;
    gSpiBf[4] = 0x00;
 
-   fbrd.SpiXfer8( gSpiBf, 5 );
+   fbrd.SpiXferStream8( gSpiBf, 5 );
 
    bytes[0]  = gSpiBf[1];
    bytes[1]  = gSpiBf[2];
@@ -72,7 +72,7 @@ flash_rdsr( unsigned char *bytes )
    gSpiBf[0] = 0x05;
    gSpiBf[1] = 0x00;
 
-   fbrd.SpiXfer8( gSpiBf, 2 );
+   fbrd.SpiXferStream8( gSpiBf, 2 );
 
    bytes[0]  = gSpiBf[1];
 
@@ -84,7 +84,7 @@ flash_wren()
 {
    gSpiBf[0] = 0x06;
 
-   fbrd.SpiXfer8( gSpiBf, 1 );
+   fbrd.SpiXferStream8( gSpiBf, 1 );
 
    return(0);
 }
@@ -94,7 +94,7 @@ flash_be()
 {
    gSpiBf[0] = 0xC7;
 
-   fbrd.SpiXfer8( gSpiBf, 1 );
+   fbrd.SpiXferStream8( gSpiBf, 1 );
 
    return(0);
 }
@@ -112,7 +112,7 @@ int flash_write_page( unsigned int offset, unsigned char *bytes )
       gSpiBf[cnt++] = bytes[idx];
    }
 
-   fbrd.SpiXfer8( gSpiBf, cnt );
+   fbrd.SpiXferStream8( gSpiBf, cnt );
 
    return(0);
 }
@@ -130,7 +130,7 @@ int flash_read_page( unsigned int offset, unsigned char *bytes )
       gSpiBf[cnt++] = 0x0;
    }
 
-   fbrd.SpiXfer8( gSpiBf, cnt );
+   fbrd.SpiXferStream8( gSpiBf, cnt );
 
    for(idx=0;idx<256;idx++){
       bytes[idx] = gSpiBf[ idx + 4 ];

@@ -33,11 +33,14 @@
 //
 //
 
-#define SRAM_OFF_DBG1       0x1000  // 4 bytes
-#define SRAM_OFF_DBG2       0x1004  // 4 bytes
-#define SRAM_OFF_CMD1       0x1100  // 4+256 bytes
-#define SRAM_OFF_CMD2       0x1300  // 4+256 bytes
+// sram offsets for cpu
+#define SRAM_OFF_DBG1       0x0000  // 4 bytes
+#define SRAM_OFF_DBG2       0x0004  // 4 bytes
+#define SRAM_OFF_CMD1       0x0008  // 4+256 bytes
 
+// command codes in upper 16 bits of 32 bit int at SRAM_OFF_CMD1
+#define PRU0_CMD_8STREAM    1       
+#define PRU0_CMD_16ARRAY    2
 
 // 
 // ---------------------------------------------------------------------------
@@ -46,18 +49,18 @@
 // ---------------------------------------------------------------------------
 //        ********** PRU0 SRAM ****************
 // 0x0000 |                                   | 
-//        |         PRU0 -> PRU1 FIFO         | 
-//   0fff |                                   |
+//        |                                   | 
+// 0x0fff |                                   |
 //        +-----------------------------------+
-// 0x1000 | SRAM_OFF_SRAM_HEAD             |
-//   1004 | SRAM_OFF_DRAM_PBASE            |
-//   1008 | SRAM_OFF_SPIN_COUNT            |
+// 0x1000 |                                   |
+//        |                                   |
+//        |                                   |
 //        |          ....                     |
-//   1fff |                                   |
+// 0x1fff |                                   |
 //        ********** PRU1 SRAM ****************
 // 0x2000 |                                   |
 //        |          ....                     |
-//   3fff |                                   |
+// 0x3fff |                                   |
 //        ********** SHARED SRAM **************
 // 0x4000 |                                   |
 //        |          ....                     |

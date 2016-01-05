@@ -59,7 +59,8 @@ public:
     void    Show();
 
     int     StartPru();
-    void    SpiXfer8( unsigned char *bf, int bfCount );
+    void    SpiXferStream8( unsigned char  *bf, int bfCount );
+    void    SpiXferArray16( unsigned short *bf, int bfCount );
 };
 
 #endif
