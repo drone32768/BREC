@@ -16,9 +16,9 @@ all	:
 	cd SdrSvr ;    make all
 	cd WbSvr  ;    make all
 	cd SynHttpd;   make all
-	cd AdcHttpd;   make all
 	cd JtagTools;  make all
 	cd Fboard;     make all
+	cd AdcHttpd;   make all
 
 clean	:
 	cd Util;       make clean
