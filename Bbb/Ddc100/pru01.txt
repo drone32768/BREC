@@ -1,0 +1,52 @@
+
+
+main_loop:
+   move  cmd_req to cmd_res
+   store cmd_res
+
+   load  cmd_req
+   beq   cmd_req, xfer2k
+   jmp main_loop 
+
+xfer2k:
+   check2kavail
+   beq read2k
+   jmp main_loop
+
+check2kavail:
+   load cmd
+   store in sram
+   issue cmd
+   get results
+   if ! then jmp main_loop
+   jump read2k
+ 
+read2k:
+   call read256
+   call save256
+   ...
+   jmp main_loop
+
+save256:
+   load dram head
+   load sram ptr
+looptop;
+   st32
+   inc dram head
+   wrap dram head
+   inc sram ptr
+   dec cnt
+   bnz looptop;
+
+read256:
+   load 256
+   store spiword
+   dec cnt
+   bnz  loop
+
+   load 2
+   write 2 to sram
+wait done;
+   read sram
+   bnz wait_done;
+
