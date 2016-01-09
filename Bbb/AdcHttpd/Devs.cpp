@@ -71,6 +71,13 @@ int Devs::Open()
         mMix = (Xboard*)mAdc;
     }
 
+    else if( FindCapeByName("brecFpru")>0  ){
+        printf("*********** Devs::Open Starting F/Ddc ****************\n");
+        mAdc = new Ddc100();
+        mAdc->Open();
+        mMix = (Ddc100*)mAdc;
+    }
+
     // x86 simulation
 #   ifdef TGT_X86
     {

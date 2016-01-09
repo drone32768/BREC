@@ -39,8 +39,11 @@
 #include "../Util/gpioutil.h"
 
 #include "../Interfaces/AdcIf.h"
+
 #include "../Iboard/Iboard.h"
 #include "../Xboard/Xboard.h"
+
+#include "../Ddc100/Ddc100.h"
 
 class Devs {
   private:
@@ -56,6 +59,6 @@ class Devs {
     MixerIf  *Mx1()        { return(mMix);    } 
 };
 
-Devs *Dp();
+extern Devs *Dp();
 
 #endif

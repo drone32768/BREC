@@ -8,10 +8,12 @@ ifeq ($(TGT),arm)
     LIBS=-lprussdrv
 else
     PRU_INC=../PruEmul/
+    PRU_LIB=./
     LIBS=
 endif
 
 ifeq ($(TGT),arm)
+    EMUL_OBJS=
 else
     EMUL_OBJS=../PruEmul/$(TGT)/SignalSim.o ../PruEmul/$(TGT)/pruss_emul.o
 endif
@@ -20,7 +22,10 @@ UTIL_OBJS=../Util/$(TGT)/mcf.o           \
           ../Util/$(TGT)/gpioutil.o      \
           ../Util/$(TGT)/SimpleTable.o
 DEV_OBJS=../Iboard/$(TGT)/Iboard.o       \
-         ../Xboard/$(TGT)/Xboard.o
+         ../Xboard/$(TGT)/Xboard.o       \
+         ../Fboard/$(TGT)/Fboard.o       \
+         ../Ddc100/$(TGT)/Ddc100.o       \
+
 LOCAL_OBJS= $(TGT)/Devs.o                \
             $(TGT)/Pse.o                 \
             $(TGT)/His.o                 \
