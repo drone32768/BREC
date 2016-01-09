@@ -1,0 +1,16 @@
+
+
+# Subset for led and clock test
+NET "DCLK"         LOC = P95;
+
+NET "LEDS[3]"      LOC = P111;
+NET "LEDS[2]"      LOC = P112;
+NET "LEDS[1]"      LOC = P114;
+NET "LEDS[0]"      LOC = P115;
+
+NET "DCLK"         IOSTANDARD = LVCMOS33;
+
+NET "LEDS[3]"      IOSTANDARD = LVCMOS33;
+NET "LEDS[2]"      IOSTANDARD = LVCMOS33;
+NET "LEDS[1]"      IOSTANDARD = LVCMOS33;
+NET "LEDS[0]"      IOSTANDARD = LVCMOS33;
