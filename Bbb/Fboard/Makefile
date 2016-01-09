@@ -65,7 +65,7 @@ $(TGT)/Fflash	: Fflash.cpp $(LOCAL_OBJS) | $(TGT)
              -L$(PRU_LIB) \
              -lprussdrv -lpthread -o $(TGT)/Fflash
 
-$(TGT)/Fboard.o	: Fboard.cpp pru_images.h | $(TGT)
+$(TGT)/Fboard.o	: Fboard.cpp Fboard.h pru_images.h | $(TGT)
 	g++ -c -I$(PRU_INC) Fboard.cpp -o $(TGT)/Fboard.o
 
 $(TGT)/pru00.bin : pru00.p pruinc.h pruconst.hp | $(TGT)
