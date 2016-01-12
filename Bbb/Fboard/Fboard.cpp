@@ -206,7 +206,7 @@ Fboard::StartPru()
     // Run/Enable prus
     prussdrv_pru_enable(0);
 
-    printf("Xboard:StartPrus Exit\n");
+    printf("Fboard:StartPrus Exit\n");
     return( 0 );
 }
 

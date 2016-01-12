@@ -23,21 +23,21 @@ $(TGT)/DdcTst	: DdcTst.cpp $(LOCAL_OBJS) | $(TGT)
              $(LOCAL_OBJS) \
              $(UTIL_OBJS) \
              -L$(PRU_LIB) \
-             -lprussdrv -lpthread -o $(TGT)/DdcTst
+             -lfftw3 -lprussdrv -lpthread -o $(TGT)/DdcTst
 
-$(TGT)/Ddc100.o	: Ddc100.cpp Ddc100.h | $(TGT)
+$(TGT)/Ddc100.o	: Ddc100.cpp Ddc100.h pru_images.h | $(TGT)
 	g++ -c -I$(PRU_INC) Ddc100.cpp -o $(TGT)/Ddc100.o
 
-#
-#$(TGT)/pru01.bin : pru01.p pruinc.h pruconst.hp | $(TGT)
-#	${PASM} -V3 -b pru01.p
-#	mv pru01.bin $(TGT)/pru01.bin
-#
-#ifeq ($(TGT),arm)
-#pru_images.h    : $(TGT)/pru01.bin | $(TGT)
-#	../Util/$(TGT)/ccat -f $(TGT)/pru01.bin -n pru_image0 >  pru_images.h
-#endif
-#
+
+$(TGT)/pru01.bin : pru01.p pruinc.h | $(TGT)
+	${PASM} -V3 -b pru01.p
+	mv pru01.bin $(TGT)/pru01.bin
+
+ifeq ($(TGT),arm)
+pru_images.h    : $(TGT)/pru01.bin | $(TGT)
+	../Util/$(TGT)/ccat -f $(TGT)/pru01.bin -n pru_image01 >  pru_images.h
+endif
+
 
 clean	:
 	rm -f $(TGT)/*

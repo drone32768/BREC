@@ -58,6 +58,8 @@ void usage( int exit_code )
     printf("-echo   <str> echo string <str>\n");
     printf("-write  <N>   write the 16 bit word N\n");
     printf("-show         show state of sw and device\n");
+    printf("-pat01        couting pattern test w/   1 x  8 bit stream xfer\n");
+    printf("-pat02        couting pattern test w/ 512 x 16 bit array xfer\n");
     printf("\n");
     printf("e.g. -write 0x00001\n");
     exit( exit_code );
@@ -110,7 +112,7 @@ void pat01()
         gettimeofday( &tv1, NULL );
         if( (tv1.tv_sec-tv0.tv_sec) > 3 ){
            us = tv_delta_useconds( &tv1, &tv0 );
-           printf("Total=%d, err=%d, M16rw/sec=%f\n",
+           printf("Total=%d, err=%d, M8rw/sec=%f\n",
                       totCnt,
                       errCnt,
                       (double)intCnt/(double)us

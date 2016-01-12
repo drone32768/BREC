@@ -33,14 +33,14 @@
 //
 //
 
-// sram offsets for cpu
+// sram offsets for pru
 #define SRAM_OFF_DBG1       0x0000  // 4 bytes
 #define SRAM_OFF_DBG2       0x0004  // 4 bytes
-#define SRAM_OFF_CMD1       0x0008  // 4+256 bytes
+#define SRAM_OFF_CMD        0x0008  // 4 bytes
+#define SRAM_OFF_RES        0x000c  // 4 bytes
+#define SRAM_OFF_MSG        0x0100  // 512 bytes
 
-// command codes in upper 16 bits of 32 bit int at SRAM_OFF_CMD1
-#define PRU0_CMD_8STREAM    1       
-#define PRU0_CMD_16ARRAY    2
+#define PRU1_CMD_2KWORDS    1
 
 // 
 // ---------------------------------------------------------------------------

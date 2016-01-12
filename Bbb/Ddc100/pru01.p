@@ -37,8 +37,8 @@
 .origin 0
 .entrypoint MAIN1
 
-#include "PruConst.hp"
-#include "Ddc100pru.h"
+#include "pruconst.hp"
+#include "pruinc.h"
 
 
 //   
@@ -80,10 +80,10 @@ MAIN1:
 
 ////////////////////////////////////////////////////////////////////////////////
 #define    rDbg1Ptr         r4
-    MOV    rDbg2Ptr,            (0x2000 + SRAM_OFF_DBG1)
+    MOV    rDbg1Ptr,            (SRAM_OFF_DBG1)
 
 #define    rDbg2Ptr         r5
-    MOV    rDbg2Ptr,            (0x2000 + SRAM_OFF_DBG2)
+    MOV    rDbg2Ptr,            (SRAM_OFF_DBG2)
 
 #define    rTmp1            r6
     MOV    rTmp1,               0x0
@@ -92,16 +92,22 @@ MAIN1:
     MOV    rTmp2,               0x0
 
 #define    rCmdPtr          r8
-    MOV    rCmdPtr,             (0x2000 + SRAM_OFF_CMD)
+    MOV    rCmdPtr,             (SRAM_OFF_CMD)
 
 #define    rResPtr          r9
-    MOV    rResPtr,             (0x2000 + SRAM_OFF_RES)
+    MOV    rResPtr,             (SRAM_OFF_RES)
 
 #define    rCmdCode         r10
     MOV    rCmdCode,            0x0
 
 #define    rResCode         r11
     MOV    rResCode,            0x0
+
+#define    rCnt                 r12
+    MOV    rCnt,                0x0
+
+#define    rPru0CmdPtr          r13
+    MOV    rPru0CmdPtr,         (SRAM_OFF_MSG)
 
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:
@@ -121,8 +127,8 @@ main_loop:
 xfer2k:
     // check for 2k avail (ok=0 in rResCode)
     // if not avail set  goto main_loop
-    MOV       rResCode, 0  // temporary
-    QBNE      main_loop,rResPtr,0
+    MOV       rResCode, 0  // TODO : temporary
+    QBNE      main_loop,rResCode,0
      
 read2k:
     CALL      read256
@@ -136,19 +142,21 @@ save256:
 ////////////////////////////////////////////////////////////////////////////////
 read256:
 
-    MOV       rTmp1,0x9001
-    MOV       rTmp2,rMsgPtr
+    MOV       rTmp2,rPru0CmdPtr // get pru0 cmd address
+    ADD       rTmp2,rTmp2,4     // pru0 payload starts at +4 from cmd
+    MOV       rTmp1,0x9001      // spi word to execu
+    MOV       rCnt,256
 read256_copyin:
     ST16      rTmp1,rTmp2       // store word
     ADD       rTmp2,rTmp2,2     // inc msg ptr
     SUB       rCnt,rCnt,1       // dec count
     QBNE      read256_copyin,rCnt,0     // loop until done
 
-    MOV       rTmp1,0xff
-    MOV       rTmp2,rMsgPtr
-    ST16      rTmp1,rTmp2       // store xfer count in msg
+    MOV       rTmp1,256
+    ST32      rTmp1,rPru0CmdPtr // store xfer count in msg
 
-waitdone_copyin:
-    LD16      rTmp1,rTmp2
+waitdone_pru0:
+    LD32      rTmp1,rPru0CmdPtr
+    QBNE      waitdone_pru0,rTmp1,0  // loop until done
 
     RET

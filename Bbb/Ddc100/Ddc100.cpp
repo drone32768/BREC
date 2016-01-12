@@ -108,7 +108,7 @@ Ddc100::Ddc100()
     // 0 = no test pattern
     // 2 = 1/8 Fs at half scale
     // 4 = 1/4 Fs at +/- 4
-    mTpg     = 0; 
+    mTpg     = 4; 
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
     mFsDec   = 100000;   // Function of firmware
@@ -134,7 +134,7 @@ Ddc100::Open()
     fwVer = GetFwVersion();
     printf("Ddc100::Open::fw ver = 0x%08x\n",fwVer);
     if( 0x0700 == (fwVer&0xff00) ){
-       mFsHz    = 60000000; // Function of the board
+       mFsHz    = 12000000; // Function of the board
        mFsDec   = 100000;
        mCSPS    = mFsHz;    
     }
@@ -303,8 +303,6 @@ Ddc100::FlushSamples()
 
     // TODO: Tell the pru to go back to streaming
 
-    Show("at flush");
-
     return(0);
 }
 
@@ -315,11 +313,8 @@ Ddc100::Get2kSamples( short *bf )
     int          p;
     int          srcIdx,idx;
 
-    Show("at Get2kSamples Start");
-
     // Transfer 2k samples with single word cpu xfers for now
 
-    SpiRW16(XSPI_FLUSH);
     // TODO - should wait until there are 2k present w/ indicator
     SpiRW16(XSPI_READ_SAMPLE);
     for(idx=0;idx<2047;idx++){
@@ -327,7 +322,8 @@ Ddc100::Get2kSamples( short *bf )
     }
     bf[idx] = SpiRW16(XSPI_RP0);
 
-    Show("at Get2kSamples End");
+    SpiRW16(XSPI_FLUSH);
+
     return( p );
 }
 
