@@ -150,6 +150,56 @@ fspi_xfer_byte( int wval )
     return(rval);
 }
 
+static int 
+fspi_xfer_byte_2x( int wval )
+{
+    int rval;
+    int obit,ibit,idx;
+    int obit2,ibit2;
+
+    if( fspiDbg ){
+       printf("fspi_write_2x: wval = 0x%04x\n",wval);
+    }
+
+    rval    = 0;
+
+    // expecting: sclk=0, ss=0
+
+    for( idx=3; idx>=0; idx-- ){
+        if( fspiDbg ){
+            printf("idx[%d]\n",idx);
+        }
+
+        if( wval&0x80 ) obit  = 1;
+        else            obit  = 0;
+
+        if( wval&0x40 ) obit2 = 1;
+        else            obit2 = 0;
+
+        if( fspiDbg ){
+            printf("   obit = %d, obit2=%d\n",obit,obit2);
+        }
+        hmosi[0].Set( obit );
+        hmosi[1].Set( obit2 );
+        hsclk.Set( 1 );
+        ibit  = hmiso[0].Get( );
+        ibit2 = hmiso[1].Get( );
+        if( fspiDbg ){
+            printf("   ibit = %d, ibit2=%d \n",ibit,ibit2);
+        }
+
+        hsclk.Set( 0 );
+
+        rval = (rval<<1) | ibit;
+        rval = (rval<<1) | ibit2;
+        wval = (wval<<2);
+    }
+
+    // expecting: sclk=0, ss=1
+
+    return(rval);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Pru Based interface ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -409,6 +459,34 @@ Fboard::SpiXferArray16( unsigned short *bf, int bfCount )
           bf[idx] = GetSramShort( SRAM_OFF_CMD1+4+(2*idx) );
       }
 
+   }
+}
+
+//------------------------------------------------------------------------------
+void
+Fboard::SpiXferArray16x2( unsigned short *bf, int bfCount )
+{
+
+   // GPIO based xfer
+   if( !mUsePru ){
+      int           idx;
+      unsigned char msb,lsb;
+
+      for( idx=0; idx<bfCount; idx++ ){
+          fspi_select();
+          msb     = ((bf[idx]>>8)&0xff);
+          lsb     = ((bf[idx]   )&0xff);
+          msb     = fspi_xfer_byte_2x( msb );
+          lsb     = fspi_xfer_byte_2x( lsb );
+          bf[idx] = msb;
+          bf[idx] = (bf[idx]<<8) + lsb;
+          fspi_deselect();
+      }
+   }
+
+   // PRU based xfer
+   else{
+       // TODO
    }
 }
 

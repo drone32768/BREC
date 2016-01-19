@@ -61,6 +61,7 @@ public:
     int     StartPru();
     void    SpiXferStream8( unsigned char  *bf, int bfCount );
     void    SpiXferArray16( unsigned short *bf, int bfCount );
+    void    SpiXferArray16x2( unsigned short *bf, int bfCount );
 };
 
 #endif

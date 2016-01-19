@@ -57,6 +57,7 @@ void usage( int exit_code )
     printf("-usleep <M>   sleeps script execution for <M> micro seconds\n");
     printf("-echo   <str> echo string <str>\n");
     printf("-write  <N>   write the 16 bit word N\n");
+    printf("-w2     <N>   write the 16 bit word N using 2x SPI\n");
     printf("-show         show state of sw and device\n");
     printf("-pat01        couting pattern test w/   1 x  8 bit stream xfer\n");
     printf("-pat02        couting pattern test w/ 512 x 16 bit array xfer\n");
@@ -237,6 +238,7 @@ main( int argc, char *argv[] )
             pat02();
         }
 
+        // TODO this is really w16x1
         else if( 0==strcmp(argv[idx], "-write") ){
             unsigned char bf[256];
 
@@ -255,6 +257,21 @@ main( int argc, char *argv[] )
             continue;
         }
 
+        else if( 0==strcmp(argv[idx], "-w16x2") ){
+            unsigned short sbf[128];
+
+            if( (idx+1) >= argc ){ usage(-1); }
+            val = strtol(argv[idx+1],&end,0);
+            
+            sbf[0] = val;
+            fbrd.SpiXferArray16x2( sbf, 1 );
+            rd    = sbf[0];
+
+            printf("2x: w=0x%04hx r=0x%04hx (%hd)\n",val, rd, rd);
+
+            idx+=2;
+            continue;
+        }
         idx++;
     }
 
