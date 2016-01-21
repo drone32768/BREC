@@ -41,6 +41,7 @@
 // command codes in upper 16 bits of 32 bit int at SRAM_OFF_CMD1
 #define PRU0_CMD_8STREAM    1       
 #define PRU0_CMD_16ARRAY    2
+#define PRU0_CMD_16ARRAY2x  3
 
 // 
 // ---------------------------------------------------------------------------

@@ -486,7 +486,33 @@ Fboard::SpiXferArray16x2( unsigned short *bf, int bfCount )
 
    // PRU based xfer
    else{
-       // TODO
+      int idx,cnt,limit;
+
+      // Copy data in
+      for(idx=0;idx<bfCount;idx++){
+          SetSramShort( bf[idx], SRAM_OFF_CMD1+4+(2*idx) );
+      }
+ 
+      // Issue the command
+      SetSramShort( bfCount,            SRAM_OFF_CMD1+2 );
+      SetSramShort( PRU0_CMD_16ARRAY2x, SRAM_OFF_CMD1 );
+
+      // Wait for the command to complete
+      cnt   = 0;
+      limit = 1000; // wait for this many times nominal expected xfer time
+      while( 0!=GetSramShort(SRAM_OFF_CMD1) && (cnt<1000) ){
+          us_sleep(1 * bfCount);  // assume nominal 1us/byte
+          cnt++;
+      }
+      if( cnt>=limit ){
+         printf("%s:%d SpiArray16x2 pru timeout\n",__FILE__,__LINE__);
+      }
+
+      // Copy out the results
+      for(idx=0;idx<bfCount;idx++){
+          bf[idx] = GetSramShort( SRAM_OFF_CMD1+4+(2*idx) );
+      }
+
    }
 }
 

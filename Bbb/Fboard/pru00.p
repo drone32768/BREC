@@ -44,8 +44,10 @@
 //
 // Bit defintions for later use
 //
-#define MOSI_B   3               // bit pos of MOSI
-#define MISO_B   1               // bit pos of MISO
+#define MOSI_B   3               // bit pos of MOSI(0)
+#define MOSI_C   5               // bit pos of MOSI(1)
+#define MISO_B   1               // bit pos of MISO(0)
+#define MISO_C   2               // bit pos of MISO(1)
 #define SCLK_H   0x01            // OR  into r30 to set high
 #define SCLK_L   0xfe            // AND into r30 to set low
 #define SS_H     0x80            // OR  into r30 to set high
@@ -114,9 +116,40 @@ main_loop:
     LD16      rCmdCode, rCmdPtr            // load the command code
     ADD       rTmp1,rCmdPtr,2              // get pointer to xfer count
     LD16      rCnt, rTmp1                  // load the xfer count
-    QBEQ      xfer_byte_stream,rCmdCode,PRU0_CMD_8STREAM    
-    QBEQ      xfer_short_array,rCmdCode,PRU0_CMD_16ARRAY    
+    QBEQ      xfer_short_array2x,rCmdCode,PRU0_CMD_16ARRAY2x    
+    QBEQ      xfer_short_array,  rCmdCode,PRU0_CMD_16ARRAY    
+    QBEQ      xfer_byte_stream,  rCmdCode,PRU0_CMD_8STREAM    
     JMP       main_loop          
+
+////////////////////////////////////////////////////////////////////////////////
+// Execute a series of 16 bit transfers each with its own slave select
+// ARG:   rCnt     = number of words
+// ARG:   rCmdPtr  = pointer to cmd word (data is +4 from this)
+// LOCAL: rDataPtr = pointer to current words
+//
+xfer_short_array2x:
+    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
+
+    LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value
+    ADD       rTmp1, rTmp1, 2     // DBG2 - increment alue
+    ST32      rTmp1, rDbg2Ptr     // DBG2 - store value
+
+xfer_short2x:
+    LD16      rArg0, rDataPtr     // load the next word to send
+    LSL       rArg0,rArg0,16      // place bits in upper most position
+    MOV       rBc, 16             // set number of bits to shift
+    AND       r30, r30, SS_L      // ss low
+    CALL      shiftbits2xb        // shift out/in a byte
+    OR        r30, r30, SS_H      // ss high
+    ST16      rArg0, rDataPtr     // save the received byte
+    ADD       rDataPtr,rDataPtr,2 // inc the xfer byte pointer
+    OR        rTmp2,rTmp2,rTmp2   // nop +01
+    SUB       rCnt,rCnt,1         // dec the xfer count
+    QBNE      xfer_short2x,rCnt,0 // loop if there are more bytes to xfer
+
+    MOV       rTmp1,0             // load a zero
+    ST16      rTmp1, rCmdPtr      // clear command bytes
+    JMP       main_loop           // return to main loop 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Execute a series of 16 bit transfers each with its own slave select
@@ -128,7 +161,7 @@ xfer_short_array:
     ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
 
     LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value
-    ADD       rTmp1, rTmp1, 1     // DBG2 - increment alue
+    ADD       rTmp1, rTmp1, 2     // DBG2 - increment alue
     ST32      rTmp1, rDbg2Ptr     // DBG2 - store value
 
 xfer_short:
@@ -219,6 +252,55 @@ clockbit:
     MOV       rArg0,rSI          // move serial input to return
     RET
 
+//-----------------------------------------------------------------------------
+// Shift out and in up to 32 bits using 2x spi
+// ARG   : rArg0 = bits to shift out (starting at msb), shifted in bits on ret
+// ARG   : rBc   = number of bits
+// LOCAL : rSO
+// LOCAL : rSI
+shiftbits2xb:
+
+    MOV       rSO, rArg0         // setup output word
+    MOV       rSI, 0             // setup input word
+
+clockbit2xb:
+    LSR       rTmp1,rSO,28       // 02 get bit  (31->3)
+    AND       rTmp1,rTmp1,8      // 03 mask bit
+
+    LSR       rTmp2,rSO,25       // 04 get bit  (30->5)
+    AND       rTmp2,rTmp2,32     // 05 mask bit 
+
+    OR        r30,rTmp1,rTmp2    // 06 ** Set MOSI(0..1)
+    LSL       rSO,rSO,2          // 07 shift SO to prep next out bits
+    SUB       rBc,rBc,2          // 08 dec the bit count
+    LSL       rSI,rSI,2          // 09 shift running input up
+    OR        rTmp2,rTmp2,rTmp2  // 10 nop
+    OR        rTmp2,rTmp2,rTmp2  // XX nop
+    OR        r30, r30,SCLK_H    // 11 ** SCLK high
+
+    OR        rTmp2,rTmp2,rTmp2  // XX nop
+    OR        rTmp2,rTmp2,rTmp2  // 12 nop
+    OR        rTmp2,rTmp2,rTmp2  // 13 nop
+    OR        rTmp2,rTmp2,rTmp2  // 14 nop
+    OR        rTmp2,rTmp2,rTmp2  // 15 nop
+
+    LSR       rTmp1,r31,0        // 16 ** Get MISO(0) (1 -> 1)
+    LSR       rTmp2,r31,2        // 17 ** Get MISO(1) (2 -> 0)
+
+    AND       rTmp1,rTmp1,2      // 18 mask of any other bits
+    AND       rTmp2,rTmp2,1      // 19 mask of any other bits
+
+    OR        rSI,rSI,rTmp1      // 20 add the new bit to si 
+    OR        rSI,rSI,rTmp2      // 21 add the new bit to si 
+
+    AND       r30, r30,SCLK_L    // 22 ** SCLK LOW
+
+    QBNE      clockbit2xb,rBc,0  // 01 if more bits, goto top of loop
+
+    MOV       rArg0,rSI          // move serial input to return
+    RET
+
+//-----------------------------------------------------------------------------
 //      000000000011111111112222222222
 //      012345678901234567890123456789
 //             .    .     .     .

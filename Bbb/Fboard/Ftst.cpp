@@ -52,15 +52,19 @@
 
 Fboard         fbrd;
 
+// Pattern tests expect BDC based fpga image
+#define BDC_READ_R3 0x8300
+
 void usage( int exit_code )
 {
-    printf("-usleep <M>   sleeps script execution for <M> micro seconds\n");
-    printf("-echo   <str> echo string <str>\n");
-    printf("-write  <N>   write the 16 bit word N\n");
-    printf("-w2     <N>   write the 16 bit word N using 2x SPI\n");
-    printf("-show         show state of sw and device\n");
-    printf("-pat01        couting pattern test w/   1 x  8 bit stream xfer\n");
-    printf("-pat02        couting pattern test w/ 512 x 16 bit array xfer\n");
+    printf("-usleep <M> sleeps script execution for <M> micro seconds\n");
+    printf("-echo   <S> echo string <S>\n");
+    printf("-write  <N> write the 16 bit word N\n");
+    printf("-w16x2  <N> write the 16 bit word N using 2x SPI\n");
+    printf("-show       show state of sw and device\n");
+    printf("-pat01      couting pattern test w/   1 x  8 bit stream xfer\n");
+    printf("-pat02      couting pattern test w/ 512 x 16 bit array xfer\n");
+    printf("-pat03      couting pattern test w/ 512 x 16 bit array xfer 2x\n");
     printf("\n");
     printf("e.g. -write 0x00001\n");
     exit( exit_code );
@@ -77,12 +81,6 @@ void pat01()
 
     printf("NOTE: This test does not self terminate.\n");
 
-    sbf[0] = ntohs( 0x8f24 );
-    fbrd.SpiXferStream8( (unsigned char*)sbf, 2 );
-
-    sbf[0] = ntohs( 0x0005 );
-    fbrd.SpiXferStream8( (unsigned char*)sbf, 2 );
-
     totCnt     = 0;
     errCnt     = 0;
     intCnt     = 0;
@@ -90,17 +88,18 @@ void pat01()
     gettimeofday( &tv0, NULL );
     while( 1 ){
 
-        sbf[0] = ntohs( 0x0009 );
+        sbf[0] = ntohs( BDC_READ_R3 );
         fbrd.SpiXferStream8( (unsigned char*)sbf, 2 );
 
         vAct = htons( sbf[0] );
 
         if( vAct!=vExp ){
-               printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) \n",
+                   printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) @%d\n",
                          vAct,
                          vAct,
                          vExp,
-                         vExp
+                         vExp,
+                         totCnt
                      );
                if( errCnt > 30 ) exit( -1 );
                errCnt++;
@@ -137,12 +136,6 @@ void pat02()
 
     printf("NOTE: This test does not self terminate.\n");
 
-    sbf[0] = 0x8f24;
-    fbrd.SpiXferArray16( sbf, 1 );
-
-    sbf[0] = 0x0005;
-    fbrd.SpiXferArray16( sbf, 1 );
-
     totCnt     = 0;
     errCnt     = 0;
     intCnt     = 0;
@@ -152,7 +145,7 @@ void pat02()
     while( 1 ){
 
         for(idx=0;idx<xferCnt;idx++){
-            sbf[idx] = 0x0009;
+            sbf[idx] = BDC_READ_R3;
         }
 
         fbrd.SpiXferArray16( sbf, xferCnt );
@@ -160,11 +153,12 @@ void pat02()
         for(idx=0;idx<xferCnt;idx++){
             vAct = sbf[idx];
             if( vAct!=vExp ){
-                   printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) \n",
+                   printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) @%d\n",
                          vAct,
                          vAct,
                          vExp,
-                         vExp
+                         vExp,
+                         totCnt
                      );
                if( errCnt > 30 ) return;
                errCnt++;
@@ -179,6 +173,66 @@ void pat02()
         if( (tv1.tv_sec-tv0.tv_sec) > 3 ){
            us = tv_delta_useconds( &tv1, &tv0 );
            printf("Total=%d, err=%d, M16rw/sec=%f\n",
+                      totCnt,
+                      errCnt,
+                      (double)intCnt/(double)us
+                 );
+           tv0 = tv1;
+           intCnt=0;
+        }
+
+    } // end of infinite loop
+
+}
+
+void pat03()
+{
+    int            idx;
+    unsigned short sbf[1024];
+    unsigned short vAct,vExp;
+    unsigned int   totCnt,errCnt,intCnt,xferCnt;
+    int            us;
+    struct timeval tv0, tv1;
+
+    printf("NOTE: This test does not self terminate.\n");
+
+    totCnt     = 0;
+    errCnt     = 0;
+    intCnt     = 0;
+    vExp       = 0;
+    xferCnt    = 512;
+    gettimeofday( &tv0, NULL );
+    while( 1 ){
+
+        for(idx=0;idx<xferCnt;idx++){
+            sbf[idx] = BDC_READ_R3; 
+        }
+
+        fbrd.SpiXferArray16x2( sbf, xferCnt );
+
+        for(idx=0;idx<xferCnt;idx++){
+            vAct = sbf[idx];
+            if( vAct!=vExp ){
+                   printf("    ERR read 0x%02x (%d), expect 0x%02x (%d) @%d\n",
+                         vAct,
+                         vAct,
+                         vExp,
+                         vExp,
+                         totCnt
+                     );
+               if( errCnt > 30 ) return;
+               errCnt++;
+               vExp = vAct;
+            }
+            totCnt++;
+            intCnt++;
+            vExp++;
+        }
+
+        gettimeofday( &tv1, NULL );
+        if( (tv1.tv_sec-tv0.tv_sec) > 3 ){
+           us = tv_delta_useconds( &tv1, &tv0 );
+           printf("Total=%d, err=%d, (2x)M16rw/sec=%f\n",
                       totCnt,
                       errCnt,
                       (double)intCnt/(double)us
@@ -236,6 +290,10 @@ main( int argc, char *argv[] )
 
         else if( 0==strcmp(argv[idx], "-pat02") ){
             pat02();
+        }
+
+        else if( 0==strcmp(argv[idx], "-pat03") ){
+            pat03();
         }
 
         // TODO this is really w16x1
