@@ -1,0 +1,17 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - version tests" \
+-echo "--->R5 other clock counter" \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-write 0x8500 \
+-echo "--->R5 the values after the first should change" \
+

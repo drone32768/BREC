@@ -1,0 +1,45 @@
+#!/bin/bash
+arm/Ftst \
+-echo "This test cycles LEDs (one at a time, then all, then off)" \
+-write  0x4200            \
+-write  0x8200            \
+                          \
+-usleep 500000            \
+-write  0x4201            \
+-write  0x8201            \
+                          \
+-usleep 500000            \
+-write  0x4202            \
+-write  0x8202            \
+                          \
+-usleep 500000            \
+-write  0x4204            \
+-write  0x4804            \
+                          \
+-usleep 500000            \
+-write  0x4208            \
+-write  0x8208            \
+                          \
+-usleep 500000            \
+-write  0x4204            \
+-write  0x4804            \
+                          \
+-usleep 500000            \
+-write  0x4202            \
+-write  0x8202            \
+                          \
+-usleep 500000            \
+-write  0x4201            \
+-write  0x8201            \
+                          \
+-usleep 500000            \
+-write  0x4200            \
+-write  0x8200            \
+                          \
+-usleep 500000            \
+-write  0x420f            \
+-write  0x8200            \
+                          \
+-usleep 500000            \
+-write  0x4200            \
+-write  0x8200            \

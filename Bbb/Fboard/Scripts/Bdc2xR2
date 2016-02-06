@@ -1,0 +1,45 @@
+#!/bin/bash
+arm/Ftst \
+-echo "This test cycles LEDs (one at a time, then all, then off)" \
+-w16x2  0x4200            \
+-w16x2  0x8200            \
+                          \
+-usleep 500000            \
+-w16x2  0x4201            \
+-w16x2  0x8201            \
+                          \
+-usleep 500000            \
+-w16x2  0x4202            \
+-w16x2  0x8202            \
+                          \
+-usleep 500000            \
+-w16x2  0x4204            \
+-w16x2  0x4804            \
+                          \
+-usleep 500000            \
+-w16x2  0x4208            \
+-w16x2  0x8208            \
+                          \
+-usleep 500000            \
+-w16x2  0x4204            \
+-w16x2  0x4804            \
+                          \
+-usleep 500000            \
+-w16x2  0x4202            \
+-w16x2  0x8202            \
+                          \
+-usleep 500000            \
+-w16x2  0x4201            \
+-w16x2  0x8201            \
+                          \
+-usleep 500000            \
+-w16x2  0x4200            \
+-w16x2  0x8200            \
+                          \
+-usleep 500000            \
+-w16x2  0x420f            \
+-w16x2  0x8200            \
+                          \
+-usleep 500000            \
+-w16x2  0x4200            \
+-w16x2  0x8200            \

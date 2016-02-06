@@ -1,0 +1,9 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - compatibility tests" \
+-echo "--->R0 write/read (id)" \
+-w16x2 0x8000 \
+-w16x2 0x8000 \
+-w16x2 0x8000 \
+-echo "--->R0 should be bdc1" \
+

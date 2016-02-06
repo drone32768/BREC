@@ -1,0 +1,9 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - version tests" \
+-echo "--->R1 write/read (id)" \
+-w16x2 0x8100 \
+-w16x2 0x8100 \
+-w16x2 0x8100 \
+-echo "--->R1 should be your version" \
+

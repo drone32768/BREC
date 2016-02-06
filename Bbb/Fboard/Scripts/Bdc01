@@ -1,0 +1,8 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - version tests" \
+-echo "--->R1 write/read (version)" \
+-write 0x8100 \
+-write 0x0000 \
+-echo "--->R1 should be expected function and version" \
+

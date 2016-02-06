@@ -1,0 +1,17 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - version tests" \
+-echo "--->R3 read counter" \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-write 0x8300 \
+-echo "--->R1 the values after the first should increment" \
+

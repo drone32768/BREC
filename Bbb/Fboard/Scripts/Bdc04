@@ -1,0 +1,17 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - version tests" \
+-echo "--->R4 clock counter" \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-write 0x8400 \
+-echo "--->R4 the values after the first should change" \
+

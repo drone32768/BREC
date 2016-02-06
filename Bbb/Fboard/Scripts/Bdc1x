@@ -1,0 +1,6 @@
+#!/bin/bash
+arm/Ftst \
+-echo "BDC - compatibility tests" \
+-w16x2 0x4600 \
+-echo "--->NOW 1X" \
+
