@@ -1,0 +1,30 @@
+#!/bin/bash
+arm/Ftst \
+-echo "This test cycles GPIO1 outputs (one at a time)" \
+-write  0x4E01            \
+-write  0x4F01            \
+                          \
+-usleep 1000000            \
+-write  0x4E02            \
+-write  0x4F02            \
+                          \
+-usleep 1000000            \
+-write  0x4E04            \
+-write  0x4F04            \
+                          \
+-usleep 1000000            \
+-write  0x4E08            \
+-write  0x4F08            \
+                          \
+-usleep 1000000            \
+-write  0x4E10            \
+-write  0x4F10            \
+                          \
+-usleep 1000000            \
+-write  0x4E20            \
+-write  0x4F20            \
+                          \
+-usleep 1000000            \
+-write  0x4E00            \
+-write  0x4F00            \
+

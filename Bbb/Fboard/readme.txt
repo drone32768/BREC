@@ -6,13 +6,13 @@ interface is defined in ../JtagTools.
 
 Fxvc.cpp
 This is the outer wrapper for starting the Xilinx virtual cable application
-It relies on the jtag .o in this directory and the general xvc libary 
+It relies on the jtag_bs_f in this directory and the general xvc libary 
 in ../JtagTools
 
 Fxsvf.cpp
 This is the main loop to drive the Xilinx xsvf player and includes 
-code to read the image from local file.  It too relies on the jtag .o in 
-this directory and the general xsvf library in ../JtagTools
+code to read the image from local file.  It too relies on the jtag_bs_f
+in this directory and the general xsvf library in ../JtagTools
 
 Fboard.o
 This is the primary interface library used to access and control the fpga
@@ -41,7 +41,7 @@ To load an .xsvf
 
 To flash an image
   a) Load the host to flash spi image
-         arm/Fxsvf Images/hspi.xsvf
+         arm/Fxsvf Images/HtoFspi-00-160109.xsvf
   b) Verify spi access
          arm/Fflash -rdid
   c) Progam the image

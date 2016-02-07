@@ -109,6 +109,20 @@ MAIN1:
 #define    rPru0CmdPtr      r13
     MOV    rPru0CmdPtr,         (SRAM_OFF_MSG)
 
+#define    rDramPtr         r15
+    MOV    rDramPtr,            (SRAM_OFF_MSG) // fixme
+
+#define    rDrmOffset       r16
+    MOV    rDrmOffset,          (SRAM_OFF_MSG) // fixme
+
+#define    rDrmBasePtr      r17
+    MOV    rDrmBasePtr,         (SRAM_OFF_MSG) // fixme
+
+#define    rDrmOffsetMask   r18
+    MOV    rDrmOffsetMask,      (SRAM_OFF_MSG) // fixme
+
+#define PRU0_CMD_16ARRAY 2 // fixme
+
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:
     // increment dbg2 every loop pass

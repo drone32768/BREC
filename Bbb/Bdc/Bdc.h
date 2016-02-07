@@ -38,6 +38,41 @@
 #include "../Util/mcf.h"
 #include "../Fboard/Fboard.h"
 
+
+#define BDC_REG_RD  0x8000
+#define BDC_REG_WR  0x4000
+
+#define BDC_REG_R0  0x0000
+#define BDC_REG_R1  0x0100
+#define BDC_REG_R2  0x0200
+#define BDC_REG_R3  0x0300
+#define BDC_REG_R4  0x0400
+#define BDC_REG_R5  0x0500
+#define BDC_REG_R6  0x0600
+#define BDC_REG_R7  0x0700
+#define BDC_REG_R8  0x0800
+
+#define BDC_REG_R9  0x0900
+#define BDC_REG_R10 0x0A00
+#define BDC_REG_R11 0x0B00
+#define BDC_REG_R12 0x0C00
+
+#define BDC_REG_R13 0x0D00
+#define BDC_REG_R14 0x0E00
+#define BDC_REG_R15 0x0F00
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define BDC_GPIO0_DIR_WR (BDC_REG_WR | BDC_REG_R11)
+#define BDC_GPIO1_DIR_WR (BDC_REG_WR | BDC_REG_R14)
+
+#define BDC_GPIO0_OUT_WR (BDC_REG_WR | BDC_REG_R12)
+#define BDC_GPIO1_OUT_WR (BDC_REG_WR | BDC_REG_R15)
+
+#define BDC_GPIO0_INP_RD (BDC_REG_RD | BDC_REG_R10)
+#define BDC_GPIO1_INP_RD (BDC_REG_RD | BDC_REG_R13)
+
+////////////////////////////////////////////////////////////////////////////////
 class Bdc {
 
 private:
@@ -46,7 +81,6 @@ private:
     int                      mPidx;
     volatile unsigned short *mPtrPruSamples;
     volatile unsigned char  *mPtrPruSram;
-
 
     ////////////////////////////////////////
     Fboard                   mFbrd;
