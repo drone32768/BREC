@@ -16,9 +16,6 @@ all	:
 	cd SdrSvr ;    make all
 	cd WbSvr  ;    make all
 	cd SynHttpd;   make all
-	cd JtagTools;  make all
-	cd Fboard;     make all
-	cd AdcHttpd;   make all
 
 clean	:
 	cd Util;       make clean
@@ -36,9 +33,6 @@ clean	:
 	cd SdrSvr ;    make clean
 	cd WbSvr  ;    make clean
 	cd SynHttpd;   make clean
-	cd AdcHttpd;   make clean
-	cd JtagTools;  make clean
-	cd Fboard;     make clean
 
 clean_all :
 	find . -name "arm" -exec rm -rf {} ";"

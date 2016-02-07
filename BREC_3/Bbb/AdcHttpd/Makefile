@@ -15,14 +15,13 @@ endif
 ifeq ($(TGT),arm)
     EMUL_OBJS=
 else
-    EMUL_OBJS=../PruEmul/$(TGT)/SignalSim.o ../PruEmul/$(TGT)/pruss_emul.o
+    EMUL_OBJS=../PruEmul/$(TGT)/pruss_emul.o
 endif
 
 UTIL_OBJS=../Util/$(TGT)/mcf.o           \
           ../Util/$(TGT)/gpioutil.o      \
           ../Util/$(TGT)/SimpleTable.o
-DEV_OBJS=../Iboard/$(TGT)/Iboard.o       \
-         ../Xboard/$(TGT)/Xboard.o       \
+DEV_OBJS= \
          ../Fboard/$(TGT)/Fboard.o       \
          ../Ddc100/$(TGT)/Ddc100.o       \
 

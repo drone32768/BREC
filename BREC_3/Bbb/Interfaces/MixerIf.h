@@ -1,4 +1,5 @@
 //
+//
 // This source code is available under the "Simplified BSD license".
 //
 // Copyright (c) 2015, J. Kleiner
@@ -31,34 +32,22 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
-#ifndef __DEVS__
-#define __DEVS__
+#ifndef __MIXER_IF__
+#define __MIXER_IF__
 
-#include "../Util/mcf.h"
-#include "../Util/net.h"
-#include "../Util/gpioutil.h"
+class MixerIf {
 
-#include "../Interfaces/AdcIf.h"
+public:
 
-#include "../Iboard/Iboard.h"
-#include "../Xboard/Xboard.h"
+    /** Required first operation */
+    virtual int Open() = 0;
 
-#include "../Ddc100/Ddc100.h"
+    /** 
+     * Set LO frequency to specified as close as possible.
+     * Returns actual frequency in Hertz set.  
+     */
+    virtual double SetLoFreqHz( double freqHz ) = 0;
 
-class Devs {
-  private:
-    AdcIf   *mAdc;
-    MixerIf *mMix;
-
-  public:
-
-    Devs();
-
-    int      Open();
-    AdcIf    *Adc()        { return(mAdc);    }
-    MixerIf  *Mx1()        { return(mMix);    } 
 };
-
-extern Devs *Dp();
 
 #endif

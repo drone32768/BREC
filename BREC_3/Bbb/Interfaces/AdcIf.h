@@ -1,7 +1,8 @@
 //
+//
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2015, J. Kleiner
+// Copyright (c) 2013, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -31,66 +32,43 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
-#include <stdio.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef __ADC_IF__
+#define __ADC_IF__
 
-#include "Devs.h"
+class AdcIf {
 
-//------------------------------------------------------------------------------
-static Devs *gpDevs = NULL;
+public:
 
-//------------------------------------------------------------------------------
-Devs *Dp()
-{
-    if( !gpDevs ){
-       gpDevs = new Devs();
-    }
-    return( gpDevs );
-}
+    /** Required first operation */
+    virtual int Open() = 0;
 
-//------------------------------------------------------------------------------
-Devs::Devs()
-{
-}
+    /** Starts internal processing for PRU based interfaces */
+    virtual int StartPrus() = 0;
 
-//------------------------------------------------------------------------------
-int Devs::Open()
-{
-    // This just opens the dev(s).  See HwModel:HwInit() for initial
-    // parameters
+    /** Flush all hw and sw queued data */
+    virtual int FlushSamples() = 0;
 
-    if( FindCapeByName("brecX")>0  ){
-        printf("*********** Devs::Open Starting X board ****************\n");
-        mAdc = new Xboard();
-        mAdc->Open();
-        mAdc->StartPrus();
+    /** 
+     * Collects 2k short data words 
+     *  [ slight misnomer - implies real valued samples but
+     *  complex formats provide 1k samples/2k words ]
+     */
+    virtual int Get2kSamples( short *bf ) = 0; 
 
-        mMix = (Xboard*)mAdc;
-    }
+    /** TODO obsolete these */
+    virtual int SetComplexSampleRate( int complexSamplesPerSecond ) = 0;
+    virtual int GetComplexSampleRate( ) = 0;
 
-    else if( FindCapeByName("brecFpru")>0  ){
-        printf("*********** Devs::Open Starting F/Ddc ****************\n");
-        mAdc = new Ddc100();
-        mAdc->Open();
-        mMix = (Ddc100*)mAdc;
-    }
+    /** Internal gain control */ 
+    virtual int SetGain( int gn ) = 0;
 
-    // x86 simulation
-#   ifdef TGT_X86
-    {
-        printf("********* Devs::Open Starting x86 X board ****************\n");
-        mAdc = new Xboard();
-        mAdc->Open();
-        mAdc->StartPrus();
+    /** Returns non zero if complext */
+    virtual int IsComplexFmt() = 0;
 
-        mMix = (Xboard*)mAdc;
-    }
-#   endif
+    /** Returns source set */
+    virtual int SetSource( int sn ) = 0;  
 
-    printf("*********** Devs::Open End *****************************\n");
+    /** TODO GetSource? */
+};
 
-    return(0);
-}
+#endif
