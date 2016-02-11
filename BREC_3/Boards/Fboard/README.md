@@ -14,7 +14,6 @@ Summary table showing all connections.
 ## Kicad
 All KiCad (2012-01-19 BZR 3256) files.
 
-# NOTE: To view non-text files, select the "Raw" tab on the view and it will
-download directly.
+NOTE: To view non-text files, select the "Raw" tab on the view and it will download directly.
 
 Also see: http://kd2boa.blogspot.com/
