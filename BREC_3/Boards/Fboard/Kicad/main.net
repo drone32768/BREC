@@ -1,0 +1,1242 @@
+# EESchema Netlist Version 1.1 created  1/6/2016 5:23:47 AM
+(
+ ( /564DA84E/568CE30D $noname  P202 CONN_5X2 {Lib=CONN_5X2}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+  (    3 P1_MOSI )
+  (    4 P1_MISO )
+  (    5 P1_SCLK )
+  (    6 P1_SS1 )
+  (    7 P1_IO1 )
+  (    8 P1_IO2 )
+  (    9 BBB_GND )
+  (   10 P0_5V )
+ )
+ ( /564DA84E/568CE30C $noname  P201 CONN_5X2 {Lib=CONN_5X2}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+  (    3 P0_MOSI )
+  (    4 P0_MISO )
+  (    5 P0_SCLK )
+  (    6 P0_SS1 )
+  (    7 P0_IO1 )
+  (    8 P0_IO2 )
+  (    9 BBB_GND )
+  (   10 P0_5V )
+ )
+ ( /564DA84E/56574430 $noname  R209 330 {Lib=R}
+  (    1 BBB_GPIO0_31 )
+  (    2 VCC_3_3 )
+ )
+ ( /564DA84E/56521453 $noname  U202 M25P40 {Lib=M25P40}
+  (    1 CSO_B )
+  (    2 MISO )
+  (    3 VCC_3_3 )
+  (    4 BBB_GND )
+  (    5 MOSI )
+  (    6 CCLK )
+  (    7 VCC_3_3 )
+  (    8 VCC_3_3 )
+ )
+ ( /564DA84E/5651A58C $noname  R208 4.7k {Lib=R}
+  (    1 N-000096 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/5651872E $noname  R207 4.7k {Lib=R}
+  (    1 BBB_GPIO0_30 )
+  (    2 VCC_3_3 )
+ )
+ ( /564DA84E/564FD8F2 $noname  R206 4.7k {Lib=R}
+  (    1 N-000123 )
+  (    2 OUT4 )
+ )
+ ( /564DA84E/564FD8F1 $noname  D204 LED {Lib=LED}
+  (    1 N-000123 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564FD832 $noname  D203 LED {Lib=LED}
+  (    1 N-000120 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564FD82F $noname  D202 LED {Lib=LED}
+  (    1 N-000101 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564FD816 $noname  R205 4.7k {Lib=R}
+  (    1 N-000120 )
+  (    2 OUT3 )
+ )
+ ( /564DA84E/564FD812 $noname  R204 4.7k {Lib=R}
+  (    1 N-000101 )
+  (    2 OUT2 )
+ )
+ ( /564DA84E/564FD7DF $noname  D201 LED {Lib=LED}
+  (    1 N-000121 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564FD7DE $noname  R203 4.7k {Lib=R}
+  (    1 N-000121 )
+  (    2 OUT1 )
+ )
+ ( /564DA84E/564F8728 $noname  C201 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564F8727 $noname  C202 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564F8726 $noname  U203 FOX924B_TCXO {Lib=FOX924B_TCXO}
+  (    1 ? )
+  (    2 BBB_GND )
+  (    3 FPGA_CLK )
+  (    4 VCC_3_3 )
+ )
+ ( /564DA84E/564F3FC3 $noname  R202 4.7k {Lib=R}
+  (    1 VCC_3_3 )
+  (    2 CSO_B )
+ )
+ ( /564DA84E/564E772D $noname  U201 LX9-TQG144 {Lib=LX9-TQG144}
+  (    1 IO16 )
+  (    2 IO15 )
+  (    3 BBB_GND )
+  (    4 VCC_3_3 )
+  (    5 IO14 )
+  (    6 IO13 )
+  (    7 IO12 )
+  (    8 IO11 )
+  (    9 IO10 )
+  (   10 IO09 )
+  (   11 IO08 )
+  (   12 IO07 )
+  (   13 BBB_GND )
+  (   14 IO06 )
+  (   15 IO05 )
+  (   16 IO04 )
+  (   17 IO03 )
+  (   18 VCC_3_3 )
+  (   19 VCC_1_2 )
+  (   20 VCC_3_3 )
+  (   21 IO02 )
+  (   22 IO01 )
+  (   23 ? )
+  (   24 ? )
+  (   25 BBB_GND )
+  (   26 ? )
+  (   27 ? )
+  (   28 VCC_1_2 )
+  (   29 ? )
+  (   30 ? )
+  (   31 VCC_3_3 )
+  (   32 ? )
+  (   33 ? )
+  (   34 ? )
+  (   35 ? )
+  (   36 VCC_3_3 )
+  (   37 BBB_GPIO1_18 )
+  (   38 CSO_B )
+  (   39 BBB_GPIO0_30 )
+  (   40 ? )
+  (   41 ? )
+  (   42 VCC_3_3 )
+  (   43 ? )
+  (   44 ? )
+  (   45 ? )
+  (   46 ? )
+  (   47 ? )
+  (   48 ? )
+  (   49 BBB_GND )
+  (   50 ? )
+  (   51 ? )
+  (   52 VCC_1_2 )
+  (   53 VCC_3_3 )
+  (   54 BBB_GND )
+  (   55 ? )
+  (   56 ? )
+  (   57 ? )
+  (   58 ? )
+  (   59 ? )
+  (   60 BBB_GND )
+  (   61 ? )
+  (   62 ? )
+  (   63 VCC_3_3 )
+  (   64 MOSI )
+  (   65 MISO )
+  (   66 ? )
+  (   67 ? )
+  (   68 BBB_GND )
+  (   69 VCC_3_3 )
+  (   70 CCLK )
+  (   71 BBB_GPIO0_31 )
+  (   72 ? )
+  (   73 N-000103 )
+  (   74 BBB_PRU0_R31_7 )
+  (   75 BBB_PRU0_R31_3 )
+  (   76 VCC_3_3 )
+  (   77 BBB_GND )
+  (   78 BBB_PRU0_R31_5 )
+  (   79 BBB_PRU0_R31_2 )
+  (   80 BBB_PRU0_R31_1 )
+  (   81 ? )
+  (   82 ? )
+  (   83 ? )
+  (   84 BBB_PRU0_R31_0 )
+  (   85 ? )
+  (   86 VCC_3_3 )
+  (   87 ? )
+  (   88 ? )
+  (   89 VCC_1_2 )
+  (   90 VCC_3_3 )
+  (   91 BBB_GND )
+  (   92 ? )
+  (   93 ? )
+  (   94 ? )
+  (   95 FPGA_CLK )
+  (   96 BBB_GND )
+  (   97 P1_IO1 )
+  (   98 P1_IO2 )
+  (   99 P1_SCLK )
+  (  100 P1_SS1 )
+  (  101 P1_MOSI )
+  (  102 P1_MISO )
+  (  103 VCC_3_3 )
+  (  104 OUT4 )
+  (  105 OUT3 )
+  (  106 BBB_GPIO1_19 )
+  (  107 BBB_GPIO0_4 )
+  (  108 BBB_GND )
+  (  109 BBB_GPIO0_5 )
+  (  110 BBB_GPIO0_12 )
+  (  111 OUT2 )
+  (  112 OUT1 )
+  (  113 BBB_GND )
+  (  114 P0_IO2 )
+  (  115 P0_IO1 )
+  (  116 P0_SS1 )
+  (  117 P0_SCLK )
+  (  118 P0_MISO )
+  (  119 P0_MOSI )
+  (  120 IO32 )
+  (  121 IO31 )
+  (  122 VCC_3_3 )
+  (  123 IO30 )
+  (  124 IO29 )
+  (  125 VCC_3_3 )
+  (  126 IO28 )
+  (  127 IO27 )
+  (  128 VCC_1_2 )
+  (  129 VCC_3_3 )
+  (  130 BBB_GND )
+  (  131 IO26 )
+  (  132 IO25 )
+  (  133 IO24 )
+  (  134 IO23 )
+  (  135 VCC_3_3 )
+  (  136 BBB_GND )
+  (  137 IO22 )
+  (  138 IO21 )
+  (  139 IO20 )
+  (  140 IO19 )
+  (  141 IO18 )
+  (  142 IO17 )
+  (  143 ? )
+  (  144 N-000096 )
+ )
+ ( /564DA84E/564E7450 $noname  R201 4.7k {Lib=R}
+  (    1 N-000103 )
+  (    2 BBB_GND )
+ )
+ ( /564DA84E/564DA8A8 $noname  P102 CONN_23X2 {Lib=CONN_23X2}
+  (    1 P0_5V )
+  (    2 P0_5V )
+  (    3 P0_5V )
+  (    4 P0_5V )
+  (    5 BBB_GND )
+  (    6 BBB_GND )
+  (    7 IO01 )
+  (    8 IO02 )
+  (    9 IO03 )
+  (   10 IO04 )
+  (   11 IO05 )
+  (   12 IO06 )
+  (   13 IO07 )
+  (   14 IO08 )
+  (   15 BBB_GND )
+  (   16 BBB_GND )
+  (   17 IO09 )
+  (   18 IO10 )
+  (   19 IO11 )
+  (   20 IO12 )
+  (   21 IO13 )
+  (   22 IO14 )
+  (   23 IO15 )
+  (   24 IO16 )
+  (   25 BBB_GND )
+  (   26 BBB_GND )
+  (   27 IO17 )
+  (   28 IO18 )
+  (   29 IO19 )
+  (   30 IO20 )
+  (   31 IO21 )
+  (   32 IO22 )
+  (   33 IO23 )
+  (   34 IO24 )
+  (   35 BBB_GND )
+  (   36 BBB_GND )
+  (   37 IO25 )
+  (   38 IO26 )
+  (   39 IO27 )
+  (   40 IO28 )
+  (   41 IO29 )
+  (   42 IO30 )
+  (   43 IO31 )
+  (   44 IO32 )
+  (   45 BBB_GND )
+  (   46 BBB_GND )
+ )
+ ( /564DA84E/564DA8A7 $noname  P101 CONN_23X2 {Lib=CONN_23X2}
+  (    1 BBB_GND )
+  (    2 BBB_GND )
+  (    3 BBB_3V3 )
+  (    4 BBB_3V3 )
+  (    5 BBB_VDD_5V )
+  (    6 BBB_VDD_5V )
+  (    7 ? )
+  (    8 ? )
+  (    9 ? )
+  (   10 ? )
+  (   11 BBB_GPIO0_30 )
+  (   12 ? )
+  (   13 BBB_GPIO0_31 )
+  (   14 BBB_GPIO1_18 )
+  (   15 ? )
+  (   16 BBB_GPIO1_19 )
+  (   17 BBB_GPIO0_5 )
+  (   18 BBB_GPIO0_4 )
+  (   19 ? )
+  (   20 BBB_GPIO0_12 )
+  (   21 ? )
+  (   22 ? )
+  (   23 ? )
+  (   24 ? )
+  (   25 BBB_PRU0_R31_7 )
+  (   26 ? )
+  (   27 BBB_PRU0_R31_5 )
+  (   28 BBB_PRU0_R31_3 )
+  (   29 BBB_PRU0_R31_1 )
+  (   30 BBB_PRU0_R31_2 )
+  (   31 BBB_PRU0_R31_0 )
+  (   32 ? )
+  (   33 ? )
+  (   34 ? )
+  (   35 ? )
+  (   36 ? )
+  (   37 ? )
+  (   38 ? )
+  (   39 ? )
+  (   40 ? )
+  (   41 ? )
+  (   42 ? )
+  (   43 BBB_GND )
+  (   44 BBB_GND )
+  (   45 BBB_GND )
+  (   46 BBB_GND )
+ )
+ ( /564D9FF3/56570E4A $noname  R305 4.7k {Lib=R}
+  (    1 ? )
+  (    2 ? )
+ )
+ ( /564D9FF3/56570E44 $noname  R304 4.7k {Lib=R}
+  (    1 ? )
+  (    2 ? )
+ )
+ ( /564D9FF3/56570E3F $noname  R303 4.7k {Lib=R}
+  (    1 ? )
+  (    2 ? )
+ )
+ ( /564D9FF3/5651A5E7 $noname  C333 4.7uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/5651A5E6 $noname  C334 0.47uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564F7905 $noname  C326 0.47uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564F7904 $noname  C325 4.7uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/5651A00F $noname  C332 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/56519FBE $noname  C331 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/56519FB6 $noname  C330 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/56519FB0 $noname  C329 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/56519FA9 $noname  C328 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/56519F7A $noname  C327 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/56519656 $noname  U304 MIC94073 {Lib=MIC94073}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+  (    3 BBB_3V3 )
+  (    4 BBB_VDD_5V )
+  (    5 BBB_GND )
+  (    6 ? )
+ )
+ ( /564D9FF3/564EF300 $noname  C324 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2FF $noname  C323 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2F7 $noname  C321 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2F6 $noname  C322 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2ED $noname  C320 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2EC $noname  C319 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2E3 $noname  C317 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2E2 $noname  C318 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2D2 $noname  C315 4.7uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2D1 $noname  C316 4.7uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2B5 $noname  C314 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF2B4 $noname  C313 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF17C $noname  C312 0.47uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF17B $noname  C311 4.7uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF178 $noname  C310 0.47uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF177 $noname  C307 4.7uF {Lib=C}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF176 $noname  C309 4.7uF {Lib=C}
+  (    1 VCC_1_2 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF175 $noname  C308 0.47uF {Lib=C}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564EF174 $noname  U303 X1117 {Lib=X1117}
+  (    1 BBB_GND )
+  (    2 VCC_1_2 )
+  (    3 P0_5V )
+  (    4 VCC_1_2 )
+ )
+ ( /564D9FF3/564EF0AB $noname  U302 X1117 {Lib=X1117}
+  (    1 BBB_GND )
+  (    2 VCC_3_3 )
+  (    3 P0_5V )
+  (    4 VCC_3_3 )
+ )
+ ( /564D9FF3/564DA87E $noname  D301 LED {Lib=LED}
+  (    1 N-000010 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564DA87D $noname  R301 4.7k {Lib=R}
+  (    1 N-000010 )
+  (    2 P0_5V )
+ )
+ ( /564D9FF3/564DA7E8 $noname  C302 0.47uF {Lib=C}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564DA7E7 $noname  C303 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564DA7E6 $noname  C301 4.7uF {Lib=C}
+  (    1 P0_5V )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564DA7E5 $noname  C304 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564DA7DB $noname  C305 4.7uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+ ( /564D9FF3/564DA7DA $noname  C306 0.47uF {Lib=C}
+  (    1 VCC_3_3 )
+  (    2 BBB_GND )
+ )
+)
+*
+{ Allowed footprints by component:
+$component R209
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R208
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R207
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R206
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component D204
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component D203
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component D202
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component R205
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R204
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component D201
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component R203
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component C201
+ SM*
+ C?
+ C1-1
+$endlist
+$component C202
+ SM*
+ C?
+ C1-1
+$endlist
+$component R202
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R201
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R305
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R304
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component R303
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component C333
+ SM*
+ C?
+ C1-1
+$endlist
+$component C334
+ SM*
+ C?
+ C1-1
+$endlist
+$component C326
+ SM*
+ C?
+ C1-1
+$endlist
+$component C325
+ SM*
+ C?
+ C1-1
+$endlist
+$component C332
+ SM*
+ C?
+ C1-1
+$endlist
+$component C331
+ SM*
+ C?
+ C1-1
+$endlist
+$component C330
+ SM*
+ C?
+ C1-1
+$endlist
+$component C329
+ SM*
+ C?
+ C1-1
+$endlist
+$component C328
+ SM*
+ C?
+ C1-1
+$endlist
+$component C327
+ SM*
+ C?
+ C1-1
+$endlist
+$component C324
+ SM*
+ C?
+ C1-1
+$endlist
+$component C323
+ SM*
+ C?
+ C1-1
+$endlist
+$component C321
+ SM*
+ C?
+ C1-1
+$endlist
+$component C322
+ SM*
+ C?
+ C1-1
+$endlist
+$component C320
+ SM*
+ C?
+ C1-1
+$endlist
+$component C319
+ SM*
+ C?
+ C1-1
+$endlist
+$component C317
+ SM*
+ C?
+ C1-1
+$endlist
+$component C318
+ SM*
+ C?
+ C1-1
+$endlist
+$component C315
+ SM*
+ C?
+ C1-1
+$endlist
+$component C316
+ SM*
+ C?
+ C1-1
+$endlist
+$component C314
+ SM*
+ C?
+ C1-1
+$endlist
+$component C313
+ SM*
+ C?
+ C1-1
+$endlist
+$component C312
+ SM*
+ C?
+ C1-1
+$endlist
+$component C311
+ SM*
+ C?
+ C1-1
+$endlist
+$component C310
+ SM*
+ C?
+ C1-1
+$endlist
+$component C307
+ SM*
+ C?
+ C1-1
+$endlist
+$component C309
+ SM*
+ C?
+ C1-1
+$endlist
+$component C308
+ SM*
+ C?
+ C1-1
+$endlist
+$component D301
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component R301
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component C302
+ SM*
+ C?
+ C1-1
+$endlist
+$component C303
+ SM*
+ C?
+ C1-1
+$endlist
+$component C301
+ SM*
+ C?
+ C1-1
+$endlist
+$component C304
+ SM*
+ C?
+ C1-1
+$endlist
+$component C305
+ SM*
+ C?
+ C1-1
+$endlist
+$component C306
+ SM*
+ C?
+ C1-1
+$endlist
+$endfootprintlist
+}
+{ Pin List by Nets
+Net 1 "BBB_VDD_5V" "BBB_VDD_5V"
+ U304 4
+ P101 5
+ P101 6
+Net 4 "BBB_GND" "BBB_GND"
+ C324 2
+ C332 2
+ C325 2
+ U304 5
+ C322 2
+ C321 2
+ C323 2
+ C314 2
+ C316 2
+ C315 2
+ C318 2
+ C329 2
+ C330 2
+ C331 2
+ C307 2
+ U201 49
+ C301 2
+ C303 2
+ C302 2
+ U201 108
+ U201 136
+ U201 113
+ U201 130
+ C304 2
+ U303 1
+ C308 2
+ C309 2
+ C305 2
+ D203 2
+ C310 2
+ C312 2
+ C313 2
+ C311 2
+ U201 13
+ C328 2
+ C319 2
+ U203 2
+ C327 2
+ U201 68
+ U201 77
+ U201 96
+ U201 25
+ U201 54
+ U304 2
+ U201 91
+ U201 3
+ D301 2
+ U302 1
+ C306 2
+ P101 45
+ P101 46
+ P201 9
+ P201 2
+ P202 9
+ P202 2
+ P101 44
+ P102 5
+ P102 6
+ R208 2
+ U202 4
+ D204 2
+ P101 43
+ P102 46
+ P101 2
+ P101 1
+ C317 2
+ C320 2
+ R201 2
+ U201 60
+ P102 15
+ P102 25
+ P102 35
+ P102 45
+ P102 16
+ P102 26
+ P102 36
+ C202 2
+ C333 2
+ C334 2
+ C326 2
+ D202 2
+ D201 2
+ C201 2
+Net 9 "BBB_3V3" "BBB_3V3"
+ P101 3
+ U304 3
+ P101 4
+Net 10 "" ""
+ R301 1
+ D301 1
+Net 11 "VCC_1_2" "VCC_1_2"
+ C334 1
+ U201 52
+ C326 1
+ U201 28
+ C333 1
+ U201 128
+ U201 89
+ U201 19
+ U303 2
+ U303 4
+ C315 1
+ C316 1
+ C309 1
+ C325 1
+ C310 1
+ C311 1
+ C312 1
+Net 12 "VCC_3_3" "VCC_3_3"
+ U201 135
+ C327 1
+ C202 1
+ R209 2
+ U201 129
+ U201 125
+ U201 103
+ U201 122
+ C313 1
+ U201 31
+ U201 90
+ U201 4
+ U201 69
+ C332 1
+ C324 1
+ U201 20
+ C314 1
+ C305 1
+ C304 1
+ C306 1
+ C303 1
+ U302 4
+ U302 2
+ U201 36
+ C318 1
+ U201 76
+ U201 86
+ C320 1
+ U202 3
+ C319 1
+ U201 18
+ C330 1
+ C317 1
+ R202 1
+ U201 53
+ R207 2
+ U201 42
+ C201 1
+ U203 4
+ C323 1
+ C331 1
+ C322 1
+ U201 63
+ U202 8
+ C321 1
+ C329 1
+ U202 7
+ C328 1
+Net 23 "IO18" "IO18"
+ P102 28
+ U201 141
+Net 26 "IO27" "IO27"
+ U201 127
+ P102 39
+Net 27 "IO19" "IO19"
+ U201 140
+ P102 29
+Net 28 "IO26" "IO26"
+ U201 131
+ P102 38
+Net 29 "BBB_PRU0_R31_0" "BBB_PRU0_R31_0"
+ P101 31
+ U201 84
+Net 30 "BBB_GPIO1_18" "BBB_GPIO1_18"
+ U201 37
+ P101 14
+Net 34 "BBB_PRU0_R31_2" "BBB_PRU0_R31_2"
+ U201 79
+ P101 30
+Net 35 "BBB_GPIO0_12" "BBB_GPIO0_12"
+ U201 110
+ P101 20
+Net 40 "IO13" "IO13"
+ P102 21
+ U201 6
+Net 41 "IO28" "IO28"
+ U201 126
+ P102 40
+Net 42 "IO20" "IO20"
+ P102 30
+ U201 139
+Net 43 "IO12" "IO12"
+ U201 7
+ P102 20
+Net 44 "IO21" "IO21"
+ U201 138
+ P102 31
+Net 45 "IO01" "IO01"
+ P102 7
+ U201 22
+Net 46 "IO02" "IO02"
+ U201 21
+ P102 8
+Net 47 "IO03" "IO03"
+ U201 17
+ P102 9
+Net 48 "IO04" "IO04"
+ P102 10
+ U201 16
+Net 49 "IO05" "IO05"
+ P102 11
+ U201 15
+Net 50 "IO11" "IO11"
+ P102 19
+ U201 8
+Net 51 "IO24" "IO24"
+ U201 133
+ P102 34
+Net 52 "IO25" "IO25"
+ P102 37
+ U201 132
+Net 53 "IO17" "IO17"
+ U201 142
+ P102 27
+Net 54 "IO09" "IO09"
+ U201 10
+ P102 17
+Net 55 "IO32" "IO32"
+ U201 120
+ P102 44
+Net 56 "IO10" "IO10"
+ U201 9
+ P102 18
+Net 57 "IO16" "IO16"
+ U201 1
+ P102 24
+Net 58 "IO08" "IO08"
+ P102 14
+ U201 11
+Net 59 "IO31" "IO31"
+ U201 121
+ P102 43
+Net 60 "IO23" "IO23"
+ P102 33
+ U201 134
+Net 61 "IO15" "IO15"
+ P102 23
+ U201 2
+Net 62 "IO07" "IO07"
+ U201 12
+ P102 13
+Net 63 "IO30" "IO30"
+ P102 42
+ U201 123
+Net 64 "IO22" "IO22"
+ U201 137
+ P102 32
+Net 65 "IO14" "IO14"
+ U201 5
+ P102 22
+Net 66 "IO06" "IO06"
+ U201 14
+ P102 12
+Net 67 "IO29" "IO29"
+ U201 124
+ P102 41
+Net 69 "OUT4" "OUT4"
+ U201 104
+ R206 2
+Net 72 "BBB_PRU0_R31_3" "BBB_PRU0_R31_3"
+ U201 75
+ P101 28
+Net 89 "BBB_GPIO0_4" "BBB_GPIO0_4"
+ P101 18
+ U201 107
+Net 91 "BBB_PRU0_R31_1" "BBB_PRU0_R31_1"
+ U201 80
+ P101 29
+Net 92 "BBB_GPIO0_5" "BBB_GPIO0_5"
+ P101 17
+ U201 109
+Net 94 "BBB_GPIO1_19" "BBB_GPIO1_19"
+ U201 106
+ P101 16
+Net 96 "" ""
+ U201 144
+ R208 1
+Net 98 "MOSI" "MOSI"
+ U201 64
+ U202 5
+Net 99 "OUT1" "OUT1"
+ U201 112
+ R203 2
+Net 100 "OUT3" "OUT3"
+ R205 2
+ U201 105
+Net 101 "" ""
+ R204 1
+ D202 1
+Net 102 "FPGA_CLK" "FPGA_CLK"
+ U203 3
+ U201 95
+Net 103 "" ""
+ U201 73
+ R201 1
+Net 104 "P0_SCLK" "P0_SCLK"
+ U201 117
+ P201 5
+Net 105 "P0_MISO" "P0_MISO"
+ U201 118
+ P201 4
+Net 106 "P0_MOSI" "P0_MOSI"
+ P201 3
+ U201 119
+Net 107 "P1_IO2" "P1_IO2"
+ U201 98
+ P202 8
+Net 108 "P1_IO1" "P1_IO1"
+ U201 97
+ P202 7
+Net 109 "P0_5V" "P0_5V"
+ P102 3
+ P202 10
+ P201 1
+ P201 10
+ C301 1
+ P202 1
+ C302 1
+ C308 1
+ C307 1
+ P102 2
+ P102 1
+ U303 3
+ P102 4
+ U304 1
+ R301 2
+ U302 3
+Net 110 "P0_IO2" "P0_IO2"
+ U201 114
+ P201 8
+Net 111 "P0_IO1" "P0_IO1"
+ P201 7
+ U201 115
+Net 112 "P0_SS1" "P0_SS1"
+ P201 6
+ U201 116
+Net 113 "BBB_GPIO0_31" "BBB_GPIO0_31"
+ P101 13
+ U201 71
+ R209 1
+Net 114 "P1_SS1" "P1_SS1"
+ U201 100
+ P202 6
+Net 115 "P1_SCLK" "P1_SCLK"
+ P202 5
+ U201 99
+Net 116 "P1_MISO" "P1_MISO"
+ P202 4
+ U201 102
+Net 117 "P1_MOSI" "P1_MOSI"
+ U201 101
+ P202 3
+Net 118 "CCLK" "CCLK"
+ U202 6
+ U201 70
+Net 119 "MISO" "MISO"
+ U202 2
+ U201 65
+Net 120 "" ""
+ D203 1
+ R205 1
+Net 121 "" ""
+ R203 1
+ D201 1
+Net 122 "OUT2" "OUT2"
+ U201 111
+ R204 2
+Net 123 "" ""
+ R206 1
+ D204 1
+Net 124 "BBB_PRU0_R31_7" "BBB_PRU0_R31_7"
+ U201 74
+ P101 25
+Net 125 "BBB_PRU0_R31_5" "BBB_PRU0_R31_5"
+ P101 27
+ U201 78
+Net 126 "BBB_GPIO0_30" "BBB_GPIO0_30"
+ U201 39
+ P101 11
+ R207 1
+Net 150 "CSO_B" "CSO_B"
+ R202 2
+ U201 38
+ U202 1
+}
+#End
