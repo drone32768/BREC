@@ -41,8 +41,8 @@
 
 #include <microhttpd.h>
 
-#include "../Util/mcf.h"
-#include "../Util/gpioutil.h"
+#include "Util/mcf.h"
+#include "Util/gpioutil.h"
 
 #include "Devs.h"
 #include "Pse.h"

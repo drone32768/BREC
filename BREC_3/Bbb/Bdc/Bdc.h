@@ -35,8 +35,8 @@
 #ifndef __BDC_INCLUDE__
 #define __BDC_INCLUDE__
 
-#include "../Util/mcf.h"
-#include "../Fboard/Fboard.h"
+#include "Util/mcf.h"
+#include "Fboard/Fboard.h"
 
 
 #define BDC_REG_RD  0x8000

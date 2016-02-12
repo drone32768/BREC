@@ -1,7 +1,7 @@
 /*
  * This is an outer wrapper for the xvc_main library.
  */
-#include "../JtagTools/xvcLib.h"
+#include "JtagTools/xvcLib.h"
 
 int main( int argc, char *argv[] )
 {

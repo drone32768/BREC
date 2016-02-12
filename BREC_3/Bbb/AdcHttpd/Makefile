@@ -35,6 +35,7 @@ all	:
 
 $(TGT)/AdcHttpd  : AdcHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ $(CPPFLAGS) AdcHttpd.cpp \
+              -I../           \
               -I$(PRU_INC)    \
               -L$(PRU_LIB)    \
                 $(LOCAL_OBJS) \
@@ -45,16 +46,16 @@ $(TGT)/AdcHttpd  : AdcHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
                 -o $(TGT)/AdcHttpd
 
 $(TGT)/Devs.o	: Devs.cpp Devs.h | $(TGT)
-	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Devs.cpp  -o $(TGT)/Devs.o
+	g++ -I../ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Devs.cpp  -o $(TGT)/Devs.o
 
 $(TGT)/Pse.o	: Pse.cpp Pse.h | $(TGT)
-	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Pse.cpp  -o $(TGT)/Pse.o
+	g++ -I../ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Pse.cpp  -o $(TGT)/Pse.o
 
 $(TGT)/Tim.o	: Tim.cpp Tim.h | $(TGT)
-	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Tim.cpp  -o $(TGT)/Tim.o
+	g++ -I../ $(CPP_TGT_ARGS) $(CPPFLAGS) -c Tim.cpp  -o $(TGT)/Tim.o
 
 $(TGT)/His.o	: His.cpp His.h | $(TGT)
-	g++ $(CPP_TGT_ARGS) $(CPPFLAGS) -c His.cpp  -o $(TGT)/His.o
+	g++ -I../ $(CPP_TGT_ARGS) $(CPPFLAGS) -c His.cpp  -o $(TGT)/His.o
 
 clean	:
 	rm -f $(TGT)/*

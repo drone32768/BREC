@@ -35,8 +35,8 @@
 #ifndef __F_BOARD__
 #define __F_BOARD__
 
-#include "../Util/mcf.h"
-#include "../Util/gpioutil.h"
+#include "Util/mcf.h"
+#include "Util/gpioutil.h"
 
 class Fboard {
 

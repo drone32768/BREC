@@ -35,11 +35,11 @@
 #ifndef __DDC100_BOARD__
 #define __DDC100_BOARD__
 
-#include "../Util/mcf.h"
-#include "../Interfaces/AdcIf.h"
-#include "../Interfaces/MixerIf.h"
+#include "Util/mcf.h"
+#include "Interfaces/AdcIf.h"
+#include "Interfaces/MixerIf.h"
 
-#include "../Fboard/Fboard.h"
+#include "Fboard/Fboard.h"
 
 class Ddc100 : public AdcIf, public MixerIf {
 

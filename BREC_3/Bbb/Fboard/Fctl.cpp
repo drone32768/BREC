@@ -36,8 +36,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../Util/mcf.h"
-#include "../Util/gpioutil.h"
+#include "Util/mcf.h"
+#include "Util/gpioutil.h"
 #include "Fboard.h"
 
 void usage( int exit_code )

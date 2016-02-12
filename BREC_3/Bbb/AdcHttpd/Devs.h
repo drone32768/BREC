@@ -34,13 +34,13 @@
 #ifndef __DEVS__
 #define __DEVS__
 
-#include "../Util/mcf.h"
-#include "../Util/net.h"
-#include "../Util/gpioutil.h"
+#include "Util/mcf.h"
+#include "Util/net.h"
+#include "Util/gpioutil.h"
 
-#include "../Interfaces/AdcIf.h"
+#include "Interfaces/AdcIf.h"
 
-#include "../Ddc100/Ddc100.h"
+#include "Ddc100/Ddc100.h"
 
 class Devs {
   private:

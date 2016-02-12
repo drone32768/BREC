@@ -40,7 +40,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "../Util/gpioutil.h"
+#include "Util/gpioutil.h"
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
 

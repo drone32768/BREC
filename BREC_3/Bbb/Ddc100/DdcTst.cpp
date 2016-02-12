@@ -5,7 +5,7 @@
 #include <math.h>
 #include <fftw3.h>
 
-#include "../Util/mcf.h"
+#include "Util/mcf.h"
 #include "Ddc100.h"
 
 ////////////////////////////////////////////////////////////////////////////////

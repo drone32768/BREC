@@ -37,9 +37,9 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "../JtagTools/jtag_bs.h"
-#include "../Util/mcf.h"
-#include "../Util/gpioutil.h"
+#include "JtagTools/jtag_bs.h"
+#include "Util/mcf.h"
+#include "Util/gpioutil.h"
 
 #define GPIO_TDI 0
 #define GPIO_TDO 1

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "../JtagTools/jtag_bs.h"
+#include "JtagTools/jtag_bs.h"
 
 static int verbose = 0;
 

@@ -18,18 +18,18 @@ ifeq ($(TGT),arm)
 endif
 
 $(TGT)/xsvfLib.o	: xsvfLib.cpp | $(TGT)
-	g++ -c -I$(XAPP058) xsvfLib.cpp -o $(TGT)/xsvfLib.o
+	g++ -c -I../  -I$(XAPP058) xsvfLib.cpp -o $(TGT)/xsvfLib.o
 
 $(TGT)/xvcLib.o		: xvcLib.cpp | $(TGT)
-	g++ -c xvcLib.cpp -o $(TGT)/xvcLib.o
+	g++ -c -I../ xvcLib.cpp -o $(TGT)/xvcLib.o
 
 $(TGT)/Sxvc	: $(TGT)/jtag_bs_sim.o | $(TGT)
-	g++ Sxvc.cpp $(TGT)/jtag_bs_sim.o \
+	g++ -I../ Sxvc.cpp $(TGT)/jtag_bs_sim.o \
             $(TGT)/xvcLib.o \
             -o $(TGT)/Sxvc
 
 $(TGT)/jtag_bs_sim.o	: jtag_bs_sim.cpp | $(TGT)
-	g++ -c -O3 jtag_bs_sim.cpp -o $(TGT)/jtag_bs_sim.o
+	g++ -I../ -c -O3 jtag_bs_sim.cpp -o $(TGT)/jtag_bs_sim.o
 
 
 clean	:

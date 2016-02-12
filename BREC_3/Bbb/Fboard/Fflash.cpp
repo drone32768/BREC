@@ -37,8 +37,8 @@
 #include <string.h>
 #include <arpa/inet.h> // for ntohs
 
-#include "../Util/mcf.h"
-#include "../Util/gpioutil.h"
+#include "Util/mcf.h"
+#include "Util/gpioutil.h"
 #include "Fboard.h"
 
 ////////////////////////////////////////////////////////////////////////////////

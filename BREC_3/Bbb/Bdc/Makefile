@@ -19,14 +19,14 @@ all	:
 	make $(TGT)/BdcTst
 
 $(TGT)/BdcTst	: BdcTst.cpp $(LOCAL_OBJS) | $(TGT)
-	g++ BdcTst.cpp \
+	g++ -I../ BdcTst.cpp \
              $(LOCAL_OBJS) \
              $(UTIL_OBJS) \
              -L$(PRU_LIB) \
              -lfftw3 -lprussdrv -lpthread -o $(TGT)/BdcTst
 
 $(TGT)/Bdc.o	: Bdc.cpp Bdc.h pru_images.h | $(TGT)
-	g++ -c -I$(PRU_INC) Bdc.cpp -o $(TGT)/Bdc.o
+	g++ -c -I../ -I$(PRU_INC) Bdc.cpp -o $(TGT)/Bdc.o
 
 
 $(TGT)/pru01.bin : pru01.p pruinc.h | $(TGT)

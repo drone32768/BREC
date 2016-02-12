@@ -32,7 +32,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
-#include "../JtagTools/xvcLib.h"
+#include "JtagTools/xvcLib.h"
 
 int main( int argc, char *argv[] )
 {

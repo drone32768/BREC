@@ -46,8 +46,8 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 
-#include "../Util/mcf.h"
-#include "../Util/gpioutil.h"
+#include "Util/mcf.h"
+#include "Util/gpioutil.h"
 #include "Fboard.h"
 
 Fboard         fbrd;

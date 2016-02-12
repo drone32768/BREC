@@ -40,7 +40,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "../Fboard/Fboard.h"
+#include "Fboard/Fboard.h"
 #include "Bdc.h"
 
 #include "prussdrv.h"
