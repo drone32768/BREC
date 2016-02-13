@@ -36,10 +36,12 @@
 #ifndef __GPIO_UTIL__
 #define __GPIO_UTIL__
 
+#include "Interfaces/GpioPin.h"
+
 /**
  * GpioUtil - simple class to manage the sysfs gpio programming
  */
-class GpioUtil {
+class GpioUtil : public GpioPin {
 
   private:
     int mGpioN;

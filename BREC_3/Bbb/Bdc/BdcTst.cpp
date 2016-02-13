@@ -113,6 +113,80 @@ gpio_loop_test( Bdc *bdc )
 
 ////////////////////////////////////////////////////////////////////////////////
 int
+gpio_loop_test2( Bdc *bdc )
+{
+   int            port,pin;
+   int            src,dst;
+   int            v1,v2,v3;
+   int            err;
+   BdcGpio        *pins[BDC_GPIO_PORTS][BDC_GPIO_PINS_PER_PORT];
+
+   printf("NOTE: This test assumes a direct connect between GPIO ports.\n");
+
+   err = 0;
+
+   // Get pins on each port and open
+   for(port=0;port<BDC_GPIO_PORTS;port++){
+       for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
+            pins[port][pin] = bdc->GetGpioPin( port, pin );
+            pins[port][pin]->Open();
+       }
+   }
+
+   // Set all pins to input
+   for(port=0;port<BDC_GPIO_PORTS;port++){
+       for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
+            pins[port][pin]->SetDirInput(1);
+       }
+   }
+
+   // Loop over ports and pins testing results
+   for(port=0;port<BDC_GPIO_PORTS;port++){
+       for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
+            src = port;
+            dst = port^1;
+
+            printf("Test %d:%d -> %d:%d ... ", src,pin, dst,pin);
+
+            pins[dst][pin]->SetDirInput(1);
+            pins[src][pin]->SetDirInput(0);
+
+            pins[src][pin]->Set(1);
+            v1 = pins[dst][pin]->Get();
+
+            pins[src][pin]->Set(0);
+            v2 = pins[dst][pin]->Get();
+
+            pins[src][pin]->Set(1);
+            v3 = pins[dst][pin]->Get();
+
+            pins[src][pin]->Set(0);
+            pins[src][pin]->SetDirInput(1);
+            pins[dst][pin]->SetDirInput(1);
+
+            if( 1==v1 && 0==v2 && 1==v3 ){
+                printf("ok\n");
+            }
+            else{
+                printf("FAIL %d (exp 1) %d (exp 0) %d (exp 1)\n",v1,v2,v3);
+                err++;
+            }
+       }
+   }
+
+   // Set all pins to input and close
+   for(port=0;port<BDC_GPIO_PORTS;port++){
+       for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
+            pins[port][pin]->SetDirInput(1);
+            pins[port][pin]->Close();
+       }
+   }
+
+   return(err);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int
 main( int argc, char *argv[] )
 {
     int            idx;	  

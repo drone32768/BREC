@@ -36,9 +36,11 @@
 #define __BDC_INCLUDE__
 
 #include "Util/mcf.h"
+#include "Interfaces/GpioPin.h"
 #include "Fboard/Fboard.h"
 
 
+////////////////////////////////////////////////////////////////////////////////
 #define BDC_REG_RD  0x8000
 #define BDC_REG_WR  0x4000
 
@@ -66,13 +68,35 @@
 #define BDC_GPIO0_DIR_WR (BDC_REG_WR | BDC_REG_R11)
 #define BDC_GPIO1_DIR_WR (BDC_REG_WR | BDC_REG_R14)
 
+#define BDC_GPIO0_DIR_RD (BDC_REG_RD | BDC_REG_R11)
+#define BDC_GPIO1_DIR_RD (BDC_REG_RD | BDC_REG_R14)
+
 #define BDC_GPIO0_OUT_WR (BDC_REG_WR | BDC_REG_R12)
 #define BDC_GPIO1_OUT_WR (BDC_REG_WR | BDC_REG_R15)
+
+#define BDC_GPIO0_OUT_RD (BDC_REG_RD | BDC_REG_R12)
+#define BDC_GPIO1_OUT_RD (BDC_REG_RD | BDC_REG_R15)
 
 #define BDC_GPIO0_INP_RD (BDC_REG_RD | BDC_REG_R10)
 #define BDC_GPIO1_INP_RD (BDC_REG_RD | BDC_REG_R13)
 
 ////////////////////////////////////////////////////////////////////////////////
+class Bdc;
+
+class BdcGpio : public GpioPin {
+    int  mPort;
+    int  mPin;
+    Bdc *mBdc;
+
+  public:
+    void Init( Bdc *bdc, int port, int pin );
+    int Open();
+    int Close();
+    int SetDirInput( int isInput );
+    int Set( int v );
+    int Get(       );
+};
+
 class Bdc {
 
 private:
@@ -81,6 +105,11 @@ private:
     int                      mPidx;
     volatile unsigned short *mPtrPruSamples;
     volatile unsigned char  *mPtrPruSram;
+
+    ////////////////////////////////////////
+#   define                   BDC_GPIO_PORTS          2
+#   define                   BDC_GPIO_PINS_PER_PORT  6
+    BdcGpio                  mGpios[BDC_GPIO_PORTS][BDC_GPIO_PINS_PER_PORT];
 
     ////////////////////////////////////////
     Fboard                   mFbrd;
@@ -93,6 +122,8 @@ public:
     int StartPru();
 
     int GetFwVersion( );
+
+    BdcGpio *GetGpioPin( int port, int pin );
 
     // For testing only
     int  SpiRW16( int wval );
