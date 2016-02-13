@@ -1,0 +1,2 @@
+arm/Tutil -select 0 -enable 1 -init -tune 920e6 -usleep 10000 -tshow
+

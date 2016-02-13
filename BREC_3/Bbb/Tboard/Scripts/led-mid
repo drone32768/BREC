@@ -1,0 +1,3 @@
+
+arm/Tutil -select 0 -enable 1 -init -dac_write 0x0800 -dac_read
+
