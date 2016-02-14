@@ -102,6 +102,7 @@ class Bdc {
 private:
 
     ////////////////////////////////////////
+    int                      mPruAvail;
     int                      mPidx;
     volatile unsigned short *mPtrPruSamples;
     volatile unsigned char  *mPtrPruSram;
@@ -118,8 +119,7 @@ public:
     Bdc();
 
     int Open();
-    int StartPrus();
-    int StartPru();
+    int PruStart();
 
     int GetFwVersion( );
 

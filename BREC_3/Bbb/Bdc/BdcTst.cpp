@@ -142,9 +142,11 @@ gpio_loop_test2( Bdc *bdc )
 
    // Loop over ports and pins testing results
    for(port=0;port<BDC_GPIO_PORTS;port++){
+
+       src = port;
+       dst = port^1;
+
        for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
-            src = port;
-            dst = port^1;
 
             printf("Test %d:%d -> %d:%d ... ", src,pin, dst,pin);
 
@@ -171,8 +173,10 @@ gpio_loop_test2( Bdc *bdc )
                 printf("FAIL %d (exp 1) %d (exp 0) %d (exp 1)\n",v1,v2,v3);
                 err++;
             }
-       }
-   }
+
+       } // End of loop over pins
+
+   } // End of loop over ports
 
    // Set all pins to input and close
    for(port=0;port<BDC_GPIO_PORTS;port++){
@@ -219,6 +223,10 @@ main( int argc, char *argv[] )
             us_sleep( val );
         } 
 
+        else if( 0==strcmp(argv[idx], "-show") ){
+            bdc->Show( "bdc" );
+        }
+
         else if( 0==strcmp(argv[idx], "-write") ){
             int rval; 
             if( (idx+1) >= argc ){ usage(-1); }
@@ -230,6 +238,10 @@ main( int argc, char *argv[] )
 
         else if( 0==strcmp(argv[idx], "-gpio-loop") ){
             gpio_loop_test( bdc );
+        }
+
+        else if( 0==strcmp(argv[idx], "-gpio-loop2") ){
+            gpio_loop_test2( bdc );
         }
     
         // Move to next argument for parsing

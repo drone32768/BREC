@@ -34,12 +34,13 @@
 //
 
 // sram offsets for pru
-#define SRAM_OFF_DBG1       0x0000  // 4 bytes
-#define SRAM_OFF_DBG2       0x0004  // 4 bytes
-#define SRAM_OFF_CMD        0x0008  // 4 bytes
-#define SRAM_OFF_RES        0x000c  // 4 bytes
-#define SRAM_OFF_MSG        0x0100  // 512 bytes
+#define SRAM_OFF_DBG1              0x0000  // 4 bytes
+#define SRAM_OFF_DBG2              0x0004  // 4 bytes
+#define SRAM_OFF_CMD               0x0008  // 2 bytes
+#define SRAM_OFF_RES               0x000c  // 2 bytes
+#define SRAM_OFF_DRAM_PBASE        0x0100  // 4 bytes
 
+#define PRU1_CMD_NONE       0
 #define PRU1_CMD_2KWORDS    1
 
 // 

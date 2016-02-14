@@ -58,7 +58,11 @@ public:
     void    Reset();
     void    Show();
 
-    int     StartPru();
+    int                      PruStart();
+    int                      PruIsAvail();
+    volatile unsigned char  *PruGetSramPtr();
+    volatile unsigned short *PruGetDramPtr();
+
     void    SpiXferStream8( unsigned char  *bf, int bfCount );
     void    SpiXferArray16( unsigned short *bf, int bfCount );
     void    SpiXferArray16x2( unsigned short *bf, int bfCount );

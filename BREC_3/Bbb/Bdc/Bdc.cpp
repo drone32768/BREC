@@ -43,6 +43,7 @@
 #include "Fboard/Fboard.h"
 #include "Bdc.h"
 
+#include "pruinc.h"
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
 #include "pru_images.h"
@@ -56,7 +57,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #define GetSramWord( off )   ( *(unsigned int*  )((mPtrPruSram + (off))) )
 #define SetSramWord( v,off ) ( *(unsigned int*  )((mPtrPruSram + (off))) = (v) )
+
 #define GetSramShort( off )  ( *(unsigned short*)((mPtrPruSram + (off))) )
+#define SetSramShort( v,off ) (*(unsigned short*)((mPtrPruSram + (off))) = (v) )
 
 ////////////////////////////////////////////////////////////////////////////////
 /// External Methods ///////////////////////////////////////////////////////////
@@ -95,6 +98,11 @@ Bdc::Open()
         }
     }
 
+    // Figure out how we should access spi 
+    if( mFbrd.PruIsAvail() ){
+        PruStart();
+    }
+
     printf("Bdc:Open exit\n");
 
     return(0);
@@ -122,9 +130,34 @@ Bdc::GetGpioPin( int port, int pin )
 
 //------------------------------------------------------------------------------
 int
-Bdc::StartPrus()
+Bdc::PruStart()
 {
-    // This method is not applicable.  pru00 is already started with fboard
+    // NOTE: the constants share with pru code are relative to how it
+    // references its sram which is zero based, however, cpu accesses
+    // globally so pru1 is +0x2000
+    mPtrPruSram    = mFbrd.PruGetSramPtr() + 0x2000;
+    mPtrPruSamples = mFbrd.PruGetDramPtr();
+
+    SetSramWord(  prussdrv_get_phys_addr( (void*)mPtrPruSamples ),
+                  SRAM_OFF_DRAM_PBASE 
+               );
+
+    SetSramWord(  0,
+                  SRAM_OFF_DBG1 
+               );
+
+    SetSramWord(  1,
+                  SRAM_OFF_DBG2 
+               );
+
+    SetSramShort(  PRU1_CMD_NONE,
+                  SRAM_OFF_CMD 
+               );
+
+    prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM,0,
+                             (unsigned int*)pru_image01,sizeof(pru_image01) );
+    prussdrv_pru_enable(1);
+
     return( 0 );
 }
 
@@ -146,8 +179,21 @@ Bdc::SpiRW16( int wval )
 void
 Bdc::Show(const char *title )
 {
-    printf("Bdc: %s",title);
+    printf("Bdc: %s\n",title);
+    printf("--- Fboard ----\n");
     mFbrd.Show();
+    printf("---- Bdc ------\n");
+    if( mFbrd.PruIsAvail() ){
+        printf("    PRU1 dbg1     0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
+        printf("    PRU1 dbg2     0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
+        printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
+        printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
+        printf("    PRU1 pbase    0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE) );
+    }
+    else{
+        printf("    PRU not available\n");
+    }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +243,7 @@ BdcGpio::SetDirInput( int isInput )
    val = mBdc->SpiRW16( 0  );
 
    // Clear and reset bit
-   val = (val & ~(1<<mPin) ) | ( (0==isInput?1:0)<<mPin);
+   val = (val & ~(1<<mPin) ) | ( (isInput?0:1)<<mPin);
 
    // Write new value
    mBdc->SpiRW16( wcmd | val  );
@@ -217,7 +263,7 @@ BdcGpio::Set( int v )
        wcmd = BDC_GPIO0_OUT_WR;
        rcmd = BDC_GPIO0_OUT_RD;
    }else{ 
-       wcmd = BDC_GPIO0_OUT_WR;
+       wcmd = BDC_GPIO1_OUT_WR;
        rcmd = BDC_GPIO1_OUT_RD;
    }
 

@@ -107,28 +107,31 @@ MAIN1:
     MOV    rCnt,                0x0
 
 #define    rPru0CmdPtr      r13
-    MOV    rPru0CmdPtr,         (SRAM_OFF_MSG)
+    MOV    rPru0CmdPtr,         (0x2000+8) // PRU0 SRAM + 8
 
 #define    rDramPtr         r15
-    MOV    rDramPtr,            (SRAM_OFF_MSG) // fixme
+    MOV    rDramPtr,            0x0
 
-#define    rDrmOffset       r16
-    MOV    rDrmOffset,          (SRAM_OFF_MSG) // fixme
+#define    rDrmBasePtr      r16
+    MOV       rDrmBasePtr,      (SRAM_OFF_DRAM_PBASE)
+    LD32      rDrmBasePtr, rDrmBasePtr
 
-#define    rDrmBasePtr      r17
-    MOV    rDrmBasePtr,         (SRAM_OFF_MSG) // fixme
+
+#define    rDrmOffset       r17
+    MOV    rDrmOffset,          0x0
 
 #define    rDrmOffsetMask   r18
-    MOV    rDrmOffsetMask,      (SRAM_OFF_MSG) // fixme
+    MOV    rDrmOffsetMask,      0x0003ffff
+
 
 #define PRU0_CMD_16ARRAY 2 // fixme
 
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:
     // increment dbg2 every loop pass
-    LD32      rTmp1, rDbg2Ptr
+    LD32      rTmp1, rDbg1Ptr
     ADD       rTmp1,rTmp1,1
-    ST32      rTmp1, rDbg2Ptr
+    ST32      rTmp1, rDbg1Ptr
 
     // update last command status
     ST16      rResCode, rResPtr            // store the status code
@@ -176,7 +179,7 @@ save256_copyout:
 read256:
     MOV       rTmp2,rPru0CmdPtr // get pru0 cmd address
     ADD       rTmp2,rTmp2,4     // pru0 payload starts at +4 from cmd
-    MOV       rTmp1,0x8f00      // spi word to execu - FIXME
+    MOV       rTmp1,0x8300      // spi word to execute rd=0x8000, R3=0x0300
     MOV       rCnt,256
 read256_copyin:
     ST16      rTmp1,rTmp2       // store word
@@ -184,11 +187,13 @@ read256_copyin:
     SUB       rCnt,rCnt,1       // dec count
     QBNE      read256_copyin,rCnt,0     // loop until done
 
+    // Store word count to pru0
     MOV       rTmp1,256
     MOV       rTmp2,rPru0CmdPtr // get pru0 cmd address
     ADD       rTmp2,rTmp2,2     // pru0 payload size starts at +2 from cmd
     ST16      rTmp1,rPru0CmdPtr // store xfer count
 
+    // Store command to pru0
     MOV       rTmp2,rPru0CmdPtr // get pru0 cmd address
     MOV       rTmp1,PRU0_CMD_16ARRAY
     ST16      rTmp1,rPru0CmdPtr // store xfer command

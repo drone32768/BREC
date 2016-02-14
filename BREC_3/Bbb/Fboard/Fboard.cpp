@@ -216,13 +216,31 @@ fspi_xfer_byte_2x( int wval )
 #define SetSramByte( v,off )  \
       (*(volatile unsigned char*)((mPtrPruSram + (off))) = (v) )
 
+volatile unsigned char *
+Fboard::PruGetSramPtr()
+{
+    return( mPtrPruSram );
+}
+
+volatile unsigned short *
+Fboard::PruGetDramPtr()
+{
+    return( mPtrPruSamples );
+}
+
 int
-Fboard::StartPru()
+Fboard::PruIsAvail()
+{
+    return( mUsePru );
+}
+
+int
+Fboard::PruStart()
 {
     int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
-    printf("Fboard:StartPrus Enter\n");
+    printf("Fboard:PruStart Enter\n");
 
     // Open pruss driver
     prussdrv_init();
@@ -256,7 +274,7 @@ Fboard::StartPru()
     // Run/Enable prus
     prussdrv_pru_enable(0);
 
-    printf("Fboard:StartPrus Exit\n");
+    printf("Fboard:PruStart Exit\n");
     return( 0 );
 }
 
@@ -292,7 +310,7 @@ Fboard::Open()
     // Figure out how we should access spi 
     if( FindCapeByName( "brecFpru" ) ) {
         mUsePru = 1;
-        StartPru();
+        PruStart();
     }
     else{ 
         mUsePru = 0;
