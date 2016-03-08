@@ -1,5 +1,0 @@
-echo out >  /sys/class/gpio/gpio48/direction
-echo 0   >  /sys/class/gpio/gpio48/value
-
-cat         /sys/class/gpio/gpio48/value
-cat         /sys/class/gpio/gpio48/direction

@@ -10,17 +10,13 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "Tboard.h"
-
 #include "Util/mcf.h"
 #include "Util/gpioutil.h"
 
 #include "Iboard/Iboard.h"
 #include "Bdc/Bdc.h"
 
-#include "ui2c.h"
-#include "mcp4725.h"
-#include "max2112.h"
+#include "Tboard.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 void usage( int exit_code )

@@ -72,9 +72,11 @@ Tboard::Attach( void *lvl0, void *lvl1 )
 
        // IO1 = p7 = "ss2"   = SCL
        // IO2 = p8 = "stat"  = SDA
+       // subtract 3 from pin number (one for 0 based, 2 more for first
+       // power and ground pin which are not gpios)
        err = mUI2C.configure( 
-                  bdc->GetGpioPin(portN,7), 
-                  bdc->GetGpioPin(portN,8)
+                  bdc->GetGpioPin(portN,4), // p7 - 3 = 4
+                  bdc->GetGpioPin(portN,5)  // p8 - 3 = 5
              );
        printf("%s:mUI2C  configure err=0x%08x\n",__FILE__,err);
 

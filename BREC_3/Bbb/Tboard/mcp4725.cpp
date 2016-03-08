@@ -39,7 +39,7 @@
 
 #include "Util/mcf.h"
 #include "Util/gpioutil.h"
-#include "ui2c.h"
+#include "Ui2c/ui2c.h"
 
 #include "mcp4725.h"
 

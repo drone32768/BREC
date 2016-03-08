@@ -1,4 +1,4 @@
-include ../common.mk
+include ../MakeCommon.mk
 
 ifeq ($(TGT),arm)
     PRU_INC=/home/root/am335x_pru_package-master/pru_sw/app_loader/include
@@ -13,10 +13,10 @@ UTIL_OBJS=../Util/$(TGT)/gpioutil.o \
           ../Util/$(TGT)/mcf.o \
           ../Iboard/$(TGT)/Iboard.o \
           ../Bdc/$(TGT)/Bdc.o \
+          ../Ui2c/$(TGT)/ui2c.o \
           ../Fboard/$(TGT)/Fboard.o
 
 LOCAL_OBJS=$(TGT)/Tboard.o \
-           $(TGT)/ui2c.o \
            $(TGT)/mcp4725.o \
            $(TGT)/max2112.o
 

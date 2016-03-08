@@ -36,7 +36,7 @@
 #define __T_BOARD__
 
 
-#include "ui2c.h"
+#include "Ui2c/ui2c.h"
 #include "mcp4725.h"
 #include "max2112.h"
 
@@ -50,15 +50,16 @@ private:
 
 public:
     Tboard();
-    int     Attach( void *lvl0, void *lvl1 );
-    void    Detach();
-    void    Show();
+    int          Attach( void *lvl0, void *lvl1 );
+    void         Detach();
+    void         Show();
 
-
-    uint32_t     DacSet( int value );
-    uint32_t     DacGet( int *vvalue );
     double       SetFreqHz( double freqHz );
     void         ShowTuner();
+
+    // Test Interfaces only
+    uint32_t     DacSet( int value );
+    uint32_t     DacGet( int *vvalue );
 };
 
 #endif
