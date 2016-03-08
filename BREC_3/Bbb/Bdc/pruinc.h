@@ -38,7 +38,8 @@
 #define SRAM_OFF_DBG2              0x0004  // 4 bytes
 #define SRAM_OFF_CMD               0x0008  // 2 bytes
 #define SRAM_OFF_RES               0x000c  // 2 bytes
-#define SRAM_OFF_DRAM_PBASE        0x0100  // 4 bytes
+#define SRAM_OFF_DRAM_PBASE        0x0020  // 4 bytes
+#define SRAM_OFF_DRAM_OFF          0x0024  // 4 bytes
 
 #define PRU1_CMD_NONE       0
 #define PRU1_CMD_2KWORDS    1

@@ -129,6 +129,9 @@ public:
     int  SpiRW16( int wval );
     void Show( const char *title );
 
+    void StartStream();
+    void StopStream();
+
 };
 
 #endif

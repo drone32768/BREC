@@ -42,16 +42,6 @@
 
 
 //   
-//   SRAM
-//           +-- rTailPtr       +--- rSrHdPtrPtr
-//           |                  |  + -- rDrmOffsetPtrPtr
-//           |                  |  |
-//           |                  |  |
-//           V                  V  V
-//   +-------------------------+-----------------------+  
-//   |                         |                       |
-//   +-------------------------+-----------------------+  
-//    <---- rTailMask -------->
 //
 //   DRAM
 // 
@@ -123,6 +113,9 @@ MAIN1:
 #define    rDrmOffsetMask   r18
     MOV    rDrmOffsetMask,      0x0003ffff
 
+#define    rDrmOffsetPtr    r9
+    MOV    rDrmOffsetPtr,       (SRAM_OFF_DRAM_OFF)
+
 
 #define PRU0_CMD_16ARRAY 2 // fixme
 
@@ -151,6 +144,9 @@ read2k:
     // TODO create loop to xfer 2048 using 8x256
     CALL      read256
     CALL      save256
+
+    // save dram offset to sram so cpu can see where pru is next
+    ST32      rDrmOffset, rDrmOffsetPtr  
     JMP       main_loop
 
 ////////////////////////////////////////////////////////////////////////////////

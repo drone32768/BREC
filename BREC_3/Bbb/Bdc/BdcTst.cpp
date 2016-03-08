@@ -227,6 +227,13 @@ main( int argc, char *argv[] )
             bdc->Show( "bdc" );
         }
 
+        else if( 0==strcmp(argv[idx], "-sstop") ){
+            bdc->StopStream();
+        }
+        else if( 0==strcmp(argv[idx], "-sstart") ){
+            bdc->StartStream();
+        }
+
         else if( 0==strcmp(argv[idx], "-write") ){
             int rval; 
             if( (idx+1) >= argc ){ usage(-1); }

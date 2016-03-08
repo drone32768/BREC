@@ -177,18 +177,32 @@ Bdc::SpiRW16( int wval )
 
 //------------------------------------------------------------------------------
 void
+Bdc::StartStream()
+{
+    SetSramShort(  PRU1_CMD_2KWORDS, SRAM_OFF_CMD );
+}
+
+void
+Bdc::StopStream()
+{
+    SetSramShort(  PRU1_CMD_NONE, SRAM_OFF_CMD );
+}
+
+//------------------------------------------------------------------------------
+void
 Bdc::Show(const char *title )
 {
     printf("Bdc: %s\n",title);
-    printf("--- Fboard ----\n");
-    mFbrd.Show();
-    printf("---- Bdc ------\n");
+    // printf("--- Fboard ----\n");
+    // mFbrd.Show();
+    // printf("---- Bdc ------\n");
     if( mFbrd.PruIsAvail() ){
         printf("    PRU1 dbg1     0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
         printf("    PRU1 dbg2     0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
         printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
         printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
         printf("    PRU1 pbase    0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE) );
+        printf("    PRU1 dram off 0x%08x\n",GetSramWord( SRAM_OFF_DRAM_OFF) );
     }
     else{
         printf("    PRU not available\n");
@@ -298,5 +312,8 @@ BdcGpio::Get( )
    mBdc->SpiRW16( rcmd  );
    val = mBdc->SpiRW16( 0  );
 
-   return( (0==val)?0:1 );
+   // Select the specified bit
+   val = (val>>mPin) & 0x1;
+
+   return(val);
 }
