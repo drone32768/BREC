@@ -1,4 +1,4 @@
-include ../common.mk
+include ../MakeCommon.mk
 
 all	:
 	make $(TGT)/pruss_emul.o 

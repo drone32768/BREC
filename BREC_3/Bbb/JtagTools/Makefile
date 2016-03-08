@@ -1,4 +1,4 @@
-include ../common.mk
+include ../MakeCommon.mk
 
 ifeq ($(TGT),arm)
     XAPP058=/home/root/Xapp058

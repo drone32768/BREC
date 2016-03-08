@@ -1,4 +1,4 @@
-include ../common.mk
+include ../MakeCommon.mk
 
 UTIL_OBJS=../Util/$(TGT)/gpioutil.o ../Util/$(TGT)/mcf.o
 DEV_OBJS=

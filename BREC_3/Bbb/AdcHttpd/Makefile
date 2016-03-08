@@ -1,5 +1,5 @@
 
-include ../common.mk
+include ../MakeCommon.mk
 
 ifeq ($(TGT),arm)
     PRU_INC=/home/root/am335x_pru_package-master/pru_sw/app_loader/include

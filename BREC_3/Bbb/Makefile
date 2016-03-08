@@ -5,6 +5,7 @@ all	:
 	cd Interfaces; make all
 	cd PruEmul;    make all
 	cd JtagTools;  make all
+	cd Ui2c;       make all
 	cd Fboard;     make all
 	cd Bdc;        make all
 	cd Ddc100;     make all
@@ -16,6 +17,7 @@ clean	:
 	cd Util;       make clean
 	cd Interfaces; make clean
 	cd PruEmul;    make clean
+	cd Ui2c;       make clean
 	cd JtagTools;  make clean
 	cd Fboard;     make clean
 	cd Bdc;        make clean
