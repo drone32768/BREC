@@ -1,2 +1,2 @@
-arm/Tutil -tune 920e6 -usleep 10000 -tshow
+arm/Tutil -gain 0.0 -bw 4e6 -tune 920e6 -usleep 10000 -tshow
 

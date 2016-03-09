@@ -247,6 +247,17 @@ MAX2112::SetFreqHz( double freqHz )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+double
+MAX2112::SetBwHz( double bwHz )
+{
+   if( bwHz <  3.48e6 ) bwHz =  3.48e6;
+   if( bwHz > 74.47e6 ) bwHz = 74.47e6;
+
+   mLpfHz = bwHz;
+   return( bwHz );
+}
+
+////////////////////////////////////////////////////////////////////////////////
 uint32_t 
 MAX2112::WriteReg( 
    uint8_t  devAddr, 

@@ -35,7 +35,6 @@
 #ifndef __T_BOARD__
 #define __T_BOARD__
 
-
 #include "Ui2c/ui2c.h"
 #include "mcp4725.h"
 #include "max2112.h"
@@ -55,6 +54,8 @@ public:
     void         Show();
 
     double       SetFreqHz( double freqHz );
+    double       SetGainDb( double gainDb );
+    double       SetBwHz(   double bwHz );
     void         ShowTuner();
 
     // Test Interfaces only

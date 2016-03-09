@@ -21,8 +21,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 void usage( int exit_code )
 {
-    printf("-usleep <M>   sleeps script execution for <M> micro seconds\n");
-    printf("-echo   <str> echo string <str>\n");
+    printf("-usleep    <M>   sleeps script execution for <M> micro seconds\n");
+    printf("-echo      <str> echo string <str>\n");
+    printf("-dac_write <N>   write <N> to dac (can be hex e.g. 0x800)\n");
+    printf("-dac_read        read and display current dac value\n");
+    printf("-dac_mod         loop ramp dac between 0x000 and 0x800\n");
+    printf("-tshow           show tuner values\n");
+    printf("-tune      <M>   tune to <M> hertz\n");
+    printf("-gain      <M>   gain to <M> db [ 0 .. 80 ] approximately \n");
+    printf("-bw        <M>   3db bw to <M> Hz \n");
+    printf("NOTE: bw must be set prior to tuning. tuning applies the bw\n");
     printf("\n");
     exit( exit_code );
 }
@@ -104,6 +112,10 @@ main( int argc, char *argv[] )
             }
         }
 
+        else if( 0==strcmp(argv[idx], "-tshow") ){
+            tbrd->ShowTuner();
+        }
+
         else if( 0==strcmp(argv[idx], "-tune") ){
             double hzTgt,hzAct;
 
@@ -111,11 +123,24 @@ main( int argc, char *argv[] )
             hzTgt = atof(argv[idx+1]);
             hzAct = tbrd->SetFreqHz( hzTgt  );
             printf("HzTgt=%f, HzAct=%f\n",hzTgt,hzAct);
-
         }
 
-        else if( 0==strcmp(argv[idx], "-tshow") ){
-            tbrd->ShowTuner();
+        else if( 0==strcmp(argv[idx], "-gain") ){
+            double dbTgt,dbAct;
+
+            if( (idx+1) >= argc ){ usage(-1); }
+            dbTgt = atof(argv[idx+1]);
+            dbAct = tbrd->SetGainDb( dbTgt  );
+            printf("dBTgt=%f, dBAct=%f\n",dbTgt,dbAct);
+        }
+
+        else if( 0==strcmp(argv[idx], "-bw") ){
+            double hzTgt,hzAct;
+
+            if( (idx+1) >= argc ){ usage(-1); }
+            hzTgt = atof(argv[idx+1]);
+            hzAct = tbrd->SetBwHz( hzTgt  );
+            printf("HzTgt=%f, HzAct=%f\n",hzTgt,hzAct);
         }
 
         // Move to next command

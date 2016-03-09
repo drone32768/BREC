@@ -118,9 +118,11 @@ Tboard::Detach()
 void
 Tboard::Show()
 {
+    printf("Tboard::Show:\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Test interface only
 uint32_t
 Tboard::DacSet( int value )
 {
@@ -128,10 +130,54 @@ Tboard::DacSet( int value )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Test interface only
 uint32_t
 Tboard::DacGet( int *vvalue )
 {
     return( mDAC.Get( 0xC6, vvalue ) );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+double
+Tboard::SetGainDb( double gainDb )
+{
+   double volts;
+   int    dac;
+
+   if( gainDb > 80 ) gainDb = 80;
+   if( gainDb < 0  ) gainDb = 0;
+
+   // Using approximations from datasheet:
+   //
+   // 2.6 V = min gain @  3dB
+   // 0.5 V = max gain @ 75dB
+   //
+   // ~ 34.29 dB / volt, treating 0dB at 2.6V
+   // 
+   //                      1 V
+   // V = 2.6V - ( dB  *  -------- )
+   //                     34.29 dB
+   //
+   //
+
+   volts  = 2.6 - ( gainDb / 34.29 );
+   dac    = 4096 * volts / 3.3;
+ 
+   if( dac > 3351 ) dac = 3351; // clamp to 2.7V
+   if( dac < 0    ) dac = 0;    // campl to 0.0V
+
+   printf("Tboard::SetGainDb:: %g to dac=%d\n",gainDb,dac);
+
+   // DacSet( dac );
+
+   return( gainDb );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+double
+Tboard::SetBwHz( double bwHz )
+{
+   return( mTUNER.SetBwHz(bwHz) );
 }
 
 ////////////////////////////////////////////////////////////////////////////////

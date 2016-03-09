@@ -56,6 +56,7 @@ public:
                     int      nBytes );
 
     double SetFreqHz( double freqHz );
+    double SetBwHz(   double bwHz );
     uint32_t Show();
     
 #define MAX2112_DBG_WRITE 0x00000001
