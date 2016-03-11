@@ -168,7 +168,7 @@ Tboard::SetGainDb( double gainDb )
 
    printf("Tboard::SetGainDb:: %g to dac=%d\n",gainDb,dac);
 
-   // DacSet( dac );
+   DacSet( dac );
 
    return( gainDb );
 }
