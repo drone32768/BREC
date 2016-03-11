@@ -113,7 +113,8 @@ int
 Bdc::GetFwVersion()
 {
     int ver;
-    ver = SpiRW16( BDC_REG_RD | BDC_REG_R0 );
+    SpiRW16( BDC_REG_RD | BDC_REG_R0 );
+    ver = SpiRW16(0);
     return(ver);
 }
 

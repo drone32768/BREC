@@ -63,6 +63,10 @@
 #define BDC_REG_R14 0x0E00
 #define BDC_REG_R15 0x0F00
 
+#define BDC_REG_R16 0x1000
+
+#define BDC_REG_R63 0x3F00
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define BDC_GPIO0_DIR_WR (BDC_REG_WR | BDC_REG_R11)
