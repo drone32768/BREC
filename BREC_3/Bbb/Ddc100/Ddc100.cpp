@@ -116,6 +116,13 @@ Ddc100::Ddc100()
 }
 
 //------------------------------------------------------------------------------
+void
+Ddc100::Attach( Bdc *bdc )
+{
+   mBdc = bdc;
+}
+
+//------------------------------------------------------------------------------
 int
 Ddc100::Open()
 {
@@ -124,12 +131,7 @@ Ddc100::Open()
 
     printf("Ddc100:Open enter\n");
 
-    fbrd.Open();
-
-    // Since we may just have powered on fpga let it load
-    us_sleep( 100000 );
-
-    fbrd.Show();
+    mBdc->Show( "Ddc100::Open" );
 
     fwVer = GetFwVersion();
     printf("Ddc100::Open::fw ver = 0x%08x\n",fwVer);
@@ -162,7 +164,6 @@ Ddc100::SetTpg( int arg )
 {
     printf("Ddc100:SetTpg=%d\n",arg);
     mTpg = arg;
-    SetR3();
     return(0);
 }
 //------------------------------------------------------------------------------
@@ -178,7 +179,6 @@ Ddc100::SetSource( int arg )
 {
     printf("Ddc100:SetSource=%d (mTpg=%d)\n",arg,mTpg);
     mFifoSrc = arg;
-    SetR3();
 
     switch( arg ){
         case XBOARD_FS_ADC      :  // input = 12 bit unsigned
@@ -221,31 +221,16 @@ Ddc100::SetSource( int arg )
 }
 
 //------------------------------------------------------------------------------
-// Internal support combining fifo source and tpg
-void
-Ddc100::SetR3()
-{
-    unsigned int word;
-    word = ((mFifoSrc&0xf)<<12) | ((mTpg&0xf)<<8);
-
-    printf("Ddc100:Set R3=0x%04x\n",word);
-
-    SpiRW16( XSPI_SEL_P1_R3     | XSPI_WP0 );
-    SpiRW16( word               | XSPI_WP1 );
-    SpiRW16( XSPI_SEL_P1_FIFO   | XSPI_WP0 );
-
-    FlushSamples(); // Necessary to start streaming
-}
-
-//------------------------------------------------------------------------------
 int
 Ddc100::GetFwVersion()
 {
     int ver;
-    SpiRW16( XSPI_SEL_P1_R8     | XSPI_WP0 );
-    SpiRW16( XSPI_RP1 );
-    ver = SpiRW16( XSPI_RP1 );
+
+    mBdc->SpiRW16(  BDC_REG_RD | BDC_REG_R0 );
+    ver = mBdc->SpiRW16( 0 );
+
     FlushSamples(); // Necessary to start streaming
+
     return(ver);
 }
 
@@ -267,13 +252,7 @@ Ddc100::SetLoFreqHz( double freqHz )
     printf("Ddc100: pinc = %lld 0x%08x (0x%04x 0x%04x)\n",
                    pinc,(unsigned int)pinc,pincHi,pincLo);
 
-    SpiRW16( XSPI_SEL_P1_R6        | XSPI_WP0 );
-    SpiRW16( ((pincLo&0x0fff)<<4)  | XSPI_WP1 );
-
-    SpiRW16( XSPI_SEL_P1_R7        | XSPI_WP0 );
-    SpiRW16( ((pincHi&0x0fff)<<4)  | XSPI_WP1 );
-
-    SpiRW16( XSPI_SEL_P1_FIFO      | XSPI_WP0 );
+    // TODO mBdc->SpiRW16(...
 
     FlushSamples(); // Necessary to continue streaming
 
@@ -291,15 +270,12 @@ Ddc100::FlushSamples()
     // printf("Ddc100:FlushSamples Enter\n");
 
     // Stop the fpga acquisition
-    SpiRW16( XSPI_STOP );
 
     // Flush the fpga fifos
-    SpiRW16( XSPI_FLUSH );
 
     // TODO: Wait for the DRAM to drain to a constant spot
 
     // Start the fpga acquisition
-    SpiRW16( XSPI_START );
 
     // TODO: Tell the pru to go back to streaming
 
@@ -316,13 +292,15 @@ Ddc100::Get2kSamples( short *bf )
     // Transfer 2k samples with single word cpu xfers for now
 
     // TODO - should wait until there are 2k present w/ indicator
-    SpiRW16(XSPI_READ_SAMPLE);
-    for(idx=0;idx<2047;idx++){
-        bf[idx] = SpiRW16(XSPI_READ_SAMPLE);
-    }
-    bf[idx] = SpiRW16(XSPI_RP0);
 
-    SpiRW16(XSPI_FLUSH);
+    mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63  );
+    for(idx=0;idx<2047;idx++){
+        bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
+    }
+    bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
+
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0xff );
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x00 );
 
     return( p );
 }
@@ -398,26 +376,10 @@ Ddc100::SetGain( int gn )
    return( 0 );
 }
 
-
-//------------------------------------------------------------------------------
-int
-Ddc100::SpiRW16( int wval )
-{
-    unsigned short sbf[256];
-    int            rval;
- 
-    sbf[0] = (unsigned short)(wval&0xffff);
-    fbrd.SpiXferArray16( sbf, 1 );
-    rval   = (int)( sbf[0] );
-
-    return(rval);
-}
-
 //------------------------------------------------------------------------------
 void
 Ddc100::Show(const char *title )
 {
     printf("Ddc100: %s",title);
-    fbrd.Show();
 }
 

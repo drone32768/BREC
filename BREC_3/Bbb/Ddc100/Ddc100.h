@@ -2,7 +2,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2015, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -39,7 +39,7 @@
 #include "Interfaces/AdcIf.h"
 #include "Interfaces/MixerIf.h"
 
-#include "Fboard/Fboard.h"
+#include "Bdc/Bdc.h"
 
 class Ddc100 : public AdcIf, public MixerIf {
 
@@ -63,13 +63,13 @@ private:
     int                      mTpg;
 
     ////////////////////////////////////////
-    Fboard                   fbrd;
+    Bdc                     *mBdc;
  
-    void SetR3(); 
     int  SimGet2kSamples( short *bf ); 
 
 public:
     Ddc100();
+    void Attach( Bdc *bdc );
 
     // ADC interfaces
     int Open();
@@ -95,7 +95,6 @@ public:
     int SetTpg( int arg );
 
     // For testing only
-    int  SpiRW16( int wval );
     void Show( const char *title );
 
     /**

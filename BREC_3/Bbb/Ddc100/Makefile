@@ -10,8 +10,10 @@ else
 endif
 
 UTIL_OBJS=../Fboard/$(TGT)/Fboard.o \
-          ../Util/$(TGT)/mcf.o \
-          ../Util/$(TGT)/gpioutil.o
+          ../Bdc/$(TGT)/Bdc.o \
+          ../Util/$(TGT)/gpioutil.o \
+          ../Util/$(TGT)/mcf.o 
+
 LOCAL_OBJS=$(TGT)/Ddc100.o
 
 

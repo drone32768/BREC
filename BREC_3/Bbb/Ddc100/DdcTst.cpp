@@ -388,13 +388,22 @@ void usage( int exit_code )
 int
 main( int argc, char *argv[] )
 {
-    int            idx;	  
+    Bdc           *bdc;
     Ddc100        *ddc;
+    int            idx;	  
     int            val;
     char          *end;
     short          bf[4096];
 
-    ddc = NULL;
+
+    bdc = new Bdc();
+    bdc->Open();
+
+    ddc = new Ddc100();
+    ddc->Attach( bdc );
+    ddc->Open();
+    ddc->StartPrus();
+    ddc->SetComplexSampleRate( 5000000 );
 
     idx = 1;
     while( idx < argc ){
@@ -412,13 +421,6 @@ main( int argc, char *argv[] )
             printf("%s\n",argv[idx+1]);
         } 
 
-        else if( 0==strcmp(argv[idx], "-open") ){
-            ddc = new Ddc100();
-            ddc->Open();
-            ddc->StartPrus();
-            ddc->SetComplexSampleRate( 5000000 );
-        }		 
-
         else if( 0==strcmp(argv[idx], "-usleep") ){
             if( (idx+1) >= argc ){ usage(-1); }
             val = strtol(argv[idx+1],&end,0);
@@ -430,7 +432,7 @@ main( int argc, char *argv[] )
             if( (idx+1) >= argc ){ usage(-1); }
             val = strtol( argv[idx+1], &end, 0 );
 
-            rval = ddc->SpiRW16( val );
+            rval = bdc->SpiRW16( val );
             printf("DdcTst:w=0x%04hx r=0x%04hx (%hd)\n",val,rval,rval);
         }
     
@@ -440,6 +442,7 @@ main( int argc, char *argv[] )
         }
 
         else if( 0==strcmp(argv[idx], "-csv") ){
+            ddc->Get2kSamples( bf );
             Show2kIQ(bf,'D');
         }
 
