@@ -21,8 +21,10 @@ endif
 UTIL_OBJS=../Util/$(TGT)/mcf.o           \
           ../Util/$(TGT)/gpioutil.o      \
           ../Util/$(TGT)/SimpleTable.o
+
 DEV_OBJS= \
          ../Fboard/$(TGT)/Fboard.o       \
+         ../Bdc/$(TGT)/Bdc.o             \
          ../Ddc100/$(TGT)/Ddc100.o       \
 
 LOCAL_OBJS= $(TGT)/Devs.o                \
