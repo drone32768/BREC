@@ -54,10 +54,6 @@ private:
     volatile unsigned short *mPtrPruSamples;
     volatile unsigned char  *mPtrPruSram;
 
-    // Output formating parameters
-    int                      mOutFmtShift;
-    int                      mOutFmtAdd;
-
     // Other internal controls
     int                      mFifoSrc;
     int                      mTpg;

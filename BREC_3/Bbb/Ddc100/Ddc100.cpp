@@ -180,42 +180,26 @@ Ddc100::SetSource( int arg )
     printf("Ddc100:SetSource=%d (mTpg=%d)\n",arg,mTpg);
     mFifoSrc = arg;
 
+    // TODO re enum tap points, and actually program selector
     switch( arg ){
-        case XBOARD_FS_ADC      :  // input = 12 bit unsigned
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 0;
+        case XBOARD_FS_ADC      :  
             break;
-        case XBOARD_FS_NCO1     :  // input = 12 bit signed 
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 2048;
+        case XBOARD_FS_NCO1     :  
             break;
-        case XBOARD_FS_NCO2     :  // input = 12 bit signed 
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 2048;
+        case XBOARD_FS_NCO2     :  
             break;
-        case XBOARD_FS_I        :  // input = 16 bit signed
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
+        case XBOARD_FS_I        :  
             break;
         case XBOARD_FS_Q        :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
             break;
         case XBOARD_FS_CIC_I    :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
             break;
         case XBOARD_FS_CIC_Q    :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 32768;
             break;
         case XBOARD_FS_CIC_IQ   :
         default                :
-            mOutFmtShift = 0;
-            mOutFmtAdd   = 0; // 32768;
             break;
     }
-    printf("Ddc100:SetSource shift=%d add=%d\n",mOutFmtShift,mOutFmtAdd);
    
     return( arg );
 }

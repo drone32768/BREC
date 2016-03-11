@@ -63,8 +63,18 @@ int Devs::Open()
     // parameters
 
     if( FindCapeByName("brecFpru")>0  ){
-        printf("*********** Devs::Open Starting F/Ddc ****************\n");
-        mAdc = new Ddc100();
+        Bdc    *bdc;
+        Ddc100 *ddc;
+
+        printf("******** Devs::Open Starting F/Bdc/Ddc100 ****************\n");
+
+        bdc = new Bdc();
+        bdc->Open();
+
+        ddc = new Ddc100();
+        ddc->Attach( bdc );
+
+        mAdc = ddc;
         mAdc->Open();
         mMix = (Ddc100*)mAdc;
     }
