@@ -64,6 +64,9 @@
 #define BDC_REG_R15 0x0F00
 
 #define BDC_REG_R16 0x1000
+#define BDC_REG_R17 0x1100
+#define BDC_REG_R18 0x1200
+#define BDC_REG_R19 0x1300
 
 #define BDC_REG_R63 0x3F00
 

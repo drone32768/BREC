@@ -136,12 +136,12 @@ Ddc100::Open()
     fwVer = GetFwVersion();
     printf("Ddc100::Open::fw ver = 0x%08x\n",fwVer);
     if( 0x0700 == (fwVer&0xff00) ){
-       mFsHz    = 12000000; // Function of the board
+       mFsHz    = 20000000; // Function of the board
        mFsDec   = 100000;
        mCSPS    = mFsHz;    
     }
     else{
-       mFsHz    = 10000000; // Function of the board
+       mFsHz    = 20000000; // Function of the board
        mFsDec   = 100000;
        mCSPS    = mFsHz;    
     }
@@ -151,7 +151,9 @@ Ddc100::Open()
 
     // Set startup default signal paramters
     SetLoFreqHz( 640000 );
+
     SetSource( 0 ); 
+    SetTpg( 1 );  // FIXME - testing only
 
     printf("Ddc100:Open exit\n");
 
@@ -164,13 +166,16 @@ Ddc100::SetTpg( int arg )
 {
     printf("Ddc100:SetTpg=%d\n",arg);
     mTpg = arg;
+
+    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R19 | (mTpg&0xff) );
+
     return(0);
 }
 //------------------------------------------------------------------------------
 int
 Ddc100::IsComplexFmt()
 {
-  return( (mFifoSrc==XBOARD_FS_CIC_IQ)?1:0 );
+  return(1);
 }
 
 //------------------------------------------------------------------------------
@@ -180,27 +185,9 @@ Ddc100::SetSource( int arg )
     printf("Ddc100:SetSource=%d (mTpg=%d)\n",arg,mTpg);
     mFifoSrc = arg;
 
-    // TODO re enum tap points, and actually program selector
-    switch( arg ){
-        case XBOARD_FS_ADC      :  
-            break;
-        case XBOARD_FS_NCO1     :  
-            break;
-        case XBOARD_FS_NCO2     :  
-            break;
-        case XBOARD_FS_I        :  
-            break;
-        case XBOARD_FS_Q        :
-            break;
-        case XBOARD_FS_CIC_I    :
-            break;
-        case XBOARD_FS_CIC_Q    :
-            break;
-        case XBOARD_FS_CIC_IQ   :
-        default                :
-            break;
-    }
-   
+    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
+
+    Show( "at set\n" );
     return( arg );
 }
 
@@ -229,14 +216,15 @@ Ddc100::SetLoFreqHz( double freqHz )
     printf("Ddc100:SetFreq=%f Hz\n",freqHz);
 
     hzMod = ((long long)freqHz) % mFsHz;
-    pinc  = hzMod * 65536 / mFsHz;;
-    pincLo=       pinc & 0x0fff;
-    pincHi= (pinc>>12) & 0x0fff;
+    pinc  = hzMod * 65536 / mFsHz;
+    pincLo=       pinc & 0x00ff;
+    pincHi=  (pinc>>8) & 0x00ff;
 
     printf("Ddc100: pinc = %lld 0x%08x (0x%04x 0x%04x)\n",
                    pinc,(unsigned int)pinc,pincHi,pincLo);
 
-    // TODO mBdc->SpiRW16(...
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R17 | pincLo );
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R18 | pincHi );
 
     FlushSamples(); // Necessary to continue streaming
 
@@ -283,8 +271,8 @@ Ddc100::Get2kSamples( short *bf )
     }
     bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
 
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0xff );
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x00 );
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
 
     return( p );
 }
@@ -318,34 +306,6 @@ Ddc100::SetComplexSampleRate( int complexSamplesPerSecond )
 int
 Ddc100::GetComplexSampleRate()
 {
-    switch( mFifoSrc ){
-        case XBOARD_FS_ADC      : 
-            return( mFsHz/2 );
-            break;
-        case XBOARD_FS_NCO1     : 
-            return( mFsHz/2 );
-            break;
-        case XBOARD_FS_NCO2     : 
-            return( mFsHz/2 );
-            break;
-        case XBOARD_FS_I        : 
-            return( mFsHz/2 );
-            break;
-        case XBOARD_FS_Q        :
-            return( mFsHz/2 );
-            break;
-        case XBOARD_FS_CIC_I    :
-            return( mFsDec );     // FIXME - this should be relative to Fs
-            break;
-        case XBOARD_FS_CIC_Q    :
-            return( mFsDec  );
-            break;
-        case XBOARD_FS_CIC_IQ   :
-            return( mFsDec );
-        default                 :
-            return( mFsHz );
-            break;
-    }
     return( mFsHz );
 }
 
@@ -364,6 +324,12 @@ Ddc100::SetGain( int gn )
 void
 Ddc100::Show(const char *title )
 {
+    int rg,val;
     printf("Ddc100: %s",title);
+    for(rg=0;rg<21;rg++){
+        mBdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
+        val = mBdc->SpiRW16( 0 );
+        printf("r[%02d] = 0x%04x\n",rg,val);
+    }
 }
 

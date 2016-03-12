@@ -375,7 +375,7 @@ void usage( int exit_code )
     printf("-echo Msg     Echo's Msg to output\n");
     printf("-open         open's device (required first step)\n");
     printf("-usleep N     sleeps N microseconds\n");
-    printf("-write  N     writes N to spi port\n");
+    printf("-rw16   N     writes N to spi port and read results\n");
     printf("-samp         show samples\n");
     printf("-csv          produce samples in csv format\n");
     printf("-flush        flush source fifo\n");
@@ -427,13 +427,33 @@ main( int argc, char *argv[] )
             us_sleep( val );
         } 
 
-        else if( 0==strcmp(argv[idx], "-write") ){
+        else if( 0==strcmp(argv[idx], "-rw16") ){
             int rval; 
             if( (idx+1) >= argc ){ usage(-1); }
             val = strtol( argv[idx+1], &end, 0 );
 
             rval = bdc->SpiRW16( val );
             printf("DdcTst:w=0x%04hx r=0x%04hx (%hd)\n",val,rval,rval);
+        }
+
+        else if( 0==strcmp(argv[idx], "-write") ){
+            int rval,rg,wr; 
+            if( (idx+2) >= argc ){ usage(-1); }
+            rg = strtol( argv[idx+1], &end, 0 );
+            wr = strtol( argv[idx+1], &end, 0 );
+            rval = bdc->SpiRW16( BDC_REG_WR | ((rg&0x3f)<<8) | (wr&0xff) );
+            printf("DdcTst:write rg %d = 0x%04hx (%hd)\n",rg,wr,wr);
+        }
+
+        else if( 0==strcmp(argv[idx], "-read") ){
+            int rval,rg; 
+            if( (idx+1) >= argc ){ usage(-1); }
+            rg = strtol( argv[idx+1], &end, 0 );
+
+            rval = bdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
+            rval = bdc->SpiRW16( 0 );
+            printf("DdcTst:read rg %d = 0x%04hx (%hd)\n",rg,rval,rval);
+
         }
     
         else if( 0==strcmp(argv[idx], "-samp") ){

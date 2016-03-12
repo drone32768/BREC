@@ -93,19 +93,6 @@ public:
     // For testing only
     void Show( const char *title );
 
-    /**
-     * Enumeration of valid data sources within fpga
-     * to be used with SetSource()
-     */
-#   define XBOARD_FS_ADC    0
-#   define XBOARD_FS_NCO1   1
-#   define XBOARD_FS_NCO2   2
-#   define XBOARD_FS_I      3
-#   define XBOARD_FS_Q      4
-#   define XBOARD_FS_CIC_I  5
-#   define XBOARD_FS_CIC_Q  6
-#   define XBOARD_FS_CIC_IQ 7
-
 };
 
 #endif
