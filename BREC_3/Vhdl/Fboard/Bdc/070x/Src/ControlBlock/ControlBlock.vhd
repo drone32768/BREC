@@ -35,7 +35,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 --000000001111111111222222222233333333334444444444555555555566666666667777777777
---234567890123456789012345678901234567890123456789012345678901234567890123456789	
+--234567890123456789012345678901234567890123456789012345678901234567890123456789   
 --
 -- This module is the primary digital interface block including
 -- control and streaming interface.  It includes multiple 
@@ -53,106 +53,106 @@ entity ControlBlock is
            iSCLK        : in    STD_LOGIC;
            iSS          : in    STD_LOGIC;
 
-			  oLEDS        : out   STD_LOGIC_VECTOR( 3 downto 0 );
-			  ioGPIO0      : inout STD_LOGIC_VECTOR( 5 downto 0 );
-			  ioGPIO1      : inout STD_LOGIC_VECTOR( 5 downto 0 );
-			  
-			  iClk         : in    STD_LOGIC;
-			  iAltClk      : in    STD_LOGIC;
-			  
-			  oFifoRst     : out   STD_LOGIC;
-			  oFifoSel     : out   STD_LOGIC_VECTOR ( 3 downto 0);
-			  iFifoRdData  : in    STD_LOGIC_VECTOR( 15 downto 0 );
-			  oFifoRdEn    : out   STD_LOGIC;
-			  iFifoMark    : in    STD_LOGIC;
-			  oFifoWrGate  : out   STD_LOGIC;
-			  
-			  oGenTp       : out   STD_LOGIC_VECTOR ( 3 downto 0 );
-			  oPinc        : out   STD_LOGIC_VECTOR ( 15 downto 0 );
-			  iStatus      : in    STD_LOGIC_VECTOR ( 15 downto 0 )
-	 );  
+           oLEDS        : out   STD_LOGIC_VECTOR( 3 downto 0 );
+           ioGPIO0      : inout STD_LOGIC_VECTOR( 5 downto 0 );
+           ioGPIO1      : inout STD_LOGIC_VECTOR( 5 downto 0 );
+           
+           iClk         : in    STD_LOGIC;
+           iAltClk      : in    STD_LOGIC;
+           
+           oFifoRst     : out   STD_LOGIC;
+           oFifoSel     : out   STD_LOGIC_VECTOR ( 3 downto 0);
+           iFifoRdData  : in    STD_LOGIC_VECTOR( 15 downto 0 );
+           oFifoRdEn    : out   STD_LOGIC;
+           iFifoMark    : in    STD_LOGIC;
+           oFifoWrGate  : out   STD_LOGIC;
+           
+           oGenTp       : out   STD_LOGIC_VECTOR ( 3 downto 0 );
+           oPinc        : out   STD_LOGIC_VECTOR ( 15 downto 0 );
+           iStatus      : in    STD_LOGIC_VECTOR ( 15 downto 0 )
+    );  
 end ControlBlock;
 
 architecture Behavioral of ControlBlock is
 
 component SpiSlave is
     Port ( 
-	        iDSPI         : in  STD_LOGIC;
-	        iMOSI         : in  STD_LOGIC_VECTOR( 1 downto 0); 
+           iDSPI         : in  STD_LOGIC;
+           iMOSI         : in  STD_LOGIC_VECTOR( 1 downto 0); 
            oMISO         : out STD_LOGIC_VECTOR( 1 downto 0);
            iSCLK         : in  STD_LOGIC;
            iSS           : in  STD_LOGIC;
-			  
+           
            oBSY          : out STD_LOGIC;
            oSI           : out STD_LOGIC_VECTOR (15 downto 0);
            iSO           : in  STD_LOGIC_VECTOR (15 downto 0)
-		     );
+           );
 end component;
 
 component PortCtl is
-	 Port ( 
-			  iSYS_CLK      : in   STD_LOGIC;
-			  
-	        iSERIAL_IN    : in   STD_LOGIC_VECTOR (15 downto 0);
+    Port ( 
+           iSYS_CLK      : in   STD_LOGIC;
+           
+           iSERIAL_IN    : in   STD_LOGIC_VECTOR (15 downto 0);
            oSERIAL_OUT   : out  STD_LOGIC_VECTOR (15 downto 0);
            iSERIAL_BSY   : in   STD_LOGIC;
-			  
-			  iRD           : in   STD_LOGIC_VECTOR (15 downto 0);
-			  oRE           : out  STD_LOGIC;
-			  
-			  oWD           : out  STD_LOGIC_VECTOR (15 downto 0);
-			  oWE           : out  STD_LOGIC;
-			  
-			  oNsel         : out  STD_LOGIC_VECTOR (5 downto 0 )
+           
+           iRD           : in   STD_LOGIC_VECTOR (15 downto 0);
+           oRE           : out  STD_LOGIC;
+           
+           oWD           : out  STD_LOGIC_VECTOR (15 downto 0);
+           oWE           : out  STD_LOGIC;
+           
+           oNsel         : out  STD_LOGIC_VECTOR (5 downto 0 )
            );
 end component;
 
 component Cnt16 is 
      Port (
-	        EN            : in   std_logic;
-		     CLK	          : in	  std_logic;
-		     DOUT	       : out  std_logic_vector(15 downto 0)
-  	        );
+           EN            : in   std_logic;
+           CLK             : in     std_logic;
+           DOUT          : out  std_logic_vector(15 downto 0)
+             );
 end component;
 
 component Srg16 is 
     Port ( iClk   : in  STD_LOGIC;
-	        iSel   : in  STD_LOGIC_VECTOR (5 downto 0);
-			  iId    : in  STD_LOGIC_VECTOR (5 downto 0);
-	        iData  : in  STD_LOGIC_VECTOR (15 downto 0);
+           iSel   : in  STD_LOGIC_VECTOR (5 downto 0);
+           iId    : in  STD_LOGIC_VECTOR (5 downto 0);
+           iData  : in  STD_LOGIC_VECTOR (15 downto 0);
            oData  : out STD_LOGIC_VECTOR (15 downto 0);
            iWen   : in  STD_LOGIC
-			  );
+           );
 end component;
 
 component Gpio6 is
     Port ( iClk   : in     STD_LOGIC;
-	        ioGpio : inout  STD_LOGIC_VECTOR (5 downto 0);
-			  
-	        iDid   : in   STD_LOGIC_VECTOR (5 downto 0);
-			  iDsel  : in   STD_LOGIC_VECTOR (5 downto 0);
-	 
-	        iOid   : in   STD_LOGIC_VECTOR (5 downto 0);
-			  iOsel  : in   STD_LOGIC_VECTOR (5 downto 0);
-			   
-			  iWen   : in   STD_LOGIC;
-			  iWdat  : in   STD_LOGIC_VECTOR (7 downto 0);
-			  
+           ioGpio : inout  STD_LOGIC_VECTOR (5 downto 0);
+           
+           iDid   : in   STD_LOGIC_VECTOR (5 downto 0);
+           iDsel  : in   STD_LOGIC_VECTOR (5 downto 0);
+    
+           iOid   : in   STD_LOGIC_VECTOR (5 downto 0);
+           iOsel  : in   STD_LOGIC_VECTOR (5 downto 0);
+            
+           iWen   : in   STD_LOGIC;
+           iWdat  : in   STD_LOGIC_VECTOR (7 downto 0);
+           
            oIdat  : out  STD_LOGIC_VECTOR (7 downto 0);
-			  oDdat  : out  STD_LOGIC_VECTOR (7 downto 0);
+           oDdat  : out  STD_LOGIC_VECTOR (7 downto 0);
            oOdat  : out  STD_LOGIC_VECTOR (7 downto 0)
-			  
-			  );
+           
+           );
 end component;
-			  
+           
 component Srg8 is
     Port ( iClk   : in  STD_LOGIC;
-	        iSel   : in  STD_LOGIC_VECTOR (5 downto 0);
-			  iId    : in  STD_LOGIC_VECTOR (5 downto 0);
-	        iData  : in  STD_LOGIC_VECTOR (7 downto 0);
+           iSel   : in  STD_LOGIC_VECTOR (5 downto 0);
+           iId    : in  STD_LOGIC_VECTOR (5 downto 0);
+           iData  : in  STD_LOGIC_VECTOR (7 downto 0);
            oData  : out STD_LOGIC_VECTOR (7 downto 0);
            iWen   : in  STD_LOGIC
-			  );
+           );
 end component;
 
 --------------------------------------------------------------------------------
@@ -231,203 +231,203 @@ signal ctlRegSel       : STD_LOGIC_VECTOR ( 5 downto 0 );
 --------------------------------------------------------------------------------
 begin
  
-     -- Read selector data	  
-	  ctlRegRd    <= ctlReg00               when ctlRegSel="000000" else  
-	                 ctlReg01               when ctlRegSel="000001" else
-						  x"00" & ctlReg02       when ctlRegSel="000010" else
-						  ctlReg03               when ctlRegSel="000011" else  
-						  ctlReg04               when ctlRegSel="000100" else						  
-						  ctlReg05               when ctlRegSel="000101" else
+     -- Read selector data     
+     ctlRegRd    <= ctlReg00               when ctlRegSel="000000" else  
+                    ctlReg01               when ctlRegSel="000001" else
+                    x"00" & ctlReg02       when ctlRegSel="000010" else
+                    ctlReg03               when ctlRegSel="000011" else  
+                    ctlReg04               when ctlRegSel="000100" else                    
+                    ctlReg05               when ctlRegSel="000101" else
                     x"00" & ctlReg06       when ctlRegSel="000110" else
 
-						  x"00" & ctlReg10       when ctlRegSel="001010" else
-						  x"00" & ctlReg11       when ctlRegSel="001011" else
-						  x"00" & ctlReg12       when ctlRegSel="001100" else
-						  
-						  x"00" & ctlReg13       when ctlRegSel="001101" else
-						  x"00" & ctlReg14       when ctlRegSel="001110" else
-						  x"00" & ctlReg15       when ctlRegSel="001111" else
-						  
-						  x"00" & ctlReg16       when ctlRegSel="010000" else
-						  x"00" & ctlReg17       when ctlRegSel="010001" else
-						  x"00" & ctlReg18       when ctlRegSel="010010" else
-						  x"00" & ctlReg19       when ctlRegSel="010011" else
-						  
-						  x"000" & 
-						       "000" & iFifoMark when ctlRegSel="111101" else
-						  iStatus                when ctlRegSel="111110" else
-						  iFifoRdData            when ctlRegSel="111111" else
-						  x"0000";
+                    x"00" & ctlReg10       when ctlRegSel="001010" else
+                    x"00" & ctlReg11       when ctlRegSel="001011" else
+                    x"00" & ctlReg12       when ctlRegSel="001100" else
+                    
+                    x"00" & ctlReg13       when ctlRegSel="001101" else
+                    x"00" & ctlReg14       when ctlRegSel="001110" else
+                    x"00" & ctlReg15       when ctlRegSel="001111" else
+                    
+                    x"00" & ctlReg16       when ctlRegSel="010000" else
+                    x"00" & ctlReg17       when ctlRegSel="010001" else
+                    x"00" & ctlReg18       when ctlRegSel="010010" else
+                    x"00" & ctlReg19       when ctlRegSel="010011" else
+                    
+                    x"000" & 
+                         "000" & iFifoMark when ctlRegSel="111101" else
+                    iStatus                when ctlRegSel="111110" else
+                    iFifoRdData            when ctlRegSel="111111" else
+                    x"0000";
 
-	  -- Fifo is not idempotent to so its enable is special
-	  oFifoRdEn        <= ctlRegRe  when ctlRegSel="111111" else '0';
+     -- Fifo is not idempotent to so its enable is special
+     oFifoRdEn        <= ctlRegRe  when ctlRegSel="111111" else '0';
 
-	  -- oLEDS = control word fields
-	  oLEDS(3)         <= ctlReg02(3);
-	  oLEDS(2)         <= ctlReg02(2);
-	  oLEDS(1)         <= ctlReg02(1);
-	  oLEDS(0)         <= ctlReg02(0); 
-	  
-	  -- Fifo Control bits
-	  oFifoWrGate      <= ctlReg16(7);
-	  oFifoRst         <= ctlReg16(6);
-  	    
-	  -- Fifo input source selected control bits
-	  oFifoSel(3)      <= ctlReg16(3);
-	  oFifoSel(2)      <= ctlReg16(2);
+     -- oLEDS = control word fields
+     oLEDS(3)         <= ctlReg02(3);
+     oLEDS(2)         <= ctlReg02(2);
+     oLEDS(1)         <= ctlReg02(1);
+     oLEDS(0)         <= ctlReg02(0); 
+     
+     -- Fifo Control bits
+     oFifoWrGate      <= ctlReg16(7);
+     oFifoRst         <= ctlReg16(6);
+         
+     -- Fifo input source selected control bits
+     oFifoSel(3)      <= ctlReg16(3);
+     oFifoSel(2)      <= ctlReg16(2);
      oFifoSel(1)      <= ctlReg16(1);
      oFifoSel(0)      <= ctlReg16(0);
-	  							  							  
-	  -- oPinc bits
-	  oPinc(7 downto  0) <= ctlReg17( 7 downto 0 );
-	  oPinc(15 downto 8) <= ctlReg18( 7 downto 0 );
+                                                   
+     -- oPinc bits
+     oPinc(7 downto  0) <= ctlReg17( 7 downto 0 );
+     oPinc(15 downto 8) <= ctlReg18( 7 downto 0 );
 
-	  -- Generate test pattern  bits
-	  oGenTp(3)        <= ctlReg19(3);
-	  oGenTp(2)        <= ctlReg19(2);
-	  oGenTp(1)        <= ctlReg19(1);
-	  oGenTp(0)        <= ctlReg19(0);
-  								  
-	  -- R0 = id register (RO)
-	  ctlReg00         <= x"BDC1";
-	  
-	  -- R1 = device and version register (RO)
-	  ctlReg01         <= x"1457";
+     -- Generate test pattern  bits
+     oGenTp(3)        <= ctlReg19(3);
+     oGenTp(2)        <= ctlReg19(2);
+     oGenTp(1)        <= ctlReg19(1);
+     oGenTp(0)        <= ctlReg19(0);
+                            
+     -- R0 = id register (RO)
+     ctlReg00         <= x"BDC1";
+     
+     -- R1 = device and version register (RO)
+     ctlReg01         <= x"1457";
 
-	  -- R2 = visual indicator register (RW) 					
-	  R02 : Srg8 port map ( 
-	                     iClk        => iClk,
-	                     iSel        => ctlRegSel,
-			               iId         => "000010",
-	                     iData       => ctlRegWd(7 downto 0),
+     -- R2 = visual indicator register (RW)                
+     R02 : Srg8 port map ( 
+                        iClk        => iClk,
+                        iSel        => ctlRegSel,
+                        iId         => "000010",
+                        iData       => ctlRegWd(7 downto 0),
                         oData       => ctlReg02,
                         iWen        => ctlRegWe
-			               );
-								
-	  -- R3 = read counter (RO)							
-	  R03 : Cnt16 port map(
-		                  EN          => ctlRegRe,
-			               CLK         => iClk,
-		                  DOUT        => ctlReg03
-		                  ); 
-		
-	  -- R4 = clock 1 counter (RO)
-	  R04 : Cnt16 port map(
-		                  EN          => '1',
-			               CLK         => iAltClk,
-		                  DOUT        => ctlReg04
-		                  ); 
+                        );
+                        
+     -- R3 = read counter (RO)                     
+     R03 : Cnt16 port map(
+                        EN          => ctlRegRe,
+                        CLK         => iClk,
+                        DOUT        => ctlReg03
+                        ); 
+      
+     -- R4 = clock 1 counter (RO)
+     R04 : Cnt16 port map(
+                        EN          => '1',
+                        CLK         => iAltClk,
+                        DOUT        => ctlReg04
+                        ); 
 
-	  -- R5 = clock 2 counter (RO)								
-	  R05 : Cnt16 port map(
-		                  EN          => '1',
-			               CLK         => iClk,
-		                  DOUT        => ctlReg05
-		                  ); 
+     -- R5 = clock 2 counter (RO)                        
+     R05 : Cnt16 port map(
+                        EN          => '1',
+                        CLK         => iClk,
+                        DOUT        => ctlReg05
+                        ); 
 
-	  -- R6 = primary control								
-	  R06 : Srg8 port map ( 
-	                     iClk        => iClk,
-	                     iSel        => ctlRegSel,
-			               iId         => "000110",
-	                     iData       => ctlRegWd(7 downto 0),
+     -- R6 = primary control                        
+     R06 : Srg8 port map ( 
+                        iClk        => iClk,
+                        iSel        => ctlRegSel,
+                        iId         => "000110",
+                        iData       => ctlRegWd(7 downto 0),
                         oData       => ctlReg06,
                         iWen        => ctlRegWe
-			               );
+                        );
 
-	  -- R10-R12 								
-	  R10R11R12 : Gpio6 port map ( 
-	                     iClk        => iClk,
-	                     ioGpio      => ioGPIO0,
-			               iDid        => "001011",
-								iDsel       => ctlRegSel,
-								iOid        => "001100",
-								iOsel       => ctlRegSel,
-								iWen        => ctlRegWe,
-								iWdat       => ctlRegWd(7 downto 0),
-								oIdat       => ctlReg10,
-								oDdat       => ctlReg11,
-								oOdat       => ctlReg12
-			               );
-									   
-	  -- R13-R15 								
-	  R13R14R15 : Gpio6 port map ( 
-	                     iClk        => iClk,
-	                     ioGpio      => ioGPIO1,
-			               iDid        => "001110",
-								iDsel       => ctlRegSel,
-								iOid        => "001111",
-								iOsel       => ctlRegSel,
-								iWen        => ctlRegWe,
-								iWdat       => ctlRegWd(7 downto 0),
-								oIdat       => ctlReg13,
-								oDdat       => ctlReg14,
-								oOdat       => ctlReg15
-			               );
-								
+     -- R10-R12                         
+     R10R11R12 : Gpio6 port map ( 
+                        iClk        => iClk,
+                        ioGpio      => ioGPIO0,
+                        iDid        => "001011",
+                        iDsel       => ctlRegSel,
+                        iOid        => "001100",
+                        iOsel       => ctlRegSel,
+                        iWen        => ctlRegWe,
+                        iWdat       => ctlRegWd(7 downto 0),
+                        oIdat       => ctlReg10,
+                        oDdat       => ctlReg11,
+                        oOdat       => ctlReg12
+                        );
+                              
+     -- R13-R15                         
+     R13R14R15 : Gpio6 port map ( 
+                        iClk        => iClk,
+                        ioGpio      => ioGPIO1,
+                        iDid        => "001110",
+                        iDsel       => ctlRegSel,
+                        iOid        => "001111",
+                        iOsel       => ctlRegSel,
+                        iWen        => ctlRegWe,
+                        iWdat       => ctlRegWd(7 downto 0),
+                        oIdat       => ctlReg13,
+                        oDdat       => ctlReg14,
+                        oOdat       => ctlReg15
+                        );
+                        
      -- R16 = secondary control register
-	  R16 : Srg8 port map ( 
-	                     iClk        => iClk,
-	                     iSel        => ctlRegSel,
-			               iId         => "010000",
-	                     iData       => ctlRegWd(7 downto 0),
+     R16 : Srg8 port map ( 
+                        iClk        => iClk,
+                        iSel        => ctlRegSel,
+                        iId         => "010000",
+                        iData       => ctlRegWd(7 downto 0),
                         oData       => ctlReg16,
                         iWen        => ctlRegWe
-			               );
-								
+                        );
+                        
      -- R17 = PINC (least significant 8 bits)
-	  R17 : Srg8 port map ( 
-	                     iClk        => iClk,
-	                     iSel        => ctlRegSel,
-			               iId         => "010001",
-	                     iData       => ctlRegWd(7 downto 0),
+     R17 : Srg8 port map ( 
+                        iClk        => iClk,
+                        iSel        => ctlRegSel,
+                        iId         => "010001",
+                        iData       => ctlRegWd(7 downto 0),
                         oData       => ctlReg17,
                         iWen        => ctlRegWe
-			               );
+                        );
 
      -- R18 = PINC (most significant 8 bits)
-	  R18 : Srg8 port map ( 
-	                     iClk        => iClk,
-	                     iSel        => ctlRegSel,
-			               iId         => "010010",
-	                     iData       => ctlRegWd(7 downto 0),
+     R18 : Srg8 port map ( 
+                        iClk        => iClk,
+                        iSel        => ctlRegSel,
+                        iId         => "010010",
+                        iData       => ctlRegWd(7 downto 0),
                         oData       => ctlReg18,
                         iWen        => ctlRegWe
-			               );
- 	
+                        );
+    
      -- R19 = TPG (test pattern generator)
-	  R19 : Srg8 port map ( 
-	                     iClk        => iClk,
-	                     iSel        => ctlRegSel,
-			               iId         => "010011",
-	                     iData       => ctlRegWd(7 downto 0),
+     R19 : Srg8 port map ( 
+                        iClk        => iClk,
+                        iSel        => ctlRegSel,
+                        iId         => "010011",
+                        iData       => ctlRegWd(7 downto 0),
                         oData       => ctlReg19,
                         iWen        => ctlRegWe
-			               );
- 			  	
- 			  
-	  U01: SpiSlave port map( 
-	                     iDSPI       => ctlReg06(0), -- '0',
-	                     iMOSI       => iMOSI, 
-			               oMISO       => oMISO, 
-								iSCLK       => iSCLK, 
-								iSS         => iSS, 
-								oBSY        => ctlBsy, 
-								oSI         => ctlSi, 
-								iSO         => ctlSo
-								); 
-								
-	  U02: PortCtl port map( 
-	                     iSYS_CLK    => iClk,
-								iSERIAL_IN  => ctlSi, 
-								oSERIAL_OUT => ctlSo, 
-								iSERIAL_BSY => ctlBsy,
+                        );
+               
+            
+     U01: SpiSlave port map( 
+                        iDSPI       => ctlReg06(0), -- '0',
+                        iMOSI       => iMOSI, 
+                        oMISO       => oMISO, 
+                        iSCLK       => iSCLK, 
+                        iSS         => iSS, 
+                        oBSY        => ctlBsy, 
+                        oSI         => ctlSi, 
+                        iSO         => ctlSo
+                        ); 
+                        
+     U02: PortCtl port map( 
+                        iSYS_CLK    => iClk,
+                        iSERIAL_IN  => ctlSi, 
+                        oSERIAL_OUT => ctlSo, 
+                        iSERIAL_BSY => ctlBsy,
 
-			               iRD         => ctlRegRd,
-								oRE         => ctlRegRe,
-								oWD         => ctlRegWd,
-								oWE         => ctlRegWe,
+                        iRD         => ctlRegRd,
+                        oRE         => ctlRegRe,
+                        oWD         => ctlRegWd,
+                        oWE         => ctlRegWe,
                         oNsel       => ctlRegSel
-								);
+                        );
 
 end Behavioral;

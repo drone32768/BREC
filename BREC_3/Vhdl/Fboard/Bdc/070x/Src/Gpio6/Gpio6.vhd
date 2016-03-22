@@ -35,7 +35,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 --000000001111111111222222222233333333334444444444555555555566666666667777777777
---234567890123456789012345678901234567890123456789012345678901234567890123456789	
+--234567890123456789012345678901234567890123456789012345678901234567890123456789   
 --
 --
 -- Selectable gpio register (6 bits wide).  Captures input value
@@ -43,22 +43,22 @@ use IEEE.STD_LOGIC_1164.ALL;
 -- 
 entity Gpio6 is
     Port ( iClk   : in     STD_LOGIC;
-	        ioGpio : inout  STD_LOGIC_VECTOR (5 downto 0);
-			  
-	        iDid   : in   STD_LOGIC_VECTOR (5 downto 0);
-			  iDsel  : in   STD_LOGIC_VECTOR (5 downto 0);
-	 
-	        iOid   : in   STD_LOGIC_VECTOR (5 downto 0);
-			  iOsel  : in   STD_LOGIC_VECTOR (5 downto 0);
-			   
-			  iWen   : in   STD_LOGIC;
-			  iWdat  : in   STD_LOGIC_VECTOR (7 downto 0);
-			  
+           ioGpio : inout  STD_LOGIC_VECTOR (5 downto 0);
+           
+           iDid   : in   STD_LOGIC_VECTOR (5 downto 0);
+           iDsel  : in   STD_LOGIC_VECTOR (5 downto 0);
+    
+           iOid   : in   STD_LOGIC_VECTOR (5 downto 0);
+           iOsel  : in   STD_LOGIC_VECTOR (5 downto 0);
+            
+           iWen   : in   STD_LOGIC;
+           iWdat  : in   STD_LOGIC_VECTOR (7 downto 0);
+           
            oIdat  : out  STD_LOGIC_VECTOR (7 downto 0);
-			  oDdat  : out  STD_LOGIC_VECTOR (7 downto 0);
+           oDdat  : out  STD_LOGIC_VECTOR (7 downto 0);
            oOdat  : out  STD_LOGIC_VECTOR (7 downto 0)
-			  
-			  );
+           
+           );
 end Gpio6;
 
 architecture Behavioral of Gpio6 is
@@ -67,41 +67,41 @@ signal outReg        : STD_LOGIC_VECTOR( 7 downto 0 ) := "00000000";
 signal dirReg        : STD_LOGIC_VECTOR( 7 downto 0 ) := "00000000";
 begin
      
-	  oIdat <= inpReg;
-	  oDdat <= dirReg;
-	  oOdat <= outReg;
-	  
-	  GpioSet: process( iClk )
-	  begin
-	      if( rising_edge(iClk) ) then
-				 inpReg  <= "00" & ioGpio; 
-				 for idx in 0 to 5 loop 
-					 if( dirReg(idx)='1' ) then
-						  ioGpio(idx) <= outReg(idx);
-					 else
-						  ioGpio(idx) <= 'Z';
-					 end if;
-				 end loop;
-			end if;
-	  end process;
-	  
-	  RegOutput: process( iClk )
-	  begin
-	     if( rising_edge(iClk) ) then
-		     if ( iOsel=iOid and iWen='1' ) then
-			      outReg <= iWdat;
-			  end if;
-		  end if;
-	  end process;
-
-	  RegDirection: process( iClk )
+     oIdat <= inpReg;
+     oDdat <= dirReg;
+     oOdat <= outReg;
+     
+     GpioSet: process( iClk )
      begin
-	     if( rising_edge(iClk) ) then
-		     if ( iDsel=iDid and iWen='1' ) then
-			      dirReg <= iWdat;
-			  end if;		  
-		  end if;  
+         if( rising_edge(iClk) ) then
+             inpReg  <= "00" & ioGpio; 
+             for idx in 0 to 5 loop 
+                if( dirReg(idx)='1' ) then
+                    ioGpio(idx) <= outReg(idx);
+                else
+                    ioGpio(idx) <= 'Z';
+                end if;
+             end loop;
+         end if;
      end process;
-	  
+     
+     RegOutput: process( iClk )
+     begin
+        if( rising_edge(iClk) ) then
+           if ( iOsel=iOid and iWen='1' ) then
+               outReg <= iWdat;
+           end if;
+        end if;
+     end process;
+
+     RegDirection: process( iClk )
+     begin
+        if( rising_edge(iClk) ) then
+           if ( iDsel=iDid and iWen='1' ) then
+               dirReg <= iWdat;
+           end if;        
+        end if;  
+     end process;
+     
 end Behavioral;
 

@@ -35,7 +35,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 --000000001111111111222222222233333333334444444444555555555566666666667777777777
---234567890123456789012345678901234567890123456789012345678901234567890123456789	
+--234567890123456789012345678901234567890123456789012345678901234567890123456789   
 --
 --
 -- Selectable register (8 bits wide).  Captures input value
@@ -43,26 +43,26 @@ use IEEE.STD_LOGIC_1164.ALL;
 -- 
 entity Srg8 is
     Port ( iClk   : in  STD_LOGIC;
-	        iSel   : in  STD_LOGIC_VECTOR (5 downto 0);
-			  iId    : in  STD_LOGIC_VECTOR (5 downto 0);
-	        iData  : in  STD_LOGIC_VECTOR (7 downto 0);
+           iSel   : in  STD_LOGIC_VECTOR (5 downto 0);
+           iId    : in  STD_LOGIC_VECTOR (5 downto 0);
+           iData  : in  STD_LOGIC_VECTOR (7 downto 0);
            oData  : out STD_LOGIC_VECTOR (7 downto 0);
            iWen   : in  STD_LOGIC
-			  );
+           );
 end Srg8;
 
 architecture Behavioral of Srg8 is
 signal regVal     : STD_LOGIC_VECTOR (7 downto 0) := "00000000";
 begin
      oData <= regVal;
-	  
-	  reg_proc: process( iClk )
+     
+     reg_proc: process( iClk )
      begin
-	     if( rising_edge(iClk) ) then
-		     if ( iSel=iId and iWen='1' ) then
-			      regVal <= iData;
-			  end if;
-		  end if;  
+        if( rising_edge(iClk) ) then
+           if ( iSel=iId and iWen='1' ) then
+               regVal <= iData;
+           end if;
+        end if;  
      end process;
 
 end Behavioral;

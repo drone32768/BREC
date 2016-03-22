@@ -40,9 +40,9 @@ entity Cnt16 is
 
 port(
       EN    : in  std_logic;
-		CLK	: in	std_logic;
-		DOUT	: out	std_logic_vector(15 downto 0)
-	);
+      CLK   : in   std_logic;
+      DOUT   : out   std_logic_vector(15 downto 0)
+   );
 
 end Cnt16;
 
@@ -51,17 +51,17 @@ architecture Behavioral of Cnt16 is
 signal COUNT:std_logic_vector(15 downto 0) := "0000000000000000";
 begin
    
-  	clk_proc:process(CLK)
-  	begin 
-	   
-	   if rising_edge(CLK) then 
-		    if EN='1' then
-				COUNT <=  unsigned(COUNT) + 1;
-			 end if;
-	   end if;
-		
-  	end process clk_proc;
-	
+     clk_proc:process(CLK)
+     begin 
+      
+      if rising_edge(CLK) then 
+          if EN='1' then
+            COUNT <=  unsigned(COUNT) + 1;
+          end if;
+      end if;
+      
+     end process clk_proc;
+   
    DOUT <= COUNT;
-	
+   
 end Behavioral;

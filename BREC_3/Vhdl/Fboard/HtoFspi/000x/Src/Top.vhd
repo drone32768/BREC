@@ -41,30 +41,30 @@ Library UNISIM;
 use UNISIM.vcomponents.all;
 
 entity Top is
-	Port ( 
-			  
-		     HSPI_SS      : in  STD_LOGIC;
-		     HSPI_MOSI    : in  STD_LOGIC_VECTOR( 1 downto 0 );
-		     HSPI_MISO    : out STD_LOGIC_VECTOR( 1 downto 0 );
-		     HSPI_SCLK    : in  STD_LOGIC;
-			  
-			  FSPI_SS      : out  STD_LOGIC;
-		     FSPI_MOSI    : out  STD_LOGIC;
-		     FSPI_MISO    : in   STD_LOGIC;
-		     FSPI_SCLK    : out  STD_LOGIC
+   Port ( 
+           
+           HSPI_SS      : in  STD_LOGIC;
+           HSPI_MOSI    : in  STD_LOGIC_VECTOR( 1 downto 0 );
+           HSPI_MISO    : out STD_LOGIC_VECTOR( 1 downto 0 );
+           HSPI_SCLK    : in  STD_LOGIC;
+           
+           FSPI_SS      : out  STD_LOGIC;
+           FSPI_MOSI    : out  STD_LOGIC;
+           FSPI_MISO    : in   STD_LOGIC;
+           FSPI_SCLK    : out  STD_LOGIC
 
-	);
+   );
 end Top;
 
 architecture structure of Top is
 
 begin
     FSPI_SS      <= HSPI_SS;
-	 FSPI_MOSI    <= HSPI_MOSI(0);
-	 FSPI_SCLK    <= HSPI_SCLK;
-	 
-	 HSPI_MISO(0) <= FSPI_MISO;
-	 HSPI_MISO(1) <= '1';
+    FSPI_MOSI    <= HSPI_MOSI(0);
+    FSPI_SCLK    <= HSPI_SCLK;
+    
+    HSPI_MISO(0) <= FSPI_MISO;
+    HSPI_MISO(1) <= '1';
 
 end structure;
 

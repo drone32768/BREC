@@ -37,7 +37,7 @@ use IEEE.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
 --000000001111111111222222222233333333334444444444555555555566666666667777777777
---234567890123456789012345678901234567890123456789012345678901234567890123456789	
+--234567890123456789012345678901234567890123456789012345678901234567890123456789   
 --
 -- This module acts as a SPI slave interface with SS low, and rising
 -- SCLK.
@@ -50,66 +50,66 @@ use ieee.numeric_std.all;
 --
 entity SpiSlave is
     Port ( 
-	        iDSPI : in  STD_LOGIC;
-	        iMOSI : in  STD_LOGIC_VECTOR( 1 downto 0);
+           iDSPI : in  STD_LOGIC;
+           iMOSI : in  STD_LOGIC_VECTOR( 1 downto 0);
            oMISO : out STD_LOGIC_VECTOR( 1 downto 0);
            iSCLK : in  STD_LOGIC;
            iSS   : in  STD_LOGIC;
-			  
+           
            oBSY  : out STD_LOGIC;
            oSI   : out STD_LOGIC_VECTOR (15 downto 0);
            iSO   : in  STD_LOGIC_VECTOR (15 downto 0)
-		);
+      );
 end SpiSlave;
 
 architecture Behavioral of SpiSlave is
 signal bitPos : std_logic_vector(3 downto 0);
 begin
 
-	 -- NOTE: This is explicitly coded this way to avoid a register
-	 -- with an asynch load.  This is appears to always synthesize as 
-	 -- a FF with set/reset which is not supported on Spartan6.
-	 -- This results in both warnings and RTL with nonsensical input/outputs
-	 
-	 -- NOTE: This is explicitly coded this way to prevent r/w on SS
-	 -- changes only.  A busy indicator requires SS low with 16 valid
-	 -- SCLK.  SS low resets the bit position to allow resynch of serial stream
-	 
+    -- NOTE: This is explicitly coded this way to avoid a register
+    -- with an asynch load.  This is appears to always synthesize as 
+    -- a FF with set/reset which is not supported on Spartan6.
+    -- This results in both warnings and RTL with nonsensical input/outputs
+    
+    -- NOTE: This is explicitly coded this way to prevent r/w on SS
+    -- changes only.  A busy indicator requires SS low with 16 valid
+    -- SCLK.  SS low resets the bit position to allow resynch of serial stream
+    
     process(iSCLK, iSS)
     begin     
-	     if iSS='0' then
-			  if rising_edge(iSCLK) then
-			      if( iDSPI='1' ) then
-					    oSI(   conv_integer(bitPos)    ) <= iMOSI(0);
-						 oSI(   conv_integer(bitPos) - 1) <= iMOSI(1);
-					    oMISO(0) <= iSO(   conv_integer(bitPos)      );	
-                   oMISO(1) <= iSO(   conv_integer(bitPos) - 1  );						 
-					else
-					    oSI(   conv_integer(bitPos)    ) <= iMOSI(0);
-					    oMISO(0) <= iSO(   conv_integer(bitPos)      );
-                   oMISO(1) <= iMOSI(1);						 
-               end if;					
-			  end if;
-			  if falling_edge(iSCLK) then
-			      if( iDSPI='1' ) then
-						if( bitPos="0001" ) then
-							 oBSY <= '0';
-						else
-							 oBSY <= '1';
-						end if;
-					   bitPos  <= std_logic_vector( unsigned( bitPos ) - 2 );
-					else
-						if( bitPos="0000" ) then
-							 oBSY <= '0';
-						else
-							 oBSY <= '1';
-						end if;
-   	            bitPos  <= std_logic_vector( unsigned( bitPos ) - 1 );	
-               end if;					
-			  end if;
-		  else
-		      bitPos <= "1111";
-		  end if;
+        if iSS='0' then
+           if rising_edge(iSCLK) then
+               if( iDSPI='1' ) then
+                   oSI(   conv_integer(bitPos)    ) <= iMOSI(0);
+                   oSI(   conv_integer(bitPos) - 1) <= iMOSI(1);
+                   oMISO(0) <= iSO(   conv_integer(bitPos)      );   
+                   oMISO(1) <= iSO(   conv_integer(bitPos) - 1  );                   
+               else
+                   oSI(   conv_integer(bitPos)    ) <= iMOSI(0);
+                   oMISO(0) <= iSO(   conv_integer(bitPos)      );
+                   oMISO(1) <= iMOSI(1);                   
+               end if;               
+           end if;
+           if falling_edge(iSCLK) then
+               if( iDSPI='1' ) then
+                  if( bitPos="0001" ) then
+                      oBSY <= '0';
+                  else
+                      oBSY <= '1';
+                  end if;
+                  bitPos  <= std_logic_vector( unsigned( bitPos ) - 2 );
+               else
+                  if( bitPos="0000" ) then
+                      oBSY <= '0';
+                  else
+                      oBSY <= '1';
+                  end if;
+                  bitPos  <= std_logic_vector( unsigned( bitPos ) - 1 );   
+               end if;               
+           end if;
+        else
+            bitPos <= "1111";
+        end if;
     end process;
-	 
+    
 end Behavioral;
