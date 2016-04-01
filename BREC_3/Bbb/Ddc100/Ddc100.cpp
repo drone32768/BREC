@@ -251,6 +251,9 @@ Ddc100::FlushSamples()
 
     // TODO: Tell the pru to go back to streaming
 
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
+
     return(0);
 }
 

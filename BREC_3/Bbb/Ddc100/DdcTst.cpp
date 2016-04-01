@@ -455,6 +455,13 @@ main( int argc, char *argv[] )
             printf("DdcTst:read rg %d = 0x%04hx (%hd)\n",rg,rval,rval);
 
         }
+
+        else if( 0==strcmp(argv[idx], "-src") ){
+            int src; 
+            if( (idx+1) >= argc ){ usage(-1); }
+            src = strtol( argv[idx+1], &end, 0 );
+            ddc->SetSource( src );
+        }
     
         else if( 0==strcmp(argv[idx], "-samp") ){
             ddc->Get2kSamples( bf );
