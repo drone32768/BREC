@@ -68,6 +68,13 @@ public:
     /** Returns source set */
     virtual int SetSource( int sn ) = 0;  
 
+    /** Returns internal test pattern generator */
+    virtual int SetTpg( int tp ) = 0;  
+
+    /** Returns status of operation */
+    virtual int SetChannelMatch(
+              int Ioff,double Igain, int Qoff,double Qgain) = 0;
+
     /** TODO GetSource? */
 };
 
