@@ -46,7 +46,6 @@ class Ddc100 : public AdcIf, public MixerIf {
 private:
     int                      mCSPS;    
     int                      mFsHz;    
-    int                      mFsDec;    
     double                   mLoFreqHz;
 
     ////////////////////////////////////////
@@ -80,6 +79,8 @@ public:
     int StartPru();
     int SetGain( int gn );
     int SetSim( int sim );
+    int SetTpg( int arg );
+    int SetChannelMatch( int Ioff, double Igain, int Qoff, double Qgain );
 
     // Mixer interfaces
     double SetLoFreqHz( double freqHz );
@@ -88,7 +89,6 @@ public:
 
     int GetFwVersion( );
     int SetSource( int arg );
-    int SetTpg( int arg );
 
     // For testing only
     void Show( const char *title );

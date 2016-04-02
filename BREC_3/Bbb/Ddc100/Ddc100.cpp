@@ -111,7 +111,6 @@ Ddc100::Ddc100()
     mTpg     = 4; 
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
-    mFsDec   = 100000;   // Function of firmware
     mCSPS    = mFsHz;    // Function of board and channel selected
 }
 
@@ -136,17 +135,14 @@ Ddc100::Open()
     fwVer = GetFwVersion();
     printf("Ddc100::Open::fw ver = 0x%08x\n",fwVer);
     if( 0x0700 == (fwVer&0xff00) ){
-       mFsHz    = 20000000; // Function of the board
-       mFsDec   = 100000;
+       mFsHz    = 40000000; // Function of the board
        mCSPS    = mFsHz;    
     }
     else{
-       mFsHz    = 20000000; // Function of the board
-       mFsDec   = 100000;
+       mFsHz    = 40000000; // Function of the board
        mCSPS    = mFsHz;    
     }
     printf("Ddc100::Open::FsHz        = %d\n",mFsHz);
-    printf("Ddc100::Open::mFsDec      = %d\n",mFsDec);
     printf("Ddc100::Open::CSPS        = %d\n",mCSPS);
 
     // Set startup default signal paramters
@@ -154,10 +150,28 @@ Ddc100::Open()
 
     SetSource( 0 ); 
     SetTpg( 1 );  // FIXME - testing only
+    SetChannelMatch(0,1.0,0,1.0);
 
     printf("Ddc100:Open exit\n");
 
     return(0);
+}
+
+//------------------------------------------------------------------------------
+int
+Ddc100::SetChannelMatch( int Ioff, double Igain, int Qoff, double Qgain )
+{
+    int Inum,Qnum;
+
+    Inum = 127 * Igain;
+    Qnum = 127 * Igain;
+
+    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R20 | (Ioff&0xff) );
+    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R21 | (Inum&0xff) );
+    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R22 | (Qoff&0xff) );
+    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R23 | (Qnum&0xff) );
+
+    printf("Match:%d,%d %d,%d\n",Ioff,Inum,Qoff,Qnum);
 }
 
 //------------------------------------------------------------------------------
@@ -309,7 +323,15 @@ Ddc100::SetComplexSampleRate( int complexSamplesPerSecond )
 int
 Ddc100::GetComplexSampleRate()
 {
-    return( mFsHz );
+    switch( mFifoSrc ){
+        case 0  : return( mFsHz ); // raw input
+        case 1  : return( mFsHz ); // equalized
+        case 2  : return( mFsHz ); // dds/nco
+        case 3  : return( mFsHz ); // mixer output
+        case 4  : return( (mFsHz/10) );  // first stage decimation
+        case 5  : return( (mFsHz/200) ); // second stage decimation
+        default : return( mFsHz );
+    }
 }
 
 //------------------------------------------------------------------------------
