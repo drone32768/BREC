@@ -141,12 +141,49 @@ button.button-off{
     <td>
       <div align="center" id="chnlDiv"></div>
     </td>
+
     <td>
       <button onclick="SetF1byKeypad()">F1(Hz)</button>
     </td>
     <td>
       <div align="center" id="f1HzDiv"></div>
     </td>
+
+    <td>
+      <button onclick="ToggleStateVar( 'tpg'    )">Tpg</button>
+    </td>
+    <td>
+      <div align="center" id="tpgDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetIoffbyKeypad()">Ioff</button>
+    </td>
+    <td>
+      <div align="center" id="ioffDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetIgainbyKeypad()">Igain</button>
+    </td>
+    <td>
+      <div align="center" id="igainDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetQoffbyKeypad()">Qoff</button>
+    </td>
+    <td>
+      <div align="center" id="qoffDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetQgainbyKeypad()">Qgain</button>
+    </td>
+    <td>
+      <div align="center" id="qgainDiv"></div>
+    </td>
+
   </tr>
 
   <!-- Remote state control buttons -->
@@ -350,6 +387,58 @@ function SetF1byKeypad()
    );
 };
 
+// This method sets the I offset using a keypad for input
+var gLastIoffInput="";
+function SetIoffbyKeypad()
+{
+   bkp1.Show(
+     gLastIoffInput,
+     function( val ) {
+        gLastIoffInput= val;
+        SetStateVar( 'ioff', val );
+     }
+   );
+};
+
+// This method sets the Q offset using a keypad for input
+var gLastQoffInput="";
+function SetQoffbyKeypad()
+{
+   bkp1.Show(
+     gLastQoffInput,
+     function( val ) {
+        gLastQoffInput= val;
+        SetStateVar( 'qoff', val );
+     }
+   );
+};
+
+// This method sets the I gain using a keypad for input
+var gLastIgainInput="";
+function SetIgainbyKeypad()
+{
+   bkp1.Show(
+     gLastIgainInput,
+     function( val ) {
+        gLastIgainInput= val;
+        SetStateVar( 'igain', val );
+     }
+   );
+};
+
+// This method sets the Q gain using a keypad for input
+var gLastQgainInput="";
+function SetQgainbyKeypad()
+{
+   bkp1.Show(
+     gLastQgainInput,
+     function( val ) {
+        gLastQgainInput= val;
+        SetStateVar( 'qgain', val );
+     }
+   );
+};
+
 // This method updates the top most status data including: 
 // isActve, isRunning and the statusDiv.
 // If the state has not been successfully updated since the last
@@ -400,9 +489,18 @@ function UpdateState()
             document.getElementById("nAveDiv").innerHTML   =unitState.nAve;
             document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
             document.getElementById("chnlDiv").innerHTML   =unitState.chnl;
+            document.getElementById("tpgDiv").innerHTML    =unitState.tpg;
             document.getElementById("funcDiv").innerHTML   =unitState.func;
             document.getElementById("f1HzDiv").innerHTML   =
                                                unitState.f1Hz.toLocaleString();
+            document.getElementById("ioffDiv").innerHTML   =
+                                               unitState.ioff.toLocaleString();
+            document.getElementById("qoffDiv").innerHTML   =
+                                               unitState.qoff.toLocaleString();
+            document.getElementById("igainDiv").innerHTML   =
+                                               unitState.igain.toLocaleString();
+            document.getElementById("qgainDiv").innerHTML   =
+                                               unitState.qgain.toLocaleString();
 
             if( gPrevFunc != unitState.func ){
                 FuncSwitch();
@@ -416,6 +514,7 @@ function UpdateState()
                           " Npt="     + unitState.nPts +
                           " Ave="     + unitState.nAve +
                           " Chn="     + unitState.chnl +
+                          " Tpg="     + unitState.tpg  +
                           " F1="      + unitState.f1Hz.toLocaleString() +
                           " Hz"
                          );

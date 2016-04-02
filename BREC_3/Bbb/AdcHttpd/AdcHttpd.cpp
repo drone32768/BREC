@@ -66,6 +66,7 @@ private:
     int            mRun;         // on/off running with hw
     int            mNave ;       // Number of averages
     int            mChnl;        // Selected chnl
+    int            mTpg;         // Selected test pattern generator
     int            mParamChange; // Flag indicating state has changed
     char          *mCfgFname;
 
@@ -86,6 +87,10 @@ private:
     Pse            mPse;         // power spectrum estimator object
     Tim            mTim;         // time series collector
     His            mHis;         // histogram 
+    int            mIoff;        // I offset
+    int            mQoff;        // Q offset
+    double         mIgain;       // I gain
+    double         mQgain;       // I gain
     double         mF1Hz;        // mixer 1 lo frequency
 
     // Internal support routines
@@ -124,6 +129,10 @@ HwModel::HwModel()
     mRun        = 0;
     mNave       = 1;
     mChnl       = 0;
+    mIoff       = 0;
+    mQoff       = 0;
+    mIgain      = 1.0;
+    mQgain      = 1.0;
     mF1Hz       = 2500000;
     mParamChange= 0;
     mCfgFname   = strdup( "local.cfg" );
@@ -175,7 +184,9 @@ HwModel::WriteCfg()
  */
 void  HwModel::Main()
 {
-    int     chnl;
+    int     chnl,tpg;
+    int     ioff,qoff;
+    double  igain,qgain;
     double  f1Hz;
  
     // Read and restore saved configuration
@@ -186,7 +197,12 @@ void  HwModel::Main()
 
     // Main processing loop
     chnl = -1;
+    tpg  = -1;
     f1Hz = -1.0;
+    ioff = 0;
+    qoff = 0;
+    igain= 1.0;
+    qgain= 1.0;
     while( !mThreadExit ){
 
        if( mRun ){
@@ -196,10 +212,23 @@ void  HwModel::Main()
              Dp()->Adc()->SetSource( mChnl );
              chnl = mChnl;
           }
+          if( mTpg!=tpg ){
+             Dp()->Adc()->SetTpg( mTpg );
+             tpg = mTpg;
+          }
           if( mF1Hz!=f1Hz ){
              Dp()->Mx1()->SetLoFreqHz( mF1Hz );
              f1Hz = mF1Hz;
           }
+          if( (mIoff !=ioff ) || (mQoff !=qoff ) || 
+              (mIgain!=igain) || (mQgain!=qgain) ){
+             Dp()->Adc()->SetChannelMatch(mIoff,mQoff,mIgain,mQgain);
+             ioff  = mIoff;
+             qoff  = mQoff;
+             igain = mIgain;
+             qgain = mQgain;
+          }
+
 
           // Conduct the specified processing
           if( FUNC_PSE == mFunc )
@@ -311,8 +340,28 @@ HwModel::SetState( char *name, char *value )
           mChnl = (mChnl+1)%8;
     }
 
+    else if( 0==strcmp(name,"tpg") ){
+          mTpg = (mTpg+1)%4;
+    }
+
     else if( 0==strcmp(name,"f1Hz") ){
           mF1Hz = atof( value );
+    }
+
+    else if( 0==strcmp(name,"ioff") ){
+          mIoff = atoi( value );
+    }
+
+    else if( 0==strcmp(name,"qoff") ){
+          mQoff = atoi( value );
+    }
+
+    else if( 0==strcmp(name,"igain") ){
+          mIgain = atof( value );
+    }
+
+    else if( 0==strcmp(name,"qgain") ){
+          mQgain = atof( value );
     }
 
     else if( 0==strcmp(name,"swreset") && 0==strcmp(value,"ON") ){
@@ -385,16 +434,26 @@ HwModel::GetState( char *resultsStr, int resultsLen )
                     "\"time\"     : \"%s\","
                     "\"nAve\"     : \"%d\","
                     "\"chnl\"     : \"%d\","
+                    "\"tpg\"      : \"%d\","
                     "\"nPts\"     : \"%d\","
                     "\"func\"     : \"%s\","
+                    "\"ioff\"     : %d, "
+                    "\"qoff\"     : %d, "
+                    "\"igain\"    : %f, "
+                    "\"qgain\"    : %f, "
                     "\"f1Hz\"     : %d "
                     ,
                     mRun?"ON":"OFF",            // run
                     timeStr,                    // time
                     mNave,                      // nAve
                     mChnl,                      // chnl
+                    mTpg,                       // tpg
                     mXyCurLen,                  // nPts
                     mFuncStr,                   // func
+                    mIoff,
+                    mQoff,
+                    mIgain,
+                    mQgain,
                     (int)mF1Hz                  // f1Hz
     );
     pos += nBytes;
@@ -509,6 +568,9 @@ int HwModel::HwInit()
     mChnl = Dp()->Adc()->SetSource( 0 );
 
     mF1Hz = Dp()->Mx1()->SetLoFreqHz( 1.0e6 );
+
+    // TODO - it doesn't return set value ...
+    Dp()->Adc()->SetTpg( 0 );
 
     // TODO - complex and saving actual rate
     Dp()->Adc()->SetComplexSampleRate( 5000000 );
