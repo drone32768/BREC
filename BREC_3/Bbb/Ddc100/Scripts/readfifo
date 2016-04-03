@@ -1,0 +1,17 @@
+
+arm/DdcTst  \
+           -rw16 0x8e00 \
+           -rw16 0x0000 \
+           -rw16 0x50ff \
+           -rw16 0x5000 \
+           -rw16 0x8e00 \
+           -rw16 0x0000 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 \
+           -rw16 0xBf00 

@@ -1,0 +1,3 @@
+# Issue read r0 and get results
+# Issue read r1 and get results
+arm/DdcTst -rw16 0x8000 -rw16 0x0 -rw16 0x8100 -rw16 0x0

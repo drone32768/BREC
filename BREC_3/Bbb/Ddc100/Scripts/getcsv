@@ -1,0 +1,2 @@
+arm/DdcTst -flush -csv > iq.csv
+
