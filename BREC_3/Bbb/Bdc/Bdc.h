@@ -68,6 +68,13 @@
 #define BDC_REG_R18 0x1200
 #define BDC_REG_R19 0x1300
 
+#define BDC_REG_R20 0x1400
+#define BDC_REG_R21 0x1500
+#define BDC_REG_R22 0x1600
+#define BDC_REG_R23 0x1700
+
+#define BDC_REG_R61 0x3d00
+#define BDC_REG_R62 0x3e00
 #define BDC_REG_R63 0x3F00
 
 ////////////////////////////////////////////////////////////////////////////////
