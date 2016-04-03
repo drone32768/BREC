@@ -222,7 +222,7 @@ void  HwModel::Main()
           }
           if( (mIoff !=ioff ) || (mQoff !=qoff ) || 
               (mIgain!=igain) || (mQgain!=qgain) ){
-             Dp()->Adc()->SetChannelMatch(mIoff,mQoff,mIgain,mQgain);
+             Dp()->Adc()->SetChannelMatch(mIoff,mIgain,mQoff,mQgain);
              ioff  = mIoff;
              qoff  = mQoff;
              igain = mIgain;
@@ -570,7 +570,7 @@ int HwModel::HwInit()
     mF1Hz = Dp()->Mx1()->SetLoFreqHz( 1.0e6 );
 
     // TODO - it doesn't return set value ...
-    Dp()->Adc()->SetTpg( 0 );
+    // Dp()->Adc()->SetTpg( 0 );
 
     // TODO - complex and saving actual rate
     Dp()->Adc()->SetComplexSampleRate( 5000000 );
