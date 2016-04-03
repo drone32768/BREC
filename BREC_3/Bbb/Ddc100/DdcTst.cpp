@@ -15,7 +15,7 @@ void Show2kIQ( short *bf, char fmt )
     
     if( 'x'==fmt ){
         for(idx=0;idx<2048;idx+=2){
-            printf("CSV, %d, 0x%hx, 0x%hx, %d, %d\n",
+            printf("CSV, %d, 0x%04hx, 0x%04hx, %d, %d\n",
                idx,(unsigned short)bf[idx],(unsigned short)bf[idx+1],
                (unsigned short)bf[idx],(unsigned short)bf[idx+1] 
                ); 
@@ -395,6 +395,10 @@ main( int argc, char *argv[] )
     char          *end;
     short          bf[4096];
 
+    int            ioff = 0;
+    int            qoff = 0;
+    double         igain= 1.0;
+    double         qgain= 1.0;
 
     bdc = new Bdc();
     bdc->Open();
@@ -463,14 +467,45 @@ main( int argc, char *argv[] )
             ddc->SetSource( src );
         }
     
-        else if( 0==strcmp(argv[idx], "-samp") ){
+        else if( 0==strcmp(argv[idx], "-tpg") ){
+            int tpg; 
+            if( (idx+1) >= argc ){ usage(-1); }
+            tpg = strtol( argv[idx+1], &end, 0 );
+            ddc->SetTpg( tpg );
+        }
+    
+        else if( 0==strcmp(argv[idx], "-ioff") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            ioff = strtol( argv[idx+1], &end, 0 );
+        }
+
+        else if( 0==strcmp(argv[idx], "-qoff") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            qoff = strtol( argv[idx+1], &end, 0 );
+        }
+
+        else if( 0==strcmp(argv[idx], "-igain") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            igain = atof( argv[idx+1] );
+        }
+
+        else if( 0==strcmp(argv[idx], "-qgain") ){
+            if( (idx+1) >= argc ){ usage(-1); }
+            qgain = atof( argv[idx+1] );
+        }
+
+        else if( 0==strcmp(argv[idx], "-match") ){
+            ddc->SetChannelMatch(ioff,igain,qoff,qgain);
+        }
+
+        else if( 0==strcmp(argv[idx], "-csvx") ){
             ddc->Get2kSamples( bf );
             Show2kIQ(bf,'x');
         }
 
-        else if( 0==strcmp(argv[idx], "-csv") ){
+        else if( 0==strcmp(argv[idx], "-csvd") ){
             ddc->Get2kSamples( bf );
-            Show2kIQ(bf,'D');
+            Show2kIQ(bf,'d');
         }
 
         else if( 0==strcmp(argv[idx], "-flush") ){
