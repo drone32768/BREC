@@ -163,15 +163,18 @@ Ddc100::SetChannelMatch( int Ioff, double Igain, int Qoff, double Qgain )
 {
     int Inum,Qnum;
 
-    Inum = 127 * Igain;
-    Qnum = 127 * Igain;
+    Inum = -128 * Igain;
+    Qnum = -128 * Qgain;
 
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R20 | (Ioff&0xff) );
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R21 | (Inum&0xff) );
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R22 | (Qoff&0xff) );
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R23 | (Qnum&0xff) );
 
-    printf("Match:%d,%d %d,%d\n",Ioff,Inum,Qoff,Qnum);
+    printf("Match: I=[+ %d, X %d (%f) ] Q=[+ %d, X %d (%f)]\n",
+                Ioff,Inum,Igain, 
+                Qoff,Qnum,Qgain
+    );
 }
 
 //------------------------------------------------------------------------------
@@ -277,17 +280,24 @@ Ddc100::Get2kSamples( short *bf )
 {
     int          p;
     int          srcIdx,idx;
+    unsigned int wd;
 
     // Transfer 2k samples with single word cpu xfers for now
 
-    // TODO - should wait until there are 2k present w/ indicator
+    // Wait until the threashold bit inidcates samples ready
+    do{
+       wd = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R61  );
+       if( !wd ) us_sleep( 100 );
+    }while( wd!=0 );
 
+    // Read 2k of samples
     mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63  );
     for(idx=0;idx<2047;idx++){
         bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
     }
     bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
 
+    // Flush and restart the fifo
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
 
