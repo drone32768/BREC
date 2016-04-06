@@ -58,7 +58,7 @@ Tboard::Attach( void *lvl0, void *lvl1 )
     int portN;
     int err;
 
-    printf("Tboard:Open Enter\n");
+    printf("Tboard:Attach Enter\n");
 
     // Port to use is second level designator
     portN = (unsigned int)lvl1;

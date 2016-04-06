@@ -5,9 +5,9 @@ fs = 40e6;            % sampling freq
 fc = 1.8e6;           % cut off freq
 L  = 160;             % filter order
 
-fs = 4e6;             % sampling freq
-fc = 0.095e6;           % cut off freq
-L  = 260;             % filter order
+%fs = 4e6;             % sampling freq
+%fc = 0.095e6;           % cut off freq
+%L  = 260;             % filter order
 
 % Calculate the filter
 f0 = fc/(fs/2);       % norm. frequency
