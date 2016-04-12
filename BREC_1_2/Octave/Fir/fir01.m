@@ -1,13 +1,13 @@
 % Input parameters
 
 % cfir00
-fs = 40e6;            % sampling freq
-fc = 1.8e6;           % cut off freq
-L  = 160;             % filter order
+%fs = 40e6;            % sampling freq
+%fc = 1.8e6;           % cut off freq
+%L  = 160;             % filter order
 
-%fs = 4e6;             % sampling freq
-%fc = 0.095e6;           % cut off freq
-%L  = 260;             % filter order
+fs = 4e6;             % sampling freq
+fc = 0.095e6;           % cut off freq
+L  = 260;             % filter order
 
 % Calculate the filter
 f0 = fc/(fs/2);       % norm. frequency
@@ -38,8 +38,11 @@ print -dpng fig1.png;
 %
 
 B  = 16;                      %% 16 bit coeffs
-b  = b/max(b);                %% Floating point coefficients
-bz = round(b*power(2,B-1)-1); %% Fixed point coefficients
+bn = b/max(b);                %% Floating point coefficients
+bz = round(bn*power(2,B-1)-1); %% Fixed point coefficients
+
+bc=b;
+% bc = bz;
 
 fid = fopen( "cfir.coe", "w");
 fprintf(fid,";\n");
@@ -49,11 +52,16 @@ fprintf(fid,"; Fs (sampling freq)      =%d [Hz]\n",fs);
 fprintf(fid,"; Fc (cutoff freq)        =%d [Hz]\n",fc);
 fprintf(fid,"; F0 (normalized cutoff)  =%f\n",f0);
 fprintf(fid,"; L  (number coefs)       =%d\n",L);
+fprintf(fid,"; Gain(sum coefs)         =%f\n",sum(bc));
+fprintf(fid,"; Gain(dB)                =%f\n",20*log10(sum(bc)));
+fprintf(fid,"; Gain(bits)              =%f\n",log2(sum(bc)));
+fprintf(fid,"; BitGrowth               =%d\n",ceil(log2(sum(abs(bc)))));
 fprintf(fid,";\n");
 fprintf(fid,"radix=10;\n");
 fprintf(fid,"coefdata=\n");
 for i=1:L 
-   fprintf(fid,"%d,\n",bz(i));
+%   fprintf(fid,"%d,\n",bz(i));
+   fprintf(fid,"%f,\n",bc(i));
 endfor
 fprintf(fid,";\n");
 fclose(fid);
