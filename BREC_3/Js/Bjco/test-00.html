@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+This is the first row of text 
+<p></p>
+<div id="bjcon1"></div>
+<p></p>
+This is the next row of text 
+<p></p>
+This is the third row of text 
+</html>
+
+<script src="BJCO.js"></script>
+<script>
+
+var bjcon = new BJCO.Console( 
+                 document.getElementById("bjcon1"), 
+                 40, // in/out cols
+                 5   // out rows
+                );
+
+bjcon.Register( function( line )
+   {
+     console.log( line );
+
+     if( line=="clear" ){ // verify clear output
+        bjcon.Clear();
+        bjcon.Output("clear history ok\n");
+     }
+
+     else if( line=="help" ){ // misc
+        bjcon.Output("help  - this command\n");
+        bjcon.Output("clear - clears output history\n");
+     }
+
+     else {
+        bjcon.Output("raw:<"+line+">\n"); // verify trim/and crlf clear
+     }
+
+   }
+);
+
+</script>
+
