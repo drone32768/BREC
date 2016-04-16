@@ -59,7 +59,8 @@ button.button-off{
 
 <!---------------------------------------------------------------------------->
 <!-- Main canvas -->
-<table>
+<div style="float:left;">
+ <table>
   <tr>
     <td align="center">
       <div id="statusDiv"></div>
@@ -76,11 +77,13 @@ button.button-off{
        </canvas>
     </td>
   </tr>
-</table>
+ </table>
+</div>
 
 <!---------------------------------------------------------------------------->
 <!-- Primary control buttons -->
-<table >
+<div style="float:left;">
+ <table border="1" >
 
   <!-- Local control buttons -->
   <tr>
@@ -148,7 +151,13 @@ button.button-off{
     <td>
       <div align="center" id="f1HzDiv"></div>
     </td>
+  </tr>
 
+  <!-- Second control line -->
+  <tr>
+    <td>
+      <button >Spare</button>
+    </td>
     <td>
       <button onclick="ToggleStateVar( 'tpg'    )">Tpg</button>
     </td>
@@ -162,19 +171,24 @@ button.button-off{
     <td>
       <div align="center" id="ioffDiv"></div>
     </td>
-
-    <td>
-      <button onclick="SetIgainbyKeypad()">Igain</button>
-    </td>
-    <td>
-      <div align="center" id="igainDiv"></div>
-    </td>
-
     <td>
       <button onclick="SetQoffbyKeypad()">Qoff</button>
     </td>
     <td>
       <div align="center" id="qoffDiv"></div>
+    </td>
+  </tr>
+
+  <!-- Third control line -->
+  <tr>
+    <td>
+      <button >Spare</button>
+    </td>
+    <td>
+      <button onclick="SetIgainbyKeypad()">Igain</button>
+    </td>
+    <td>
+      <div align="center" id="igainDiv"></div>
     </td>
 
     <td>
@@ -201,11 +215,13 @@ button.button-off{
       <button onclick="ToggleStateVar( 'savecfg' )">SaveCfg</button>
     </td>
   </tr>
-</table>
+
+ </table>
+</div>
 
 <!---------------------------------------------------------------------------->
-<!-- Status line -->
-<div id="statusDiv"></div>
+<!-- Console -->
+<div id="bjcoCon" style="float:left;"></div>
 
 <!-- Dialog to use -->
 <dialog id="bjkpKeypad">DefaultValue</dialog>
@@ -219,10 +235,40 @@ button.button-off{
 <!-- Include the keypad module -->
 <script src="BJKP.js"></script>
 
+<!-- Include the console module -->
+<script src="BJCO.js"></script>
+
 <script>
 
 // This is the keypad
 var bkp1 = new BJKP.Keypad( document.getElementById("bjkpKeypad") );
+
+// This is the console
+var bco1 = new BJCO.Console( 
+               document.getElementById("bjcoCon") ,
+               80,   // output columns
+               5     // output rows
+           );
+
+// Register a line input callback function with console
+bco1.Register( 
+   function( aLineStr )
+   {
+      if( aLineStr=="clear" ){ // verify clear output
+        bco1.Clear();
+        bco1.Output("clear history ok\n");
+      }
+
+      else if( aLineStr=="help" ){ // misc
+        bco1.Output("help  - this command\n");
+        bco1.Output("clear - clears output history\n");
+      }
+
+      else {
+        bco1.Output("raw:<"+aLineStr+">\n"); // verify trim/and crlf clear
+      }
+   } // end of console registered function
+);
 
 // Graph data default
 var xyXvec = [];
