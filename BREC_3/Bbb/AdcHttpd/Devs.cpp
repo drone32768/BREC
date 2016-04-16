@@ -62,7 +62,15 @@ int Devs::Open()
     // This just opens the dev(s).  See HwModel:HwInit() for initial
     // parameters
 
-    if( FindCapeByName("brecFpru")>0  ){
+    
+# ifdef TGT_X86
+    if( 1 )  // x86 
+# else
+    if( 0 )  // arm 
+# endif
+    {
+        printf("********* Devs::Open Starting x86 X board ****************\n");
+
         Bdc    *bdc;
         Ddc100 *ddc;
 
@@ -79,12 +87,28 @@ int Devs::Open()
         mMix = (Ddc100*)mAdc;
     }
 
-    // x86 simulation
-#   ifdef TGT_X86
-    {
-        printf("********* Devs::Open Starting x86 X board ****************\n");
+    else if( FindCapeByName("brecFpru")>0  ){
+        Bdc    *bdc;
+        Ddc100 *ddc;
+
+        printf("******** Devs::Open Starting F/Bdc/Ddc100 ****************\n");
+
+        bdc = new Bdc();
+        bdc->Open();
+
+        ddc = new Ddc100();
+        ddc->Attach( bdc );
+
+        mAdc = ddc;
+        mAdc->Open();
+        mMix = (Ddc100*)mAdc;
     }
-#   endif
+
+    else{
+        // Just terminate here since exceptions will result
+        fprintf(stderr,"No recognized device tree\n");
+        exit(-1);
+    }
 
     printf("*********** Devs::Open End *****************************\n");
 
