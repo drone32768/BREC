@@ -83,7 +83,7 @@ button.button-off{
 <!---------------------------------------------------------------------------->
 <!-- Primary control buttons -->
 <div style="float:left;">
- <table border="1" >
+ <table>
 
   <!-- Local control buttons -->
   <tr>
@@ -221,7 +221,7 @@ button.button-off{
 
 <!---------------------------------------------------------------------------->
 <!-- Console -->
-<div id="bjcoCon" style="float:left;"></div>
+<div id="bjcoCon" style="border-style:outset;float:left;"></div>
 
 <!-- Dialog to use -->
 <dialog id="bjkpKeypad">DefaultValue</dialog>
@@ -247,28 +247,52 @@ var bkp1 = new BJKP.Keypad( document.getElementById("bjkpKeypad") );
 var bco1 = new BJCO.Console( 
                document.getElementById("bjcoCon") ,
                80,   // output columns
-               5     // output rows
+               11    // output rows
            );
 
 // Register a line input callback function with console
 bco1.Register( 
    function( aLineStr )
    {
-      if( aLineStr=="clear" ){ // verify clear output
+      if( aLineStr=="~.clear" ){ // verify clear output
         bco1.Clear();
         bco1.Output("clear history ok\n");
       }
 
-      else if( aLineStr=="help" ){ // misc
+      else if( aLineStr=="~.help" ){ // misc
         bco1.Output("help  - this command\n");
         bco1.Output("clear - clears output history\n");
       }
 
       else {
-        bco1.Output("raw:<"+aLineStr+">\n"); // verify trim/and crlf clear
+        // bco1.Output("raw:<"+aLineStr+">\n"); // verify trim/and crlf clear
+        CliCommand( aLineStr );
       }
    } // end of console registered function
 );
+
+// This method issues a cli command and updates the console text
+// with the response.
+function CliCommand( aLineStr )
+{
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
+
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+      {
+          bco1.Output( xmlhttp.responseText );
+      }
+   }
+ 
+   // need to produce: cli?v=cli_line
+   xmlhttp.open("GET",
+                 "cli?v=" + 
+                 aLineStr,
+                 true);
+   xmlhttp.send();
+}
 
 // Graph data default
 var xyXvec = [];
