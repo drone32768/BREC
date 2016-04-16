@@ -114,6 +114,7 @@ public:
     int    GetState( char *resultsStr, int resultsLen );
     int    GetData( char *resultsStr, int resultsLen );
     int    SetCfg( const char *fname );
+    void   Cli( const char *inStr, char *outStr, int outBytes );
 };
 
 /**
@@ -586,6 +587,13 @@ void HwModel::HwStop()
 {
 }
 
+/**
+ * This method processes a command line input string
+ */
+void HwModel::Cli( const char *inStr, char *outStr, int outBytes )
+{
+    DpCli(inStr,outStr,outBytes);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// HTTP Interface /////////////////////////////////////////////////////////////
@@ -707,6 +715,28 @@ ahc_access_handler (void *cls,
    else if( 0==strcmp("getdata", &url[1]) ){
 
       gHwm->GetData(rstr, sizeof(rstr) - 1 );
+      response = MHD_create_response_from_buffer (strlen (rstr),
+ 						  (void *) rstr,
+ 						  MHD_RESPMEM_MUST_COPY);
+      ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+      MHD_destroy_response (response);
+      return ret;
+   }
+
+   //////////////////////////////////////// 
+   else if( 0==strcmp("cli", &url[1]) ){
+      const char *vstr;
+
+      vstr = MHD_lookup_connection_value( 
+                        connection, 
+                        MHD_GET_ARGUMENT_KIND,
+                        "v"
+                      );
+
+      printf("ahc_access_handler:cli v=\'%s\'\n",vstr);
+
+      gHwm->Cli(vstr,rstr,MAX_RESP_BYTES);
+
       response = MHD_create_response_from_buffer (strlen (rstr),
  						  (void *) rstr,
  						  MHD_RESPMEM_MUST_COPY);
