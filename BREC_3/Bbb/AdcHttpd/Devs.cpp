@@ -52,6 +52,13 @@ Devs *Dp()
 }
 
 //------------------------------------------------------------------------------
+void DpCli( const char *inStr, char *outStr, int outBytes )
+{
+    printf("%s:%d Input=<%s>\n",__FILE__,__LINE__,inStr);
+    sprintf(outStr,"received cmd\n");
+}
+
+//------------------------------------------------------------------------------
 Devs::Devs()
 {
 }

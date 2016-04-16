@@ -57,5 +57,6 @@ class Devs {
 };
 
 extern Devs *Dp();
+extern void  DpCli(  const char *inStr, char *outStr, int outBytes );
 
 #endif
