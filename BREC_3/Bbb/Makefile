@@ -10,10 +10,10 @@ all	:
 	cd Fboard;     make all
 	cd Bdc;        make all
 	cd Ddc100;     make all
-	cd AdcHttpd;   make all
 	cd Iboard;     make all
 	cd Tboard;     make all
 	cd Mboard;     make all
+	cd AdcHttpd;   make all
 
 clean	:
 	cd Util;       make clean
@@ -25,10 +25,10 @@ clean	:
 	cd Fboard;     make clean
 	cd Bdc;        make clean
 	cd Ddc100;     make clean
-	cd AdcHttpd;   make clean
 	cd Iboard;     make clean
 	cd Tboard;     make clean
 	cd Mboard;     make clean
+	cd AdcHttpd;   make clean
 
 clean_all :
 	find . -name "arm" -exec rm -rf {} ";"

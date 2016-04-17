@@ -182,6 +182,10 @@ HwModel::WriteCfg()
  * This is a required interface of the McF class.  It is the main entry
  * point of the thread associated with the object.  A dedicated thread
  * will invoke this entry point when the object is started.
+ *
+ * NOTE: Due to this being a seperate and independent thread:
+ *  a) Parameters are copied from current state and applied
+ *  b) Hardware mutex locking is used under run operations
  */
 void  HwModel::Main()
 {
@@ -207,6 +211,9 @@ void  HwModel::Main()
     while( !mThreadExit ){
 
        if( mRun ){
+          
+          // Get exclusive access to hw
+          Dp()->Lock();
 
           // Revisit any changed hw parameters
           if( mChnl!=chnl ){
@@ -261,6 +268,9 @@ void  HwModel::Main()
                     mYvec
               ); 
           }
+
+          // Give up exclusive access to Hw
+          Dp()->Unlock();
 
        } // End of running
 

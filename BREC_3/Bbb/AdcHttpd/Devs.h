@@ -49,6 +49,9 @@
 class Devs :  public TokCallback {
   private:
 
+    // For locking device access
+    SimpleMutex mMutex;
+
     // For hw model
     AdcIf   *mAdc;
     MixerIf *mMix;
@@ -66,6 +69,9 @@ class Devs :  public TokCallback {
     int      Open();
     AdcIf    *Adc()        { return(mAdc);    }
     MixerIf  *Mx1()        { return(mMix);    } 
+
+    int Lock()             { return( mMutex.Lock() ); }
+    int Unlock()           { return( mMutex.Unlock() ); }
 
     int TokParse( 
       std::vector<std::string> & arInputTokens , 

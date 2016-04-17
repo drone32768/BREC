@@ -94,6 +94,7 @@ int Devs::Open()
 
         mAdc = mDdc;
         mAdc->Open();
+
         mMix = (Ddc100*)mAdc;
     }
 
@@ -125,6 +126,8 @@ Devs::TokParse(
    double gainDb;
 
    int consumed = 1;
+
+   Dp()->Lock();
 
    if( 0==arInputTokens[0].compare("help") ){
        arOutStrSt << "mboard freq <Hz>       Set Mboard tuning\n";
@@ -184,5 +187,6 @@ Devs::TokParse(
        consumed = 0;
    }
 
+   Dp()->Unlock();
    return( consumed );
 }
