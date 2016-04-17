@@ -26,6 +26,13 @@ DEV_OBJS= \
          ../Fboard/$(TGT)/Fboard.o       \
          ../Bdc/$(TGT)/Bdc.o             \
          ../Ddc100/$(TGT)/Ddc100.o       \
+         ../Iboard/$(TGT)/Iboard.o       \
+         ../Mboard/$(TGT)/Mboard.o       \
+         ../Adf4351/$(TGT)/Adf4351.o     \
+         ../Tboard/$(TGT)/Tboard.o       \
+         ../Ui2c/$(TGT)/ui2c.o           \
+         ../Tboard/$(TGT)/mcp4725.o      \
+         ../Tboard/$(TGT)/max2112.o      \
 
 LOCAL_OBJS= $(TGT)/Devs.o                \
             $(TGT)/Tok.o                 \

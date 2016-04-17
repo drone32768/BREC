@@ -37,31 +37,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+#include <iostream>
+
 #include "Devs.h"
 
-////////////////////////////////////////////////////////////////////////////////
-/// Temporary //////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-int
-Devs::TokParse( 
-  std::vector<std::string> & arInputTokens , 
-  std::ostringstream       & arOutStrSt 
-)
-{
-   int consumed = 1;
-
-   if( 0==arInputTokens[0].compare("help") ){
-       arOutStrSt << "  help cmd found - this would be help text\n";
-   }
-   else if( 0==arInputTokens[0].compare("mboard" ) ){
-       arOutStrSt << "  select mboard\n";
-   }
-   else{
-       consumed = 0;
-   }
-
-   return( consumed );
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Devices ////////////////////////////////////////////////////////////////////
@@ -86,48 +66,33 @@ Devs::Devs()
 //------------------------------------------------------------------------------
 int Devs::Open()
 {
+    int force;
+
     // This just opens the dev(s).  See HwModel:HwInit() for initial
     // parameters
 
-    
 # ifdef TGT_X86
-    if( 1 )  // x86 
+    force = 1;  // x86
 # else
-    if( 0 )  // arm 
+    force = 0;  // arm 
 # endif
-    {
-        printf("********* Devs::Open Starting x86 X board ****************\n");
 
-        Bdc    *bdc;
-        Ddc100 *ddc;
-
+    if( force || FindCapeByName("brecFpru")>0  ){
         printf("******** Devs::Open Starting F/Bdc/Ddc100 ****************\n");
 
-        bdc = new Bdc();
-        bdc->Open();
+        mBdc = new Bdc();
+        mBdc->Open();
 
-        ddc = new Ddc100();
-        ddc->Attach( bdc );
+        mTbrd = new Tboard();
+        mTbrd->Attach( (void*)mBdc, (void*)0 /* port */ );
 
-        mAdc = ddc;
-        mAdc->Open();
-        mMix = (Ddc100*)mAdc;
+        mMbrd = new Mboard();
+        mMbrd->Attach( (void*)mBdc, (void*)1 /* port */ );
 
-    }
+        mDdc = new Ddc100();
+        mDdc->Attach( mBdc );
 
-    else if( FindCapeByName("brecFpru")>0  ){
-        Bdc    *bdc;
-        Ddc100 *ddc;
-
-        printf("******** Devs::Open Starting F/Bdc/Ddc100 ****************\n");
-
-        bdc = new Bdc();
-        bdc->Open();
-
-        ddc = new Ddc100();
-        ddc->Attach( bdc );
-
-        mAdc = ddc;
+        mAdc = mDdc;
         mAdc->Open();
         mMix = (Ddc100*)mAdc;
     }
@@ -144,4 +109,80 @@ int Devs::Open()
     TokRegister( this );
 
     return(0);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Command line parser ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+int
+Devs::TokParse( 
+  std::vector<std::string> & arInputTokens , 
+  std::ostringstream       & arOutStrSt 
+)
+{
+   double freqHz;
+   double bwHz;
+   double gainDb;
+
+   int consumed = 1;
+
+   if( 0==arInputTokens[0].compare("help") ){
+       arOutStrSt << "mboard freq <Hz>       Set Mboard tuning\n";
+       arOutStrSt << "mboard pwr  [0..3]     Set Mboard LO power level\n";
+       arOutStrSt << "tboard freq <Hz>       Set Tboard tuning\n";
+       arOutStrSt << "tboard gain <dB>       Set Tboard RF gain\n";
+       arOutStrSt << "tboard bw   <Hz>       Set Tboard IF filter bandwidth\n";
+       consumed = 0; // special, allow other callbacks to add help
+   }
+
+   else if( 0==arInputTokens[0].compare("mboard" ) ){
+       Adf4351 *syn = mMbrd->GetAdf4351( 0 );
+       arOutStrSt << "selecting mboard\n";
+
+       if( arInputTokens.size() < 3 ){
+          arOutStrSt << "missing argument\n";
+       }
+
+       else if( 0==arInputTokens[1].compare("freq") ){
+          freqHz = atof( arInputTokens[2].c_str() );  // stod C++11
+          syn->SetFrequency( freqHz );
+          syn->SetAuxEnable( 0 );
+          arOutStrSt << "freq        = " << freqHz         << "\n";
+          arOutStrSt << "lock status = " << syn->GetLock() << "\n";
+          arOutStrSt << "ok\n";
+       }
+       else if( 0==arInputTokens[1].compare("pwr") ){
+          syn->SetMainPower( 0 );
+          arOutStrSt << "ok\n";
+       }
+   }
+
+   else if( 0==arInputTokens[0].compare("tboard" ) ){
+       arOutStrSt << "selecting tboard\n";
+
+       if( arInputTokens.size() < 3 ){
+          arOutStrSt << "missing argument\n";
+       }
+       else if( 0==arInputTokens[1].compare("freq") ){
+          freqHz = atof( arInputTokens[2].c_str() );  // stod C++11
+          mTbrd->SetFreqHz( freqHz );
+          arOutStrSt << "ok\n";
+       }
+       else if( 0==arInputTokens[1].compare("gain") ){
+          gainDb = atof( arInputTokens[2].c_str() );  // stod C++11
+          mTbrd->SetGainDb( gainDb );
+          arOutStrSt << "ok\n";
+       }
+       else if( 0==arInputTokens[1].compare("bw") ){
+          bwHz = atof( arInputTokens[2].c_str() );  // stod C++11
+          mTbrd->SetBwHz( bwHz );
+          arOutStrSt << "ok\n";
+       }
+   }
+
+   else{
+       consumed = 0;
+   }
+
+   return( consumed );
 }

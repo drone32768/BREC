@@ -43,10 +43,21 @@
 
 #include "Ddc100/Ddc100.h"
 
+#include "Mboard/Mboard.h"
+#include "Tboard/Tboard.h"
+
 class Devs :  public TokCallback {
   private:
+
+    // For hw model
     AdcIf   *mAdc;
     MixerIf *mMix;
+
+    // Configuration specific
+    Bdc      *mBdc;
+    Ddc100   *mDdc;
+    Mboard   *mMbrd;
+    Tboard   *mTbrd;
 
   public:
 
