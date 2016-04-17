@@ -1,7 +1,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2015, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -45,6 +45,7 @@
 #include "Util/gpioutil.h"
 
 #include "Devs.h"
+#include "Tok.h"
 #include "Pse.h"
 #include "Tim.h"
 #include "His.h"
@@ -114,7 +115,6 @@ public:
     int    GetState( char *resultsStr, int resultsLen );
     int    GetData( char *resultsStr, int resultsLen );
     int    SetCfg( const char *fname );
-    void   Cli( const char *inStr, char *outStr, int outBytes );
 };
 
 /**
@@ -587,14 +587,6 @@ void HwModel::HwStop()
 {
 }
 
-/**
- * This method processes a command line input string
- */
-void HwModel::Cli( const char *inStr, char *outStr, int outBytes )
-{
-    DpCli(inStr,outStr,outBytes);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 /// HTTP Interface /////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -725,7 +717,8 @@ ahc_access_handler (void *cls,
 
    //////////////////////////////////////// 
    else if( 0==strcmp("cli", &url[1]) ){
-      const char *vstr;
+      std::ostringstream   oss;
+      const char          *vstr;
 
       vstr = MHD_lookup_connection_value( 
                         connection, 
@@ -735,10 +728,10 @@ ahc_access_handler (void *cls,
 
       printf("ahc_access_handler:cli v=\'%s\'\n",vstr);
 
-      gHwm->Cli(vstr,rstr,MAX_RESP_BYTES);
+      TokProcessCstr( vstr, oss );
 
-      response = MHD_create_response_from_buffer (strlen (rstr),
- 						  (void *) rstr,
+      response = MHD_create_response_from_buffer( oss.str().length(),
+ 						  (void *) oss.str().c_str(),
  						  MHD_RESPMEM_MUST_COPY);
       ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
       MHD_destroy_response (response);

@@ -37,12 +37,13 @@
 #include "Util/mcf.h"
 #include "Util/net.h"
 #include "Util/gpioutil.h"
+#include "Tok.h"
 
 #include "Interfaces/AdcIf.h"
 
 #include "Ddc100/Ddc100.h"
 
-class Devs {
+class Devs :  public TokCallback {
   private:
     AdcIf   *mAdc;
     MixerIf *mMix;
@@ -54,9 +55,13 @@ class Devs {
     int      Open();
     AdcIf    *Adc()        { return(mAdc);    }
     MixerIf  *Mx1()        { return(mMix);    } 
+
+    int TokParse( 
+      std::vector<std::string> & arInputTokens , 
+      std::ostringstream       & arOutStrSt 
+    );
 };
 
 extern Devs *Dp();
-extern void  DpCli(  const char *inStr, char *outStr, int outBytes );
 
 #endif

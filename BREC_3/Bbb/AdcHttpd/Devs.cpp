@@ -39,6 +39,33 @@
 
 #include "Devs.h"
 
+////////////////////////////////////////////////////////////////////////////////
+/// Temporary //////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+int
+Devs::TokParse( 
+  std::vector<std::string> & arInputTokens , 
+  std::ostringstream       & arOutStrSt 
+)
+{
+   int consumed = 1;
+
+   if( 0==arInputTokens[0].compare("help") ){
+       arOutStrSt << "  help cmd found - this would be help text\n";
+   }
+   else if( 0==arInputTokens[0].compare("mboard" ) ){
+       arOutStrSt << "  select mboard\n";
+   }
+   else{
+       consumed = 0;
+   }
+
+   return( consumed );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Devices ////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 static Devs *gpDevs = NULL;
 
@@ -49,13 +76,6 @@ Devs *Dp()
        gpDevs = new Devs();
     }
     return( gpDevs );
-}
-
-//------------------------------------------------------------------------------
-void DpCli( const char *inStr, char *outStr, int outBytes )
-{
-    printf("%s:%d Input=<%s>\n",__FILE__,__LINE__,inStr);
-    sprintf(outStr,"received cmd\n");
 }
 
 //------------------------------------------------------------------------------
@@ -92,6 +112,7 @@ int Devs::Open()
         mAdc = ddc;
         mAdc->Open();
         mMix = (Ddc100*)mAdc;
+
     }
 
     else if( FindCapeByName("brecFpru")>0  ){
@@ -118,6 +139,9 @@ int Devs::Open()
     }
 
     printf("*********** Devs::Open End *****************************\n");
+
+    // Register this devices token/cli handler
+    TokRegister( this );
 
     return(0);
 }
