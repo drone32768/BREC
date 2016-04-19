@@ -171,24 +171,13 @@ MAX2112::Show()
 } 
 
 ////////////////////////////////////////////////////////////////////////////////
-double
-MAX2112::SetFreqHz( double freqHz )
+void
+MAX2112::ProgramDevice()
 {
    uint8_t      byte;
-   unsigned int refHz;
-   double       del;
 
-   refHz   = mOscHz; // NOTE: for xd = 0, div by 1
-   mNdiv   = freqHz / refHz;
-   del     = ( freqHz - ( mNdiv * refHz ) );
-   mFdiv   = (1<<20) * del / refHz ;
-   mFreqHz = ( (double)mNdiv * (double)refHz ) + 
-                  ( (double)refHz * (double)mFdiv / (double)(1<<20) );
-
-   printf("Hz(tgt) = %f\n",freqHz);
-   printf("Ref(Hz) = %d\n",refHz);
+   printf("Hz(tgt) = %f\n",mFreqHz);
    printf("N       = %d\n",mNdiv);
-   printf("del(Hz) = %f\n",del);
    printf("F       = %d\n",mFdiv);
    printf("Hz(act) = %f\n",mFreqHz);
 
@@ -243,6 +232,28 @@ MAX2112::SetFreqHz( double freqHz )
    ReadReg( mDevAddr, 0x0D, &byte, 1 );
    printf("%s:%d:Status2 = 0x%02x\n",__FILE__,__LINE__,byte);
 
+}
+
+////////////////////////////////////////////////////////////////////////////////
+double
+MAX2112::SetFreqHz( double freqHz )
+{
+   unsigned int refHz;
+   double       del;
+
+   mFreqHz = freqHz;
+
+   refHz   = mOscHz; // NOTE: for xd = 0, div by 1
+   mNdiv   = mFreqHz / refHz;
+   del     = ( mFreqHz - ( mNdiv * refHz ) );
+   mFdiv   = (1<<20) * del / refHz ;
+   mFreqHz = ( (double)mNdiv * (double)refHz ) + 
+                  ( (double)refHz * (double)mFdiv / (double)(1<<20) );
+
+   printf("Ref(Hz) = %d\n",refHz);
+   printf("del(Hz) = %f\n",del);
+
+   ProgramDevice();
    return( mFreqHz );
 }
 
@@ -254,6 +265,8 @@ MAX2112::SetBwHz( double bwHz )
    if( bwHz > 74.47e6 ) bwHz = 74.47e6;
 
    mLpfHz = bwHz;
+
+   ProgramDevice();
    return( bwHz );
 }
 

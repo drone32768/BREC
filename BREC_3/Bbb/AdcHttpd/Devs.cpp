@@ -150,7 +150,7 @@ Devs::TokParse(
           freqHz = atof( arInputTokens[2].c_str() );  // stod C++11
           syn->SetFrequency( freqHz );
           syn->SetAuxEnable( 0 );
-          arOutStrSt << "freq        = " << freqHz         << "\n";
+          arOutStrSt << "freq(Hz)    = " << freqHz         << "\n";
           arOutStrSt << "lock status = " << syn->GetLock() << "\n";
           arOutStrSt << "ok\n";
        }
@@ -168,17 +168,20 @@ Devs::TokParse(
        }
        else if( 0==arInputTokens[1].compare("freq") ){
           freqHz = atof( arInputTokens[2].c_str() );  // stod C++11
-          mTbrd->SetFreqHz( freqHz );
+          freqHz = mTbrd->SetFreqHz( freqHz );
+          arOutStrSt << "freq(Hz)    = " << freqHz         << "\n";
           arOutStrSt << "ok\n";
        }
        else if( 0==arInputTokens[1].compare("gain") ){
           gainDb = atof( arInputTokens[2].c_str() );  // stod C++11
-          mTbrd->SetGainDb( gainDb );
+          gainDb = mTbrd->SetGainDb( gainDb );
+          arOutStrSt << "gain(dB)    = " << gainDb        << "\n";
           arOutStrSt << "ok\n";
        }
        else if( 0==arInputTokens[1].compare("bw") ){
           bwHz = atof( arInputTokens[2].c_str() );  // stod C++11
-          mTbrd->SetBwHz( bwHz );
+          bwHz = mTbrd->SetBwHz( bwHz );
+          arOutStrSt << "bw(Hz)      = " << bwHz         << "\n";
           arOutStrSt << "ok\n";
        }
    }

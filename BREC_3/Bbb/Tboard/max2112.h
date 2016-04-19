@@ -55,6 +55,7 @@ public:
                     uint8_t *regBytes, 
                     int      nBytes );
 
+    void   ProgramDevice();
     double SetFreqHz( double freqHz );
     double SetBwHz(   double bwHz );
     uint32_t Show();
