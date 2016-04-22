@@ -268,6 +268,7 @@ Ddc100::FlushSamples()
 
     // TODO: Tell the pru to go back to streaming
 
+    // Flush and restart the fifo
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
 
@@ -295,11 +296,7 @@ Ddc100::Get2kSamples( short *bf )
     for(idx=0;idx<2047;idx++){
         bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
     }
-    bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
-
-    // Flush and restart the fifo
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
+    bf[idx] = mBdc->SpiRW16( 0 ); // Fetch last value but do not init read
 
     return( p );
 }
