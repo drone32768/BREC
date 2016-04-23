@@ -34,13 +34,25 @@
 //
 
 // sram offsets for pru
-#define SRAM_OFF_DBG1       0x0000  // 4 bytes
-#define SRAM_OFF_DBG2       0x0004  // 4 bytes
-#define SRAM_OFF_CMD        0x0008  // 4 bytes
-#define SRAM_OFF_RES        0x000c  // 4 bytes
-#define SRAM_OFF_MSG        0x0100  // 512 bytes
+#define SRAM_OFF_DBG1          0x0000  // 4 bytes
+#define SRAM_OFF_DBG2          0x0004  // 4 bytes
+#define SRAM_OFF_CMD           0x0008  // 4 bytes
+#define SRAM_OFF_RES           0x000c  // 4 bytes
+#define SRAM_OFF_DRAM_PBASE    0x0010  // 4 bytes
+#define SRAM_OFF_DRAM_OFF      0x0014  // 4 bytes
 
-#define PRU1_CMD_2KWORDS    1
+// pru1 commands
+#define PRU1_CMD_NONE          0
+#define PRU1_CMD_2KWORDS       1
+
+// spi command definitions
+#define SPI_CMD_RD_FIFO_STATUS 0x0000
+#define SPI_CMD_NOP            0x0000
+#define SPI_CMD_RD_FIFO_DATA   0x0000
+
+// TODO this is a copy from F board pruinc
+// Should that be refectored so it can be included directly?
+#define PRU0_CMD_16ARRAY       2
 
 // 
 // ---------------------------------------------------------------------------

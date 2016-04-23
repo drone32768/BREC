@@ -25,18 +25,8 @@ $(TGT)/BdcTst	: BdcTst.cpp $(LOCAL_OBJS) | $(TGT)
              -L$(PRU_LIB) \
              -lfftw3 -lprussdrv -lpthread -o $(TGT)/BdcTst
 
-$(TGT)/Bdc.o	: Bdc.cpp Bdc.h pru_images.h | $(TGT)
+$(TGT)/Bdc.o	: Bdc.cpp Bdc.h | $(TGT)
 	g++ -c -I../ -I$(PRU_INC) Bdc.cpp -o $(TGT)/Bdc.o
-
-
-$(TGT)/pru01.bin : pru01.p pruinc.h | $(TGT)
-	${PASM} -V3 -b pru01.p
-	mv pru01.bin $(TGT)/pru01.bin
-
-ifeq ($(TGT),arm)
-pru_images.h    : $(TGT)/pru01.bin | $(TGT)
-	../Util/$(TGT)/ccat -f $(TGT)/pru01.bin -n pru_image01 >  pru_images.h
-endif
 
 
 clean	:

@@ -46,20 +46,6 @@
 #include "pruinc.h"
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
-#include "pru_images.h"
-
-
-// TODO need a global lock on device
-
-
-////////////////////////////////////////////////////////////////////////////////
-/// Hardware definitions ///////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-#define GetSramWord( off )   ( *(unsigned int*  )((mPtrPruSram + (off))) )
-#define SetSramWord( v,off ) ( *(unsigned int*  )((mPtrPruSram + (off))) = (v) )
-
-#define GetSramShort( off )  ( *(unsigned short*)((mPtrPruSram + (off))) )
-#define SetSramShort( v,off ) (*(unsigned short*)((mPtrPruSram + (off))) = (v) )
 
 ////////////////////////////////////////////////////////////////////////////////
 /// External Methods ///////////////////////////////////////////////////////////
@@ -92,15 +78,12 @@ Bdc::Open()
     printf("Bdc::Open::fw ver = 0x%08x\n",fwVer);
 
     // Setup the gpio port constructs
+    BdcGpio *gpio;
     for(port=0;port<BDC_GPIO_PORTS;port++){
         for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
-            mGpios[port][pin].Init(this,port,pin);
+            gpio = (BdcGpio*)( mGpioGroups[port].GetGpioPin(pin) );
+            gpio->Init(this,port,pin);
         }
-    }
-
-    // Figure out how we should access spi 
-    if( mFbrd.PruIsAvail() ){
-        PruStart();
     }
 
     printf("Bdc:Open exit\n");
@@ -119,47 +102,17 @@ Bdc::GetFwVersion()
 }
 
 //------------------------------------------------------------------------------
-BdcGpio *
-Bdc::GetGpioPin( int port, int pin )
+volatile unsigned char *
+Bdc::PruGetSramPtr()
 {
-
-    if( port<0 || port>=BDC_GPIO_PORTS ) return(NULL);
-    if( pin <0 || pin>=BDC_GPIO_PINS_PER_PORT   ) return(NULL);
-
-    return( &(mGpios[port][pin]) );
+    return( mFbrd.PruGetSramPtr() );
 }
 
 //------------------------------------------------------------------------------
-int
-Bdc::PruStart()
+volatile unsigned short *
+Bdc::PruGetDramPtr()
 {
-    // NOTE: the constants share with pru code are relative to how it
-    // references its sram which is zero based, however, cpu accesses
-    // globally so pru1 is +0x2000
-    mPtrPruSram    = mFbrd.PruGetSramPtr() + 0x2000;
-    mPtrPruSamples = mFbrd.PruGetDramPtr();
-
-    SetSramWord(  prussdrv_get_phys_addr( (void*)mPtrPruSamples ),
-                  SRAM_OFF_DRAM_PBASE 
-               );
-
-    SetSramWord(  0,
-                  SRAM_OFF_DBG1 
-               );
-
-    SetSramWord(  1,
-                  SRAM_OFF_DBG2 
-               );
-
-    SetSramShort(  PRU1_CMD_NONE,
-                  SRAM_OFF_CMD 
-               );
-
-    prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM,0,
-                             (unsigned int*)pru_image01,sizeof(pru_image01) );
-    prussdrv_pru_enable(1);
-
-    return( 0 );
+    return( mFbrd.PruGetDramPtr() );
 }
 
 //------------------------------------------------------------------------------
@@ -177,38 +130,19 @@ Bdc::SpiRW16( int wval )
 }
 
 //------------------------------------------------------------------------------
-void
-Bdc::StartStream()
+GpioGroup *
+Bdc::GetPinGroup( int grp )
 {
-    SetSramShort(  PRU1_CMD_2KWORDS, SRAM_OFF_CMD );
+   return( &(mGpioGroups[grp]) );
 }
 
-void
-Bdc::StopStream()
+////////////////////////////////////////////////////////////////////////////////
+/// BdcGpioGroup ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+GpioPin*
+BdcGpioGroup::GetGpioPin( int pin )
 {
-    SetSramShort(  PRU1_CMD_NONE, SRAM_OFF_CMD );
-}
-
-//------------------------------------------------------------------------------
-void
-Bdc::Show(const char *title )
-{
-    printf("Bdc: %s\n",title);
-    // printf("--- Fboard ----\n");
-    // mFbrd.Show();
-    // printf("---- Bdc ------\n");
-    if( mFbrd.PruIsAvail() ){
-        printf("    PRU1 dbg1     0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
-        printf("    PRU1 dbg2     0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
-        printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
-        printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
-        printf("    PRU1 pbase    0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE) );
-        printf("    PRU1 dram off 0x%08x\n",GetSramWord( SRAM_OFF_DRAM_OFF) );
-    }
-    else{
-        printf("    PRU not available\n");
-    }
-
+   return( &(mGpios[pin]) );
 }
 
 ////////////////////////////////////////////////////////////////////////////////

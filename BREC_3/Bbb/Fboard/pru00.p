@@ -128,7 +128,7 @@ main_loop:
 // LOCAL: rDataPtr = pointer to current words
 //
 xfer_short_array2x:
-    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
+    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after command
 
     LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value
     ADD       rTmp1, rTmp1, 2     // DBG2 - increment alue
@@ -158,7 +158,7 @@ xfer_short2x:
 // LOCAL: rDataPtr = pointer to current words
 //
 xfer_short_array:
-    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
+    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after command
 
     LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value
     ADD       rTmp1, rTmp1, 2     // DBG2 - increment alue
@@ -189,7 +189,7 @@ xfer_short:
 // LOCAL: rDataPtr = pointer to current words
 //
 xfer_byte_stream: 
-    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after count
+    ADD       rDataPtr, rCmdPtr,4 // bytes start 4 bytes after command
     AND       r30, r30, SS_L      // ss low
 
     LD32      rTmp1, rDbg2Ptr     // DBG2 - load current value

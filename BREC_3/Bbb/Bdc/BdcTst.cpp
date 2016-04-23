@@ -119,7 +119,7 @@ gpio_loop_test2( Bdc *bdc )
    int            src,dst;
    int            v1,v2,v3;
    int            err;
-   BdcGpio        *pins[BDC_GPIO_PORTS][BDC_GPIO_PINS_PER_PORT];
+   GpioPin        *pins[BDC_GPIO_PORTS][BDC_GPIO_PINS_PER_PORT];
 
    printf("NOTE: This test assumes a direct connect between GPIO ports.\n");
 
@@ -128,7 +128,7 @@ gpio_loop_test2( Bdc *bdc )
    // Get pins on each port and open
    for(port=0;port<BDC_GPIO_PORTS;port++){
        for(pin=0;pin<BDC_GPIO_PINS_PER_PORT;pin++){
-            pins[port][pin] = bdc->GetGpioPin( port, pin );
+            pins[port][pin] = bdc->GetPinGroup(port)->GetGpioPin(pin );
             pins[port][pin]->Open();
        }
    }
@@ -222,17 +222,6 @@ main( int argc, char *argv[] )
             val = strtol(argv[idx+1],&end,0);
             us_sleep( val );
         } 
-
-        else if( 0==strcmp(argv[idx], "-show") ){
-            bdc->Show( "bdc" );
-        }
-
-        else if( 0==strcmp(argv[idx], "-sstop") ){
-            bdc->StopStream();
-        }
-        else if( 0==strcmp(argv[idx], "-sstart") ){
-            bdc->StartStream();
-        }
 
         else if( 0==strcmp(argv[idx], "-write") ){
             int rval; 

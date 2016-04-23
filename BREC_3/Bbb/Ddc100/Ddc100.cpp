@@ -42,6 +42,7 @@
 
 #include "Fboard/Fboard.h"
 #include "Ddc100.h"
+#include "pruinc.h"
 
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
@@ -60,54 +61,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Hardware definitions ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#define XSPI_FIFO_EN     0x8000
-#define XSPI_FIFO_RST    0x4000
-
-#define XSPI_LED0        0x0100
-#define XSPI_LED1        0x0200
-#define XSPI_LED2        0x0400
-#define XSPI_LED3        0x0800
-
-#define XSPI_SEL_P1_CNTR 0x0000
-#define XSPI_SEL_P1_FIFO 0x0010
-#define XSPI_SEL_P1_R3   0x0030
-#define XSPI_SEL_P1_R6   0x0060
-#define XSPI_SEL_P1_R7   0x0070
-#define XSPI_SEL_P1_R8   0x0080
-#define XSPI_SEL_P1_R9   0x0090
-
-#define XSPI_READ        0x0008
-#define XSPI_WRITE       0x0004
-#define XSPI_PORT1       0x0001
-#define XSPI_PORT0       0x0000
-
-#define XSPI_RP0         (XSPI_READ  | XSPI_PORT0)
-#define XSPI_WP0         (XSPI_WRITE | XSPI_PORT0)
-#define XSPI_RP1         (XSPI_READ  | XSPI_PORT1)
-#define XSPI_WP1         (XSPI_WRITE | XSPI_PORT1)
-
-#define XSPI_STOP        (               XSPI_SEL_P1_FIFO |  XSPI_WP0 )
-#define XSPI_FLUSH       (XSPI_FIFO_RST| XSPI_SEL_P1_FIFO |  XSPI_WP0 )
-#define XSPI_START       (XSPI_FIFO_EN | XSPI_SEL_P1_FIFO |  XSPI_WP0 )
-#define XSPI_READ_SAMPLE (  XSPI_RP1 )
-
-// NOTE: Use this start to collect counter values rather than fifo samples
-// this is usefull for testing the full path as a continuous counter is 
-// provided allowing the pattern to be checked
-// #define XSPI_START  (XSPI_FIFO_EN | XSPI_SEL_P1_CNTR | XSPI_LED2 | XSPI_WP0 )
-
 #define GetSramWord( off )   ( *(unsigned int*  )((mPtrPruSram + (off))) )
 #define SetSramWord( v,off ) ( *(unsigned int*  )((mPtrPruSram + (off))) = (v) )
+
 #define GetSramShort( off )  ( *(unsigned short*)((mPtrPruSram + (off))) )
+#define SetSramShort( v,off ) (*(unsigned short*)((mPtrPruSram + (off))) = (v) )
 
 ////////////////////////////////////////////////////////////////////////////////
 /// External Methods ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 Ddc100::Ddc100()
 {
-    // 0 = no test pattern
-    // 2 = 1/8 Fs at half scale
-    // 4 = 1/4 Fs at +/- 4
     mTpg     = 4; 
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
@@ -130,18 +94,12 @@ Ddc100::Open()
 
     printf("Ddc100:Open enter\n");
 
-    mBdc->Show( "Ddc100::Open" );
-
     fwVer = GetFwVersion();
     printf("Ddc100::Open::fw ver = 0x%08x\n",fwVer);
-    if( 0x0700 == (fwVer&0xff00) ){
-       mFsHz    = 40000000; // Function of the board
-       mCSPS    = mFsHz;    
-    }
-    else{
-       mFsHz    = 40000000; // Function of the board
-       mCSPS    = mFsHz;    
-    }
+
+    mFsHz    = 40000000; // Function of the board
+    mCSPS    = mFsHz;    
+
     printf("Ddc100::Open::FsHz        = %d\n",mFsHz);
     printf("Ddc100::Open::CSPS        = %d\n",mCSPS);
 
@@ -149,7 +107,7 @@ Ddc100::Open()
     SetLoFreqHz( 640000 );
 
     SetSource( 0 ); 
-    SetTpg( 1 );  // FIXME - testing only
+    SetTpg( 0 ); 
     SetChannelMatch(0,1.0,0,1.0);
 
     printf("Ddc100:Open exit\n");
@@ -171,7 +129,7 @@ Ddc100::SetChannelMatch( int Ioff, double Igain, int Qoff, double Qgain )
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R22 | (Qoff&0xff) );
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R23 | (Qnum&0xff) );
 
-    printf("Match: I=[+ %d, X %d (%f) ] Q=[+ %d, X %d (%f)]\n",
+    printf("Ddc100:Match: I=[+ %d, X %d (%f) ] Q=[+ %d, X %d (%f)]\n",
                 Ioff,Inum,Igain, 
                 Qoff,Qnum,Qgain
     );
@@ -192,7 +150,7 @@ Ddc100::SetTpg( int arg )
 int
 Ddc100::IsComplexFmt()
 {
-  return(1);
+  return( 1 );
 }
 
 //------------------------------------------------------------------------------
@@ -305,7 +263,32 @@ Ddc100::Get2kSamples( short *bf )
 int
 Ddc100::StartPrus()
 {
-    // This method is not applicable.  pru00 is already started with fboard
+    // NOTE: the constants share with pru code are relative to how it
+    // references its sram which is zero based, however, cpu accesses
+    // globally so pru1 is +0x2000
+    mPtrPruSram    = mBdc->PruGetSramPtr() + 0x2000;
+    mPtrPruSamples = mBdc->PruGetDramPtr();
+
+    SetSramWord(  prussdrv_get_phys_addr( (void*)mPtrPruSamples ),
+                  SRAM_OFF_DRAM_PBASE 
+               );
+
+    SetSramWord(  0,
+                  SRAM_OFF_DBG1 
+               );
+
+    SetSramWord(  1,
+                  SRAM_OFF_DBG2 
+               );
+
+    SetSramShort(  PRU1_CMD_NONE,
+                  SRAM_OFF_CMD 
+               );
+
+    prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM,0,
+                             (unsigned int*)pru_image01,sizeof(pru_image01) );
+    prussdrv_pru_enable(1);
+
     return( 0 );
 }
 
@@ -363,5 +346,19 @@ Ddc100::Show(const char *title )
         val = mBdc->SpiRW16( 0 );
         printf("r[%02d] = 0x%04x\n",rg,val);
     }
+
+#if 0
+    if( mFbrd.PruIsAvail() ){
+        printf("    PRU1 dbg1     0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
+        printf("    PRU1 dbg2     0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
+        printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
+        printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
+        printf("    PRU1 pbase    0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE) );
+        printf("    PRU1 dram off 0x%08x\n",GetSramWord( SRAM_OFF_DRAM_OFF) );
+    }
+    else{
+        printf("    PRU not available\n");
+    }
+#endif 
 }
 

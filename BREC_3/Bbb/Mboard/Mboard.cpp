@@ -118,29 +118,28 @@ int Mboard::Attach(  void *lvl0, void *lvl1 )
 {
     int portN;
 
-    // Port to use is second level designator
-    portN = (unsigned int)lvl1;
-
-    printf("Mboard:Attach Enter ( port = %d)\n",portN);
 
     if( FindCapeByName( "brecFpru" ) || FindCapeByName( "brecFjtag" ) ){
        printf("Mboard:Open F board\n");
 
-       Bdc     *bdc;
-
-       bdc  = (Bdc*)lvl0;
+       GpioGroup *gpg;
+       gpg = (GpioGroup*)lvl0;
 
        // subtract 3 from pin number (one for 0 based, 2 more for first
        // power and ground pin which are not gpios)
 
-       gMbrdMosi[0] = bdc->GetGpioPin(portN,0); // p3 - 3 = 0
-       gMbrdSclk[0] = bdc->GetGpioPin(portN,2); // p5 - 3 = 2
-       gMbrdStat[0] = bdc->GetGpioPin(portN,5); // p8 - 3 = 5
-       gMbrdSsel[0] = bdc->GetGpioPin(portN,3); // p6 - 3 = 3
+       gMbrdMosi[0] = gpg->GetGpioPin(0); // p3 - 3 = 0
+       gMbrdSclk[0] = gpg->GetGpioPin(2); // p5 - 3 = 2
+       gMbrdStat[0] = gpg->GetGpioPin(5); // p8 - 3 = 5
+       gMbrdSsel[0] = gpg->GetGpioPin(3); // p6 - 3 = 3
 
     }
     else{
        printf("Mboard:Open I board\n");
+
+       // Port to use is second level designator
+       portN = (unsigned int)lvl1;
+       printf("Mboard:Attach Enter ( port = %d)\n",portN);
 
        Iboard        *ibrd;
        Gpio6PinGroup *g6pg;

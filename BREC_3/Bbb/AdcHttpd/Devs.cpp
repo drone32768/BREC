@@ -83,14 +83,14 @@ int Devs::Open()
         mBdc = new Bdc();
         mBdc->Open();
 
-        mTbrd = new Tboard();
-        mTbrd->Attach( (void*)mBdc, (void*)0 /* port */ );
-
-        mMbrd = new Mboard();
-        mMbrd->Attach( (void*)mBdc, (void*)1 /* port */ );
-
         mDdc = new Ddc100();
         mDdc->Attach( mBdc );
+
+        mTbrd = new Tboard();
+        mTbrd->Attach( (void*)( mBdc->GetPinGroup(0) ), (void*)0 );
+
+        mMbrd = new Mboard();
+        mMbrd->Attach( (void*)( mBdc->GetPinGroup(1) ), (void*)0 );
 
         mAdc = mDdc;
         mAdc->Open();

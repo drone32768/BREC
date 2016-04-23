@@ -62,12 +62,14 @@ main( int argc, char *argv[] )
     mbrd = new Mboard();
 
     if( FindCapeByName( "brecFpru" ) || FindCapeByName( "brecFjtag" ) ){
-       Bdc     *bdc;
+       Bdc       *bdc;
+       GpioGroup *gpg;
 
        bdc = new Bdc();
        bdc->Open();
 
-       mbrd->Attach( (void*)bdc, (void*)portN );
+       gpg = bdc->GetPinGroup( portN );
+       mbrd->Attach( (void*)gpg, (void*)0 );
     }
     else{
        Iboard        *ibrd;

@@ -42,6 +42,9 @@
 #include "Util/mcf.h"
 #include "Util/gpioutil.h"
 
+#include "Interfaces/GpioGroup.h"
+#include "Interfaces/GpioPin.h"
+
 #include "Iboard/Iboard.h"
 #include "Bdc/Bdc.h"
 
@@ -60,29 +63,28 @@ Tboard::Attach( void *lvl0, void *lvl1 )
 
     printf("Tboard:Attach Enter\n");
 
-    // Port to use is second level designator
-    portN = (unsigned int)lvl1;
-
     if( FindCapeByName( "brecFpru" ) || FindCapeByName( "brecFjtag" ) ){
        printf("Tboard:Open F board\n");
 
-       Bdc     *bdc;
-
-       bdc  = (Bdc*)lvl0;
+       GpioGroup *gpg;
+       gpg = (GpioGroup*)lvl0;
 
        // IO1 = p7 = "ss2"   = SCL
        // IO2 = p8 = "stat"  = SDA
        // subtract 3 from pin number (one for 0 based, 2 more for first
        // power and ground pin which are not gpios)
        err = mUI2C.configure( 
-                  bdc->GetGpioPin(portN,4), // p7 - 3 = 4
-                  bdc->GetGpioPin(portN,5)  // p8 - 3 = 5
+                  gpg->GetGpioPin(4), // p7 - 3 = 4
+                  gpg->GetGpioPin(5)  // p8 - 3 = 5
              );
        printf("%s:mUI2C  configure err=0x%08x\n",__FILE__,err);
 
     }
     else{
        printf("Tboard:Open I board\n");
+
+       // Port to use is second level designator
+       portN = (unsigned int)lvl1;
 
        Iboard        *ibrd;
        Gpio6PinGroup *g6pg;

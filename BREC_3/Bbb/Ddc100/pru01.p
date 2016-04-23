@@ -42,16 +42,6 @@
 
 
 //   
-//   SRAM
-//           +-- rTailPtr       +--- rSrHdPtrPtr
-//           |                  |  + -- rDrmOffsetPtrPtr
-//           |                  |  |
-//           |                  |  |
-//           V                  V  V
-//   +-------------------------+-----------------------+  
-//   |                         |                       |
-//   +-------------------------+-----------------------+  
-//    <---- rTailMask -------->
 //
 //   DRAM
 // 
@@ -103,11 +93,31 @@ MAIN1:
 #define    rResCode         r11
     MOV    rResCode,            0x0
 
-#define    rCnt                 r12
+#define    rCnt             r12
     MOV    rCnt,                0x0
 
-#define    rPru0CmdPtr          r13
-    MOV    rPru0CmdPtr,         (SRAM_OFF_MSG)
+#define    rP0CPcod         r13  // Pru0CmdPtr code 
+    MOV    rP0CPcod,            (8)
+
+#define    rRes01           r14 
+
+#define    rRes02           r15 
+
+#define    rArg0            r16
+    MOV    rArg0,               0x0
+
+#define    rDrmOffsetMask   r17
+    MOV    rDrmOffsetMask,      (0x0003ffff)
+
+#define    rDrmOffset       r18 
+    MOV    rDrmOffset,           0x0
+
+#define    rDrmBasePtr      r19
+    MOV    rDrmBasePtr   ,       (0x2000 + SRAM_OFF_DRAM_PBASE) // ??
+    LD32   rDrmBasePtr, rDrmBasePtr
+
+#define    rDrmOffsetPtrPtr r20
+     MOV   rDrmOffsetPtrPtr,     (0x2000 + SRAM_OFF_DRAM_OFF) // ??
 
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:
@@ -122,41 +132,149 @@ main_loop:
     // load and dispatch command
     LD16      rCmdCode, rCmdPtr            // load the command code
     QBEQ      xfer2k,rCmdCode,PRU1_CMD_2KWORDS
+
+    // command not processed
+    MOV       rResCode, rCmdCode, 
     JMP       main_loop
 
 xfer2k:
     // check for 2k avail (ok=0 in rResCode)
-    // if not avail set  goto main_loop
-    MOV       rResCode, 0  // TODO : temporary
-    QBNE      main_loop,rResCode,0
+    MOV       rArg0,rP0CPcod   
+    CALL      check2kfifo
+    QBEQ      readdone,rArg0,0
      
 read2k:
+    MOV       rArg0,rP0CPcod   
     CALL      read256
+
+    MOV       rArg0,rP0CPcod   
     CALL      save256
+
+    // TODO replicate above to full 2k
+
+    // Set res to cmd and return through main loop
+readdone:
+    MOV       rResCode, rCmdCode, 
     JMP       main_loop
 
 ////////////////////////////////////////////////////////////////////////////////
+// Saves 256 words from pru0 ram to dram
+// ARG  : rArg0 = pointer to pru0 cmd
+// LOCAL: rTmp1, rTmp2, rCnt
+// LOCAL: rDrm*
+// RET  : not applicable
 save256:
+    // Setup to copy 256 results
+    MOV       rTmp2,rArg0         
+    ADD       rTmp2,rTmp2,6          // skip over first result
+    MOV       rCnt,256           
+
+save256_copyout:
+
+    // Load the sample from pru0 ram
+    LD16      rTmp1,rTmp2            // store word
+    ADD       rTmp2,rTmp2,2          // inc msg ptr
+    SUB       rCnt,rCnt,1            // dec count
+
+    // Store and advance ddr dst pointer
+    SBBO      rTmp1,rDrmBasePtr,rDrmOffset, 2       // store samp in drm
+    ADD       rDrmOffset,rDrmOffset,2               // inc drm dst addr 
+    AND       rDrmOffset,rDrmOffset,rDrmOffsetMask  // wrap dst addr
+
+    // Save dram head in sram so cpu can access
+    ST32      rDrmOffset,rDrmOffsetPtrPtr   
+
+    // Loop until done copying
+    QBNE      save256_copyout,rCnt,0 // loop until done
+
     RET
 
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Read 256 words from spi fifo
+// ARG  : rArg0 = pointer to pru0 cmd
+// LOCAL: rTmp1, rTmp2
+// RET  : not applicable
+//
 read256:
 
-    MOV       rTmp2,rPru0CmdPtr // get pru0 cmd address
-    ADD       rTmp2,rTmp2,4     // pru0 payload starts at +4 from cmd
-    MOV       rTmp1,0x9001      // spi word to execu
-    MOV       rCnt,256
+    // Setup to fill in 256 command words (each word is a read command)
+    MOV       rTmp2,rArg0         
+    MOV       rTmp1,SPI_CMD_RD_FIFO_DATA  
+    MOV       rCnt,256           
+
+    // Fill in the payload of read command words
 read256_copyin:
-    ST16      rTmp1,rTmp2       // store word
-    ADD       rTmp2,rTmp2,2     // inc msg ptr
-    SUB       rCnt,rCnt,1       // dec count
-    QBNE      read256_copyin,rCnt,0     // loop until done
+    ST16      rTmp1,rTmp2            // store word
+    ADD       rTmp2,rTmp2,2          // inc msg ptr
+    SUB       rCnt,rCnt,1            // dec count
+    QBNE      read256_copyin,rCnt,0  // loop until done
 
-    MOV       rTmp1,256
-    ST32      rTmp1,rPru0CmdPtr // store xfer count in msg
+    // Add one last nop command to read last word
+    MOV       rTmp1,SPI_CMD_NOP      // last spi word to execute 
+    ST16      rTmp1,rTmp2            // store word
 
+    // Fill in the command word count 
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 2    
+    MOV       rTmp2,257
+    ST16      rTmp2,rTmp1            // store count
+
+    // Issue the command to start
+    MOV       rTmp2,PRU0_CMD_16ARRAY  // issue the 16array command
+    ST16      rTmp2,rArg0
+
+    // Wait until the command word count is 0 (pru0 is done)
 waitdone_pru0:
-    LD32      rTmp1,rPru0CmdPtr
-    QBNE      waitdone_pru0,rTmp1,0  // loop until done
+    LD16      rTmp2,rArg0
+    QBNE      waitdone_pru0,rTmp2,0  // loop until done
 
+    RET
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Check the fifo status for at least 2k samples
+// ARG  : rArg0 = pointer to pru0 cmd
+// LOCAL: rTmp1, rTmp2, rCnt
+// RET  : rArg0 = 0 if not read, non 0 if ready
+//
+check2kfifo:
+
+    // Store an SPI command
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 6    
+    MOV       rTmp2,SPI_CMD_RD_FIFO_STATUS        
+    ST16      rTmp2,rTmp1   
+
+    // Store an SPI command
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 4    
+    MOV       rTmp2,SPI_CMD_RD_FIFO_STATUS        
+    ST16      rTmp2,rTmp1   
+
+    // Store the PRU0 transfer count
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 2    
+    MOV       rTmp2, 2        
+    ST16      rTmp2,rTmp1   
+
+    // Store the PRU0 operation/command
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 0    
+    MOV       rTmp2,PRU0_CMD_16ARRAY        
+    ST16      rTmp2,rTmp1   
+
+check2kfifo_waita:
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 0    
+    LD16      rTmp2,rTmp1
+    QBNE      check2kfifo_waita,rTmp2,0  // loop until done
+
+    // Get the final result 
+    MOV       rTmp1,rArg0        
+    ADD       rTmp1,rTmp1, 6    
+    LD16      rTmp2,rTmp1
+   
+    // Save result in arg0 and return
+    MOV       rArg0,rTmp2
     RET

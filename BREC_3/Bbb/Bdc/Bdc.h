@@ -37,8 +37,8 @@
 
 #include "Util/mcf.h"
 #include "Interfaces/GpioPin.h"
+#include "Interfaces/GpioGroup.h"
 #include "Fboard/Fboard.h"
-
 
 ////////////////////////////////////////////////////////////////////////////////
 #define BDC_REG_RD  0x8000
@@ -98,53 +98,52 @@
 class Bdc;
 
 class BdcGpio : public GpioPin {
+  private:
     int  mPort;
     int  mPin;
     Bdc *mBdc;
 
   public:
     void Init( Bdc *bdc, int port, int pin );
-    int Open();
-    int Close();
-    int SetDirInput( int isInput );
-    int Set( int v );
-    int Get(       );
+
+    // Interface
+    int  Open();
+    int  Close();
+    int  SetDirInput( int isInput );
+    int  Set( int v );
+    int  Get(       );
+};
+
+class BdcGpioGroup : public GpioGroup {
+  private:
+#   define                   BDC_GPIO_PINS_PER_PORT  6
+    BdcGpio                  mGpios[BDC_GPIO_PINS_PER_PORT];
+
+  public:
+    // Interface
+    GpioPin*  GetGpioPin( int n );
 };
 
 class Bdc {
 
-private:
+  private:
 
-    ////////////////////////////////////////
-    int                      mPruAvail;
-    int                      mPidx;
-    volatile unsigned short *mPtrPruSamples;
-    volatile unsigned char  *mPtrPruSram;
-
-    ////////////////////////////////////////
 #   define                   BDC_GPIO_PORTS          2
-#   define                   BDC_GPIO_PINS_PER_PORT  6
-    BdcGpio                  mGpios[BDC_GPIO_PORTS][BDC_GPIO_PINS_PER_PORT];
-
-    ////////////////////////////////////////
+    BdcGpioGroup             mGpioGroups[BDC_GPIO_PORTS];
     Fboard                   mFbrd;
  
-public:
+  public:
     Bdc();
 
-    int Open();
-    int PruStart();
+    int        Open();
+    int        GetFwVersion( );
+    GpioGroup *GetPinGroup( int grp );
 
-    int GetFwVersion( );
-
-    BdcGpio *GetGpioPin( int port, int pin );
+    volatile unsigned char  *PruGetSramPtr();
+    volatile unsigned short *PruGetDramPtr();
 
     // For testing only
-    int  SpiRW16( int wval );
-    void Show( const char *title );
-
-    void StartStream();
-    void StopStream();
+    int        SpiRW16( int wval );
 
 };
 
