@@ -272,7 +272,7 @@ Ddc100::StartPru()
                   SRAM_OFF_DRAM_PBASE 
                );
 
-    SetSramShort(  0,
+    SetSramWord(  0,
                   SRAM_OFF_DRAM_OFF 
                );
 
@@ -291,7 +291,12 @@ Ddc100::StartPru()
 
     prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM,0,
                              (unsigned int*)pru_image01,sizeof(pru_image01) );
+
     prussdrv_pru_enable(1);
+
+    SetSramShort(  PRU1_CMD_2KWORDS,
+                   SRAM_OFF_CMD 
+               );
 
     return( 0 );
 }
@@ -358,9 +363,20 @@ Ddc100::Show(const char *title )
      printf("    PRU1 dbg1     0x%08x\n",GetSramWord(  SRAM_OFF_DBG1 ) );
      printf("    PRU1 dbg2     0x%08x\n",GetSramWord(  SRAM_OFF_DBG2 ) );
      printf("    PRU1 pbase    0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_PBASE) );
-     printf("    PRU1 dram off 0x%08x\n",GetSramShort( SRAM_OFF_DRAM_OFF) );
+     printf("    PRU1 dram off 0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_OFF) );
      printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
      printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
+
+     int idx,cnt;
+     idx = GetSramWord( SRAM_OFF_DRAM_OFF);
+     idx = (idx + PRU_MAX_SHORT_SAMPLES - 16)%PRU_MAX_SHORT_SAMPLES;
+     for(cnt=0;cnt<8;cnt++){
+       printf("%d 0x%04x, ",idx,mPtrPruSamples[idx]);
+       idx = (idx + 1)%PRU_MAX_SHORT_SAMPLES;
+       
+     }
+     printf("\n");
+     
     }else{
      printf("    PRU1 not started\n");
     }

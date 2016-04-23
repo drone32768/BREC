@@ -135,15 +135,13 @@ class Bdc {
   public:
     Bdc();
 
-    int        Open();
-    int        GetFwVersion( );
-    GpioGroup *GetPinGroup( int grp );
+    int                      Open();
+    int                      GetFwVersion( );
+    GpioGroup               *GetPinGroup( int grp );
 
     volatile unsigned char  *PruGetSramPtr();
     volatile unsigned short *PruGetDramPtr();
-
-    // For testing only
-    int        SpiRW16( int wval );
+    int                      SpiRW16( int wval );
 
 };
 

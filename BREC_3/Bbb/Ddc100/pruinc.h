@@ -46,9 +46,12 @@
 #define PRU1_CMD_2KWORDS       1
 
 // spi command definitions
-#define SPI_CMD_RD_FIFO_STATUS 0x0000
+#define SPI_CMD_RD_FIFO_STATUS 0xBd00   // 0x8000 | 0x3d00
 #define SPI_CMD_NOP            0x0000
-#define SPI_CMD_RD_FIFO_DATA   0x0000
+
+// TODO temporarily point to counting register
+// #define SPI_CMD_RD_FIFO_DATA   0xBf00   // 0x8000 | 0x3f00
+#define SPI_CMD_RD_FIFO_DATA   0x8300   // 0x8000 | 0x0300
 
 // TODO this is a copy from F board pruinc
 // Should that be refectored so it can be included directly?

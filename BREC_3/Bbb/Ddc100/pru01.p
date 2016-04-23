@@ -57,11 +57,6 @@
 // 
 
 //-----------------------------------------------------------------------------
-//
-// This pru module reads a serial word and stores the results in 
-// the wrapping fifo memory from 0x0.0000 to 0x0.3fff.  The last address 
-// written to within this range is stored at 0x1.0000
-//
 MAIN1:
     // Enable OCP master port
     LBCO      r0, CONST_PRUCFG, 4, 4
@@ -97,7 +92,7 @@ MAIN1:
     MOV    rCnt,                0x0
 
 #define    rP0CPcod         r13  // Pru0CmdPtr code 
-    MOV    rP0CPcod,            (8)
+    MOV    rP0CPcod,            (0x2000 + 8) // FIXM - get this from F board
 
 #define    rRes01           r14 
 
@@ -113,18 +108,18 @@ MAIN1:
     MOV    rDrmOffset,           0x0
 
 #define    rDrmBasePtr      r19
-    MOV    rDrmBasePtr   ,       (0x2000 + SRAM_OFF_DRAM_PBASE) // ??
+    MOV    rDrmBasePtr   ,       SRAM_OFF_DRAM_PBASE
     LD32   rDrmBasePtr, rDrmBasePtr
 
 #define    rDrmOffsetPtrPtr r20
-     MOV   rDrmOffsetPtrPtr,     (0x2000 + SRAM_OFF_DRAM_OFF) // ??
+    MOV    rDrmOffsetPtrPtr,     SRAM_OFF_DRAM_OFF
 
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:
     // increment dbg2 every loop pass
-    LD32      rTmp1, rDbg2Ptr
+    LD32      rTmp1, rDbg1Ptr
     ADD       rTmp1,rTmp1,1
-    ST32      rTmp1, rDbg2Ptr
+    ST32      rTmp1, rDbg1Ptr
 
     // update last command status
     ST16      rResCode, rResPtr            // store the status code
@@ -138,6 +133,11 @@ main_loop:
     JMP       main_loop
 
 xfer2k:
+    // increment dbg2 every xfer attempt
+    LD32      rTmp1, rDbg2Ptr
+    ADD       rTmp1,rTmp1,1
+    ST32      rTmp1, rDbg2Ptr
+
     // check for 2k avail (ok=0 in rResCode)
     MOV       rArg0,rP0CPcod   
     CALL      check2kfifo
@@ -176,16 +176,18 @@ save256_copyout:
     ADD       rTmp2,rTmp2,2          // inc msg ptr
     SUB       rCnt,rCnt,1            // dec count
 
+// MOV rTmp1,rCnt  // FIXME - debug only
+
     // Store and advance ddr dst pointer
     SBBO      rTmp1,rDrmBasePtr,rDrmOffset, 2       // store samp in drm
     ADD       rDrmOffset,rDrmOffset,2               // inc drm dst addr 
     AND       rDrmOffset,rDrmOffset,rDrmOffsetMask  // wrap dst addr
 
-    // Save dram head in sram so cpu can access
-    ST32      rDrmOffset,rDrmOffsetPtrPtr   
-
     // Loop until done copying
     QBNE      save256_copyout,rCnt,0 // loop until done
+
+    // Save dram head in sram so cpu can access
+    ST32      rDrmOffset,rDrmOffsetPtrPtr   
 
     RET
 
