@@ -2,7 +2,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2013, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -58,31 +58,6 @@
 // Should that be refectored so it can be included directly?
 #define PRU0_CMD_16ARRAY       2
 
-// 
-// ---------------------------------------------------------------------------
-// PRU0             Memory Description                Notes
-// ADDR
-// ---------------------------------------------------------------------------
-//        ********** PRU0 SRAM ****************
-// 0x0000 |                                   | 
-//        |                                   | 
-// 0x0fff |                                   |
-//        +-----------------------------------+
-// 0x1000 |                                   |
-//        |                                   |
-//        |                                   |
-//        |          ....                     |
-// 0x1fff |                                   |
-//        ********** PRU1 SRAM ****************
-// 0x2000 |                                   |
-//        |          ....                     |
-// 0x3fff |                                   |
-//        ********** SHARED SRAM **************
-// 0x4000 |                                   |
-//        |          ....                     |
-//        |                                   |
-//        **********  END SRAM  ***************
-//
-//
-
+// This is a function of the library and kernel module
+// TODO: should be able to query this ...
 #define PRU_MAX_SHORT_SAMPLES (128*1024)

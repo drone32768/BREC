@@ -78,6 +78,9 @@ MAIN:
 #define       rSI                r9
 #define       rBc                r10
 
+#define       rCmdPtr1           r11
+#define       rCmdPtr2           r12
+
 #define       rTmp1              r25
 #define       rTmp2              r26
 
@@ -85,7 +88,7 @@ MAIN:
 
     MOV       rDbg1Ptr,          (0x0000 + SRAM_OFF_DBG1)
     MOV       rDbg2Ptr,          (0x0000 + SRAM_OFF_DBG2)
-    MOV       rCmdPtr,           (0x0000 + SRAM_OFF_CMD1) 
+    MOV       rCmdPtr,           0x0
 
     MOV       rCmdCode,          0x0
     MOV       rCnt,              0x0
@@ -95,6 +98,9 @@ MAIN:
     MOV       rSO,               0x0
     MOV       rSI,               0x0
     MOV       rBc,               0x0
+
+    MOV       rCmdPtr1,          (SRAM_OFF_CMD1) 
+    MOV       rCmdPtr2,          (SRAM_OFF_CMD2) 
 
     MOV       rTmp1,             0x0
     MOV       rTmp2,             0x0
@@ -107,18 +113,29 @@ MAIN:
 //
 main_loop:
 
-    // increment dbg1 every main loop pass
+    // Increment dbg1 every main loop pass
     LD32      rTmp1, rDbg1Ptr
     ADD       rTmp1, rTmp1, 1
     ST32      rTmp1, rDbg1Ptr
 
-    // load and dispatch command
+    // Load and dispatch command from cpu
+    MOV       rCmdPtr, rCmdPtr1
     LD16      rCmdCode, rCmdPtr            // load the command code
     ADD       rTmp1,rCmdPtr,2              // get pointer to xfer count
     LD16      rCnt, rTmp1                  // load the xfer count
     QBEQ      xfer_short_array2x,rCmdCode,PRU0_CMD_16ARRAY2x    
     QBEQ      xfer_short_array,  rCmdCode,PRU0_CMD_16ARRAY    
     QBEQ      xfer_byte_stream,  rCmdCode,PRU0_CMD_8STREAM    
+
+    // Load and dispatch command from pru1
+    MOV       rCmdPtr, rCmdPtr2
+    LD16      rCmdCode, rCmdPtr            // load the command code
+    ADD       rTmp1,rCmdPtr,2              // get pointer to xfer count
+    LD16      rCnt, rTmp1                  // load the xfer count
+    QBEQ      xfer_short_array2x,rCmdCode,PRU0_CMD_16ARRAY2x    
+    QBEQ      xfer_short_array,  rCmdCode,PRU0_CMD_16ARRAY    
+    QBEQ      xfer_byte_stream,  rCmdCode,PRU0_CMD_8STREAM    
+
     JMP       main_loop          
 
 ////////////////////////////////////////////////////////////////////////////////

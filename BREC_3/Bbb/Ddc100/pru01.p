@@ -91,8 +91,9 @@ MAIN1:
 #define    rCnt             r12
     MOV    rCnt,                0x0
 
-#define    rP0CPcod         r13  // Pru0CmdPtr code  // FIXME get from F brd
-    MOV    rP0CPcod,            (0x2008)
+#define    rP0CPcod         r13  
+//    MOV    rP0CPcod,            (0x2008) // Pru0CmdPtr code addr FIXME cpu
+      MOV    rP0CPcod,            (0x10008) // Pru0CmdPtr code addr FIXME pru1
 
 #define    rRes01           r14 
 
