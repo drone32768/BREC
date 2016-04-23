@@ -40,10 +40,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "Fboard/Fboard.h"
 #include "Ddc100.h"
-#include "pruinc.h"
 
+#include "pruinc.h"
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
 #include "pru_images.h"
@@ -76,6 +75,7 @@ Ddc100::Ddc100()
     mFifoSrc = 0;
     mFsHz    = 10000000; // Function of the board
     mCSPS    = mFsHz;    // Function of board and channel selected
+    mPtrPruSram = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -162,7 +162,6 @@ Ddc100::SetSource( int arg )
 
     mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
 
-    Show( "at set\n" );
     return( arg );
 }
 
@@ -261,7 +260,7 @@ Ddc100::Get2kSamples( short *bf )
 
 //------------------------------------------------------------------------------
 int
-Ddc100::StartPrus()
+Ddc100::StartPru()
 {
     // NOTE: the constants share with pru code are relative to how it
     // references its sram which is zero based, however, cpu accesses
@@ -273,6 +272,10 @@ Ddc100::StartPrus()
                   SRAM_OFF_DRAM_PBASE 
                );
 
+    SetSramShort(  0,
+                  SRAM_OFF_DRAM_OFF 
+               );
+
     SetSramWord(  0,
                   SRAM_OFF_DBG1 
                );
@@ -280,6 +283,7 @@ Ddc100::StartPrus()
     SetSramWord(  1,
                   SRAM_OFF_DBG2 
                );
+
 
     SetSramShort(  PRU1_CMD_NONE,
                   SRAM_OFF_CMD 
@@ -341,24 +345,25 @@ Ddc100::Show(const char *title )
 {
     int rg,val;
     printf("Ddc100: %s",title);
+
+/* FIXME - reduce verbosity for pru testing
     for(rg=0;rg<21;rg++){
         mBdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
         val = mBdc->SpiRW16( 0 );
         printf("r[%02d] = 0x%04x\n",rg,val);
     }
+*/
 
-#if 0
-    if( mFbrd.PruIsAvail() ){
-        printf("    PRU1 dbg1     0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
-        printf("    PRU1 dbg2     0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
-        printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
-        printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
-        printf("    PRU1 pbase    0x%08x\n",GetSramWord( SRAM_OFF_DRAM_PBASE) );
-        printf("    PRU1 dram off 0x%08x\n",GetSramWord( SRAM_OFF_DRAM_OFF) );
+    if( 0!=mPtrPruSram ){
+     printf("    PRU1 dbg1     0x%08x\n",GetSramWord(  SRAM_OFF_DBG1 ) );
+     printf("    PRU1 dbg2     0x%08x\n",GetSramWord(  SRAM_OFF_DBG2 ) );
+     printf("    PRU1 pbase    0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_PBASE) );
+     printf("    PRU1 dram off 0x%08x\n",GetSramShort( SRAM_OFF_DRAM_OFF) );
+     printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
+     printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
+    }else{
+     printf("    PRU1 not started\n");
     }
-    else{
-        printf("    PRU not available\n");
-    }
-#endif 
+
 }
 

@@ -379,9 +379,10 @@ void usage( int exit_code )
     printf("-samp         show samples\n");
     printf("-csv          produce samples in csv format\n");
     printf("-flush        flush source fifo\n");
-    printf("-pru          show pru state\n");
+    printf("-prustart     start pru\n");
     printf("-iqp          execute IQ pattern test\n");
     printf("-quad         execute quadrature data test\n");
+    printf("-show         show device state\n");
     exit( exit_code );
 }
 
@@ -406,7 +407,7 @@ main( int argc, char *argv[] )
     ddc = new Ddc100();
     ddc->Attach( bdc );
     ddc->Open();
-    ddc->StartPrus();
+    ddc->StartPru();
     ddc->SetComplexSampleRate( 5000000 );
 
     idx = 1;
@@ -512,8 +513,12 @@ main( int argc, char *argv[] )
             ddc->FlushSamples();
         }
 
-        else if( 0==strcmp(argv[idx], "-pru") ){
-            ddc->Show( "DdcTst: pru state" );
+        else if( 0==strcmp(argv[idx], "-prustart") ){
+            ddc->StartPru();
+        }
+
+        else if( 0==strcmp(argv[idx], "-show") ){
+            ddc->Show("DdcTst:\n");
         }
 
         else if( 0==strcmp(argv[idx], "-iqp") ){

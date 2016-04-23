@@ -64,7 +64,7 @@ Tboard::Attach( void *lvl0, void *lvl1 )
     printf("Tboard:Attach Enter\n");
 
     if( FindCapeByName( "brecFpru" ) || FindCapeByName( "brecFjtag" ) ){
-       printf("Tboard:Open F board\n");
+       printf("Tboard:Attaching to F board\n");
 
        GpioGroup *gpg;
        gpg = (GpioGroup*)lvl0;

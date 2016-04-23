@@ -43,7 +43,7 @@ public:
     virtual int Open() = 0;
 
     /** Starts internal processing for PRU based interfaces */
-    virtual int StartPrus() = 0;
+    virtual int StartPru() = 0;
 
     /** Flush all hw and sw queued data */
     virtual int FlushSamples() = 0;

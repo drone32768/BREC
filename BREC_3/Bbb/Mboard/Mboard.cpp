@@ -118,9 +118,8 @@ int Mboard::Attach(  void *lvl0, void *lvl1 )
 {
     int portN;
 
-
     if( FindCapeByName( "brecFpru" ) || FindCapeByName( "brecFjtag" ) ){
-       printf("Mboard:Open F board\n");
+       printf("Mboard:Attaching to F board\n");
 
        GpioGroup *gpg;
        gpg = (GpioGroup*)lvl0;

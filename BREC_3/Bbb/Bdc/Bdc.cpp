@@ -43,7 +43,6 @@
 #include "Fboard/Fboard.h"
 #include "Bdc.h"
 
-#include "pruinc.h"
 #include "prussdrv.h"
 #include "pruss_intc_mapping.h"
 

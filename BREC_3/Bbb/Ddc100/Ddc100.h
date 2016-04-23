@@ -74,9 +74,8 @@ public:
     int SetComplexSampleRate( int complexSamplesPerSecond );
     int GetComplexSampleRate();
     int IsComplexFmt();
-    int StartPrus();
-
     int StartPru();
+
     int SetGain( int gn );
     int SetSim( int sim );
     int SetTpg( int arg );
