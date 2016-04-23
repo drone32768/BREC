@@ -60,7 +60,6 @@ private:
     ////////////////////////////////////////
     Bdc                     *mBdc;
  
-    int  SimGet2kSamples( short *bf ); 
 
 public:
     Ddc100();
@@ -76,6 +75,7 @@ public:
     int IsComplexFmt();
     int StartPru();
 
+    int  Get2kStream( short *bf ); 
     int SetGain( int gn );
     int SetSim( int sim );
     int SetTpg( int arg );

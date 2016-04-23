@@ -46,17 +46,20 @@ int IqpTest_Check2kPattern(
     int            idx,nErrs;
     unsigned short expt,find;
 
-#define IQ_INC 600 // 100 for 10MHz
-#define IQ_OFF  35
-
     if( reset ){
-       *key = ubf[0] - IQ_INC;
+       *key = ubf[0];
     }
 
     nErrs = 0;
-    for(idx=0;idx<2048;idx+=2){
-        expt =  (*key + IQ_INC ); // I(n) to I(n+1) = IQ_INC;
+    for(idx=0;idx<2048;idx++){
+        expt =  (*key);
         find =  ubf[idx];
+
+        // TODO - every 256 samples the 
+        if( (idx%256)==0 ){ 
+            expt = find;
+        }
+
         if( expt!=find ){
             nErrs++;
             if( showErrs ){
@@ -65,16 +68,7 @@ int IqpTest_Check2kPattern(
             }
         }
 
-        expt =  ubf[idx+1] + IQ_OFF;
-        find =  ubf[idx];
-        if( expt!=find ){
-            nErrs++;
-            if( showErrs ){
-                printf("%d iq phase : expected 0x%hx found 0x%hx\n",
-                              idx,expt,find);
-            }
-        }
-        *key = ubf[idx]; 
+        *key = ubf[idx] + 1; 
     }
     return( nErrs );
 }
@@ -83,123 +77,60 @@ void IqpTest (Ddc100 *ddc )
 {
     unsigned short ubf[4096];
     unsigned short key;
-    int            nErrs,cnt,icnt,us;
+    int            nErrs,cnt,wcnt,us;
     int            reset;
-    unsigned short pinc;
     struct timeval tv1,tv2;
     int            errs;
     int            showErrs;
+    int            stopOnErr;
 
     printf("Starting iq pattern test\n");
 
-    ddc->SetLoFreqHz( 0 ); 
-    ddc->SetTpg( 1 );
-    ddc->SetSource( 7 );
-
     cnt       = 0;
     reset     = 1;
-    pinc      = 1;
-    icnt      = 0;
+    wcnt      = 0;
     errs      = 0;
-    showErrs  = 1; // Also stops on first error
+    showErrs  = 1; //
+    stopOnErr = 0; //
     key       = 0;
     ddc->FlushSamples();
     gettimeofday( &tv1, NULL );
-    while( 1 ){
-        // ddc->FlushSamples();
-        // reset     = 1;
 
-        ddc->Get2kSamples( (short*)ubf );
+    while( 1 ){
+
+        // ddc->Get2kSamples( (short*)ubf );
+
+        ddc->Get2kStream( (short*)ubf );
+
         nErrs=IqpTest_Check2kPattern(ubf,&key,reset,showErrs);
 
         if( nErrs ){
             errs++;
             reset = 1;
-            if( showErrs ){
+            if( stopOnErr ){
                 Show2kIQ( (short*)ubf, 'x' );
                 return;
             }
         }
 
         cnt++;
-        icnt++;
+        wcnt+=2048;
         reset=0;
 
         if( 0==(cnt%300) ){
            gettimeofday( &tv2, NULL );
            us = tv_delta_useconds( &tv2, &tv1 );
 
-           printf("%8d 2k wrd checked,t=%8d uS,i=%d,%f kwd/sec,errs=%d\n",
-                         cnt,us,icnt,(2.0*1e6*icnt/(double)us),errs );
-           icnt = 0;
+           printf("%8d 2k wrd checked,t=%8d uS,i=%d, %f MW/s, errs=%d\n",
+                         cnt,us,wcnt,(wcnt/(double)us),errs );
+           wcnt = 0;
            gettimeofday( &tv1, NULL );
         }
-        if( 0==(cnt%4000) ){
-           printf("changing lo...\n");
-           ddc->SetLoFreqHz( pinc ); 
-           pinc = (pinc+1)%4096;
-           reset= 1;
-        }
-    }
+
+    } // End of infinite processing loop
 
 }
 
-void IqpTest2 (Ddc100 *ddc )
-{
-    unsigned short ubf[4096];
-    unsigned short key;
-    int            nErrs,cnt,icnt,us;
-    int            reset;
-    unsigned short pinc;
-    struct timeval tv1,tv2;
-    int            errs;
-
-    printf("Starting iq pattern test\n");
-
-    ddc->SetTpg( 1 );
-    ddc->SetSource( 7 );
-    ddc->SetLoFreqHz( 0 ); 
-
-    cnt       = 0;
-    reset     = 1;
-    pinc      = 1;
-    icnt      = 0;
-    errs      = 0;
-    key       = 0;
-    ddc->FlushSamples();
-    gettimeofday( &tv1, NULL );
-    while( 1 ){
-        ddc->FlushSamples();
-        ddc->Get2kSamples( (short*)ubf );
-
-        reset     = 1;
-        nErrs=IqpTest_Check2kPattern(ubf,&key,reset,0);
-
-        if( nErrs ){
-            errs++;
-        }
-
-        cnt++;
-        icnt++;
-
-        if( 0==(cnt%300) ){
-           gettimeofday( &tv2, NULL );
-           us = tv_delta_useconds( &tv2, &tv1 );
-
-           printf("%8d 2k wrd checked,t=%8d uS,i=%d,%f kwd/sec,errs=%d\n",
-                         cnt,us,icnt,(2.0*1e6*icnt/(double)us),errs );
-           icnt = 0;
-           gettimeofday( &tv1, NULL );
-        }
-        if( 0==(cnt%4000) ){
-           printf("changing lo...\n");
-           ddc->SetLoFreqHz( pinc ); 
-           pinc = (pinc+1)%4096;
-           reset= 1;
-        }
-    }
-
-}
 ////////////////////////////////////////////////////////////////////////////////
 void Histogram (Ddc100 *ddc )
 {
@@ -407,7 +338,6 @@ main( int argc, char *argv[] )
     ddc = new Ddc100();
     ddc->Attach( bdc );
     ddc->Open();
-    ddc->StartPru();
     ddc->SetComplexSampleRate( 5000000 );
 
     idx = 1;
@@ -442,11 +372,11 @@ main( int argc, char *argv[] )
         }
 
         else if( 0==strcmp(argv[idx], "-write") ){
-            int rval,rg,wr; 
+            int rg,wr; 
             if( (idx+2) >= argc ){ usage(-1); }
             rg = strtol( argv[idx+1], &end, 0 );
             wr = strtol( argv[idx+1], &end, 0 );
-            rval = bdc->SpiRW16( BDC_REG_WR | ((rg&0x3f)<<8) | (wr&0xff) );
+            bdc->SpiRW16( BDC_REG_WR | ((rg&0x3f)<<8) | (wr&0xff) );
             printf("DdcTst:write rg %d = 0x%04hx (%hd)\n",rg,wr,wr);
         }
 
@@ -458,7 +388,6 @@ main( int argc, char *argv[] )
             rval = bdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
             rval = bdc->SpiRW16( 0 );
             printf("DdcTst:read rg %d = 0x%04hx (%hd)\n",rg,rval,rval);
-
         }
 
         else if( 0==strcmp(argv[idx], "-src") ){
@@ -523,10 +452,6 @@ main( int argc, char *argv[] )
 
         else if( 0==strcmp(argv[idx], "-iqp") ){
             IqpTest( ddc );
-        }
-
-        else if( 0==strcmp(argv[idx], "-iqp2") ){
-            IqpTest2( ddc );
         }
 
         else if( 0==strcmp(argv[idx], "-quad") ){

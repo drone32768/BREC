@@ -89,7 +89,6 @@ Ddc100::Attach( Bdc *bdc )
 int
 Ddc100::Open()
 {
-    int ret;
     unsigned short fwVer;
 
     printf("Ddc100:Open enter\n");
@@ -133,6 +132,8 @@ Ddc100::SetChannelMatch( int Ioff, double Igain, int Qoff, double Qgain )
                 Ioff,Inum,Igain, 
                 Qoff,Qnum,Qgain
     );
+
+    return(0);
 }
 
 //------------------------------------------------------------------------------
@@ -224,6 +225,11 @@ Ddc100::FlushSamples()
     // Start the fpga acquisition
 
     // TODO: Tell the pru to go back to streaming
+    // TODO: should stop fifo, let the pru catchup, then release
+
+    if( 0!=mPtrPruSram ){
+       mPidx = ( GetSramWord( SRAM_OFF_DRAM_OFF) / 2 ); // bytes to short index
+    }
 
     // Flush and restart the fifo
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
@@ -234,19 +240,52 @@ Ddc100::FlushSamples()
 
 //------------------------------------------------------------------------------
 int
+Ddc100::Get2kStream( short *bf )
+{
+    int dstIdx;
+    int pruIdx;
+    int p;
+
+    dstIdx = 0;
+    p      = 0;
+    pruIdx = GetSramWord( SRAM_OFF_DRAM_OFF);
+    pruIdx = pruIdx/2; // PRU1 dram offset is in bytes, need in shorts
+    while( dstIdx<2048 ){
+
+        // If our index is the same as pru, wait and then re-eval
+        while( mPidx == pruIdx ){
+            us_sleep(100);
+            pruIdx = GetSramWord( SRAM_OFF_DRAM_OFF);
+            pruIdx = pruIdx/2; // byte offset to short offset
+            p++;
+        }
+
+        // Copy a sample
+        bf[ dstIdx ] = mPtrPruSamples[ mPidx ];
+        dstIdx++;
+        mPidx = (mPidx+1)%PRU_MAX_SHORT_SAMPLES;
+    }
+    return(p);
+}
+
+//------------------------------------------------------------------------------
+int
 Ddc100::Get2kSamples( short *bf )
 {
     int          p;
-    int          srcIdx,idx;
-    unsigned int wd;
+    int          idx;
+    unsigned int belowThresh;
 
     // Transfer 2k samples with single word cpu xfers for now
 
     // Wait until the threashold bit inidcates samples ready
+    p = 0;
     do{
-       wd = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R61  );
-       if( !wd ) us_sleep( 100 );
-    }while( wd!=0 );
+       mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R61  );
+       belowThresh = mBdc->SpiRW16( 0x0 );
+       if( belowThresh ) us_sleep( 100 );
+       p = 0;
+    }while( belowThresh );
 
     // Read 2k of samples
     mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63  );
@@ -280,12 +319,15 @@ Ddc100::StartPru()
                   SRAM_OFF_DBG1 
                );
 
-    SetSramWord(  1,
+    SetSramWord(  0,
                   SRAM_OFF_DBG2 
                );
 
+    SetSramWord(  0,
+                  SRAM_OFF_DBG3 
+               );
 
-    SetSramShort(  PRU1_CMD_NONE,
+    SetSramShort( PRU1_CMD_NONE,
                   SRAM_OFF_CMD 
                );
 
@@ -349,19 +391,26 @@ void
 Ddc100::Show(const char *title )
 {
     int rg,val;
+    int cc,rc;
     printf("Ddc100: %s",title);
 
-/* FIXME - reduce verbosity for pru testing
-    for(rg=0;rg<21;rg++){
-        mBdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
-        val = mBdc->SpiRW16( 0 );
-        printf("r[%02d] = 0x%04x\n",rg,val);
+    rg = 0;
+    for(rc=0;rc<16;rc++){
+
+        for(cc=0;cc<4;cc++){
+            mBdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
+            val = mBdc->SpiRW16( 0 );
+            printf("r[%02d] = 0x%04x  ",rg,val);
+            rg++;
+        }
+        printf("\n");
+
     }
-*/
 
     if( 0!=mPtrPruSram ){
      printf("    PRU1 dbg1     0x%08x\n",GetSramWord(  SRAM_OFF_DBG1 ) );
      printf("    PRU1 dbg2     0x%08x\n",GetSramWord(  SRAM_OFF_DBG2 ) );
+     printf("    PRU1 dbg3     0x%08x\n",GetSramWord(  SRAM_OFF_DBG3 ) );
      printf("    PRU1 pbase    0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_PBASE) );
      printf("    PRU1 dram off 0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_OFF) );
      printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
@@ -376,7 +425,14 @@ Ddc100::Show(const char *title )
        
      }
      printf("\n");
-     
+
+     /* FIXME - not needed
+     for(idx=8;idx<32;idx+=2){
+       printf("%d 0x%04x, ",idx,GetSramShort(idx));
+     }
+     printf("\n");
+     */
+ 
     }else{
      printf("    PRU1 not started\n");
     }

@@ -91,8 +91,8 @@ MAIN1:
 #define    rCnt             r12
     MOV    rCnt,                0x0
 
-#define    rP0CPcod         r13  // Pru0CmdPtr code 
-    MOV    rP0CPcod,            (0x2000 + 8) // FIXM - get this from F board
+#define    rP0CPcod         r13  // Pru0CmdPtr code  // FIXME get from F brd
+    MOV    rP0CPcod,            (0x2008)
 
 #define    rRes01           r14 
 
@@ -114,6 +114,9 @@ MAIN1:
 #define    rDrmOffsetPtrPtr r20
     MOV    rDrmOffsetPtrPtr,     SRAM_OFF_DRAM_OFF
 
+#define    rDbg3Ptr         r21
+    MOV    rDbg3Ptr,            (SRAM_OFF_DBG3)
+
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:
     // increment dbg2 every loop pass
@@ -126,13 +129,13 @@ main_loop:
 
     // load and dispatch command
     LD16      rCmdCode, rCmdPtr            // load the command code
-    QBEQ      xfer2k,rCmdCode,PRU1_CMD_2KWORDS
+    QBEQ      xfer_block,rCmdCode,PRU1_CMD_2KWORDS
 
     // command not processed
     MOV       rResCode, rCmdCode, 
     JMP       main_loop
 
-xfer2k:
+xfer_block:
     // increment dbg2 every xfer attempt
     LD32      rTmp1, rDbg2Ptr
     ADD       rTmp1,rTmp1,1
@@ -140,20 +143,52 @@ xfer2k:
 
     // check for 2k avail (ok=0 in rResCode)
     MOV       rArg0,rP0CPcod   
-    CALL      check2kfifo
-    QBEQ      readdone,rArg0,0
+    CALL      fifo_below_2k
+    QBNE      xfer_done,rArg0,0
      
-read2k:
-    MOV       rArg0,rP0CPcod   
+readblock:
+    MOV       rArg0,rP0CPcod    // 256
     CALL      read256
-
     MOV       rArg0,rP0CPcod   
     CALL      save256
 
-    // TODO replicate above to full 2k
+    MOV       rArg0,rP0CPcod    // 512
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
 
+    MOV       rArg0,rP0CPcod    // 768
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
+
+    MOV       rArg0,rP0CPcod    // 1024 
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
+
+    MOV       rArg0,rP0CPcod    // 256
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
+
+    MOV       rArg0,rP0CPcod    // 512
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
+
+    MOV       rArg0,rP0CPcod    // 768
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
+
+    MOV       rArg0,rP0CPcod    // 1024 
+    CALL      read256
+    MOV       rArg0,rP0CPcod   
+    CALL      save256
+
+xfer_done:
     // Set res to cmd and return through main loop
-readdone:
     MOV       rResCode, rCmdCode, 
     JMP       main_loop
 
@@ -176,8 +211,6 @@ save256_copyout:
     ADD       rTmp2,rTmp2,2          // inc msg ptr
     SUB       rCnt,rCnt,1            // dec count
 
-// MOV rTmp1,rCnt  // FIXME - debug only
-
     // Store and advance ddr dst pointer
     SBBO      rTmp1,rDrmBasePtr,rDrmOffset, 2       // store samp in drm
     ADD       rDrmOffset,rDrmOffset,2               // inc drm dst addr 
@@ -193,7 +226,7 @@ save256_copyout:
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Read 256 words from spi fifo
+// Read 256 spi commands (to read fifo) with results left in pru0 ram
 // ARG  : rArg0 = pointer to pru0 cmd
 // LOCAL: rTmp1, rTmp2
 // RET  : not applicable
@@ -201,29 +234,30 @@ save256_copyout:
 read256:
 
     // Setup to fill in 256 command words (each word is a read command)
-    MOV       rTmp2,rArg0         
-    MOV       rTmp1,SPI_CMD_RD_FIFO_DATA  
+    MOV       rTmp1,rArg0         
+    ADD       rTmp1,rTmp1, 4         // +4 first spi command
+    MOV       rTmp2,SPI_CMD_RD_FIFO_DATA  
     MOV       rCnt,256           
 
     // Fill in the payload of read command words
 read256_copyin:
-    ST16      rTmp1,rTmp2            // store word
-    ADD       rTmp2,rTmp2,2          // inc msg ptr
+    ST16      rTmp2,rTmp1            // store word
+    ADD       rTmp1,rTmp1,2          // inc msg ptr
     SUB       rCnt,rCnt,1            // dec count
     QBNE      read256_copyin,rCnt,0  // loop until done
 
     // Add one last nop command to read last word
-    MOV       rTmp1,SPI_CMD_NOP      // last spi word to execute 
-    ST16      rTmp1,rTmp2            // store word
+    MOV       rTmp2,SPI_CMD_NOP      // last spi word to execute 
+    ST16      rTmp2,rTmp1            // store word
 
     // Fill in the command word count 
     MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 2    
+    ADD       rTmp1,rTmp1, 2         // +2 spi command count
     MOV       rTmp2,257
     ST16      rTmp2,rTmp1            // store count
 
     // Issue the command to start
-    MOV       rTmp2,PRU0_CMD_16ARRAY  // issue the 16array command
+    MOV       rTmp2,PRU0_CMD_16ARRAY  // +0 pru0 command
     ST16      rTmp2,rArg0
 
     // Wait until the command word count is 0 (pru0 is done)
@@ -238,43 +272,41 @@ waitdone_pru0:
 // Check the fifo status for at least 2k samples
 // ARG  : rArg0 = pointer to pru0 cmd
 // LOCAL: rTmp1, rTmp2, rCnt
-// RET  : rArg0 = 0 if not read, non 0 if ready
+// RET  : rArg0 = non 0 if fifo is below 2k, 0 else
 //
-check2kfifo:
+fifo_below_2k:
 
     // Store an SPI command
     MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 6    
+    ADD       rTmp1,rTmp1, 6    // +6 for second command
     MOV       rTmp2,SPI_CMD_RD_FIFO_STATUS        
     ST16      rTmp2,rTmp1   
 
     // Store an SPI command
     MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 4    
+    ADD       rTmp1,rTmp1, 4    // +4 for first command
     MOV       rTmp2,SPI_CMD_RD_FIFO_STATUS        
     ST16      rTmp2,rTmp1   
 
     // Store the PRU0 transfer count
     MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 2    
+    ADD       rTmp1,rTmp1, 2    // +2 count of spi commands 
     MOV       rTmp2, 2        
     ST16      rTmp2,rTmp1   
 
     // Store the PRU0 operation/command
-    MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 0    
+    MOV       rTmp1,rArg0       // +0 for command  
     MOV       rTmp2,PRU0_CMD_16ARRAY        
     ST16      rTmp2,rTmp1   
 
 check2kfifo_waita:
     MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 0    
     LD16      rTmp2,rTmp1
     QBNE      check2kfifo_waita,rTmp2,0  // loop until done
 
     // Get the final result 
     MOV       rTmp1,rArg0        
-    ADD       rTmp1,rTmp1, 6    
+    ADD       rTmp1,rTmp1, 6     // Get results of 2nd command at +6 
     LD16      rTmp2,rTmp1
    
     // Save result in arg0 and return
