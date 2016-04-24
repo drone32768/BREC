@@ -99,8 +99,7 @@ int
 Bdc::GetFwVersion()
 {
     int ver;
-    SpiRW16( BDC_REG_RD | BDC_REG_R1 );
-    ver = SpiRW16(0);
+    ver = SpiRead16( BDC_REG_RD | BDC_REG_R1 );
     return(ver);
 }
 
@@ -108,10 +107,9 @@ Bdc::GetFwVersion()
 int
 Bdc::GetFwCompat()
 {
-    int ver;
-    SpiRW16( BDC_REG_RD | BDC_REG_R0 );
-    ver = SpiRW16(0);
-    return(ver);
+    int com;
+    com = SpiRead16( BDC_REG_RD | BDC_REG_R0 );
+    return(com);
 }
 
 //------------------------------------------------------------------------------
@@ -130,16 +128,36 @@ Bdc::PruGetDramPtr()
 
 //------------------------------------------------------------------------------
 int
-Bdc::SpiRW16( int wval )
+Bdc::SpiRead16( int reg )
 {
-    unsigned short sbf[256];
-    int            rval;
+    unsigned short sbf[2];
  
-    sbf[0] = (unsigned short)(wval&0xffff);
-    mFbrd.SpiXferArray16( sbf, 1 );
-    rval   = (int)( sbf[0] );
+    sbf[0] = (unsigned short)((reg&0xffff) | BDC_REG_RD);
+    sbf[1] = (unsigned short)(0);
+    mFbrd.SpiXferArray16( sbf, 2 );
+    return( (int)(sbf[1]) );
+}
 
-    return(rval);
+//------------------------------------------------------------------------------
+int
+Bdc::SpiXfer16( int op )
+{
+    unsigned short sbf[2];
+ 
+    sbf[0] = (unsigned short)(op&0xffff);
+    mFbrd.SpiXferArray16( sbf, 1 );
+    return( (int)(sbf[0]) );
+}
+
+//------------------------------------------------------------------------------
+int
+Bdc::SpiWrite16( int reg )
+{
+    unsigned short sbf[2];
+ 
+    sbf[0] = (unsigned short)((reg&0xffff) | BDC_REG_WR);
+    mFbrd.SpiXferArray16( sbf, 2 );
+    return(reg);
 }
 
 //------------------------------------------------------------------------------
@@ -201,14 +219,13 @@ BdcGpio::SetDirInput( int isInput )
    }
 
    // Read current value
-   mBdc->SpiRW16( rcmd  );
-   val = mBdc->SpiRW16( 0  );
+   val = mBdc->SpiRead16( rcmd  );
 
    // Clear and reset bit
    val = (val & ~(1<<mPin) ) | ( (isInput?0:1)<<mPin);
 
    // Write new value
-   mBdc->SpiRW16( wcmd | val  );
+   mBdc->SpiWrite16( wcmd | val  );
 
    return( 0 );
 }
@@ -230,14 +247,13 @@ BdcGpio::Set( int v )
    }
 
    // Read current value
-   mBdc->SpiRW16( rcmd  );
-   val = mBdc->SpiRW16( 0  );
+   val = mBdc->SpiRead16( rcmd  );
 
    // Clear and reset bit
    val = (val & ~(1<<mPin) ) | ( (v&1)<<mPin);
 
    // Write new value
-   mBdc->SpiRW16( wcmd | val  );
+   mBdc->SpiWrite16( wcmd | val  );
 
    return( 0 );
 }
@@ -257,8 +273,7 @@ BdcGpio::Get( )
    }
 
    // Read current value
-   mBdc->SpiRW16( rcmd  );
-   val = mBdc->SpiRW16( 0  );
+   val = mBdc->SpiRead16( rcmd  );
 
    // Select the specified bit
    val = (val>>mPin) & 0x1;

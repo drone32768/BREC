@@ -123,10 +123,10 @@ Ddc100::SetChannelMatch( int Ioff, double Igain, int Qoff, double Qgain )
     Inum = -128 * Igain;
     Qnum = -128 * Qgain;
 
-    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R20 | (Ioff&0xff) );
-    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R21 | (Inum&0xff) );
-    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R22 | (Qoff&0xff) );
-    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R23 | (Qnum&0xff) );
+    mBdc->SpiWrite16(  BDC_REG_WR | BDC_REG_R20 | (Ioff&0xff) );
+    mBdc->SpiWrite16(  BDC_REG_WR | BDC_REG_R21 | (Inum&0xff) );
+    mBdc->SpiWrite16(  BDC_REG_WR | BDC_REG_R22 | (Qoff&0xff) );
+    mBdc->SpiWrite16(  BDC_REG_WR | BDC_REG_R23 | (Qnum&0xff) );
 
     printf("Ddc100:Match: I=[+ %d, X %d (%f) ] Q=[+ %d, X %d (%f)]\n",
                 Ioff,Inum,Igain, 
@@ -143,7 +143,7 @@ Ddc100::SetTpg( int arg )
     printf("Ddc100:SetTpg=%d\n",arg);
     mTpg = arg;
 
-    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R19 | (mTpg&0xff) );
+    mBdc->SpiWrite16(  BDC_REG_WR | BDC_REG_R19 | (mTpg&0xff) );
 
     return(0);
 }
@@ -161,7 +161,7 @@ Ddc100::SetSource( int arg )
     printf("Ddc100:SetSource=%d (mTpg=%d)\n",arg,mTpg);
     mFifoSrc = arg;
 
-    mBdc->SpiRW16(  BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
+    mBdc->SpiWrite16(  BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
 
     return( arg );
 }
@@ -172,8 +172,7 @@ Ddc100::GetFwVersion()
 {
     int ver;
 
-    mBdc->SpiRW16(  BDC_REG_RD | BDC_REG_R1 );
-    ver = mBdc->SpiRW16( 0 );
+    ver = mBdc->SpiRead16(  BDC_REG_RD | BDC_REG_R1 );
     return(ver);
 }
 
@@ -195,8 +194,8 @@ Ddc100::SetLoFreqHz( double freqHz )
     printf("Ddc100: pinc = %lld 0x%08x (0x%04x 0x%04x)\n",
                    pinc,(unsigned int)pinc,pincHi,pincLo);
 
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R17 | pincLo );
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R18 | pincHi );
+    mBdc->SpiWrite16( BDC_REG_WR | BDC_REG_R17 | pincLo );
+    mBdc->SpiWrite16( BDC_REG_WR | BDC_REG_R18 | pincHi );
 
     actHz     = pinc * mFsHz / 65536;
     mLoFreqHz = actHz;
@@ -213,7 +212,7 @@ Ddc100::FlushSamples()
     unsigned short res;
 
     // Place the fifo in reset
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
+    mBdc->SpiWrite16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
 
     // If we are streaming then we need to take additional steps
     if( 0!=mPtrPruSram ){
@@ -237,7 +236,7 @@ Ddc100::FlushSamples()
     }
 
     // Take the fifo out of reset
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
+    mBdc->SpiWrite16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
 
     // If the pru is active restore the pru1 active command
     if( 0!=mPtrPruSram ){
@@ -304,18 +303,23 @@ Ddc100::Get2k_Cpu( short *bf )
     // Wait until the threashold bit inidcates samples ready
     p = 0;
     do{
-       mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R61  );
-       belowThresh = mBdc->SpiRW16( 0x0 );
+       belowThresh = mBdc->SpiRead16( BDC_REG_RD | BDC_REG_R61  );
        if( belowThresh ) us_sleep( 100 );
        p = 0;
     }while( belowThresh );
 
     // Read 2k of samples
-    mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63  );
+
+    // Prime the first sample
+    mBdc->SpiXfer16( BDC_REG_RD | BDC_REG_R63  );
+
+    // Loop over n-1 samples
     for(idx=0;idx<2047;idx++){
-        bf[idx] = mBdc->SpiRW16( BDC_REG_RD | BDC_REG_R63 );
+        bf[idx] = mBdc->SpiXfer16( BDC_REG_RD | BDC_REG_R63 );
     }
-    bf[idx] = mBdc->SpiRW16( 0 ); // Fetch last value but do not init read
+
+    // Fetch last sample but do not initiate read
+    bf[idx] = mBdc->SpiXfer16( 0 ); 
 
     return( p );
 }
@@ -421,8 +425,7 @@ Ddc100::Show(const char *title )
     for(rc=0;rc<16;rc++){
 
         for(cc=0;cc<4;cc++){
-            mBdc->SpiRW16( BDC_REG_RD | ((rg&0x3f)<<8) );
-            val = mBdc->SpiRW16( 0 );
+            val = mBdc->SpiRead16( BDC_REG_RD | ((rg&0x3f)<<8) );
             printf("r[%02d] = 0x%04x  ",rg,val);
             rg++;
         }

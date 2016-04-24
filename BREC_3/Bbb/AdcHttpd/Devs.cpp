@@ -98,7 +98,7 @@ int Devs::Open()
         mMix = (Ddc100*)mAdc;
 
         // Comment this line out to use CPU based SPI to samples
-        // mAdc->StartPru();
+        mAdc->StartPru();
     }
 
     else{

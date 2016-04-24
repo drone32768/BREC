@@ -65,17 +65,16 @@ gpio_loop_test( Bdc *bdc )
    printf("NOTE: This test assumes a direct connect between GPIO ports.\n");
 
    // Make all pins in both ports inputs
-   bdc->SpiRW16( BDC_GPIO0_DIR_WR | 0 );
-   bdc->SpiRW16( BDC_GPIO1_DIR_WR | 0 );
+   bdc->SpiWrite16( BDC_GPIO0_DIR_WR | 0 );
+   bdc->SpiWrite16( BDC_GPIO1_DIR_WR | 0 );
 
    for( bit=0;bit<6;bit++ ){
       printf("Testing 0:%d -> 1:%d ... ",bit,bit);
 
-      bdc->SpiRW16( BDC_GPIO0_DIR_WR | (1<<bit) );
-      bdc->SpiRW16( BDC_GPIO0_OUT_WR | (1<<bit) );
+      bdc->SpiWrite16( BDC_GPIO0_DIR_WR | (1<<bit) );
+      bdc->SpiWrite16( BDC_GPIO0_OUT_WR | (1<<bit) );
 
-      bdc->SpiRW16( BDC_GPIO1_INP_RD | (1<<bit) );
-      val = bdc->SpiRW16(0);
+      val = bdc->SpiRead16( BDC_GPIO1_INP_RD | (1<<bit) );
      
       if( !(val & (1<<bit)) ){
           printf("FAIL mismatch on bit %d, read 0x%02x\n",bit,val);
@@ -86,17 +85,16 @@ gpio_loop_test( Bdc *bdc )
    }
 
    // Make all pins in both ports inputs
-   bdc->SpiRW16( BDC_GPIO0_DIR_WR | 0 );
-   bdc->SpiRW16( BDC_GPIO1_DIR_WR | 0 );
+   bdc->SpiWrite16( BDC_GPIO0_DIR_WR | 0 );
+   bdc->SpiWrite16( BDC_GPIO1_DIR_WR | 0 );
 
    for( bit=0;bit<6;bit++ ){
       printf("Testing 1:%d -> 0:%d ... ",bit,bit);
 
-      bdc->SpiRW16( BDC_GPIO1_DIR_WR | (1<<bit) );
-      bdc->SpiRW16( BDC_GPIO1_OUT_WR | (1<<bit) );
+      bdc->SpiWrite16( BDC_GPIO1_DIR_WR | (1<<bit) );
+      bdc->SpiWrite16( BDC_GPIO1_OUT_WR | (1<<bit) );
 
-      bdc->SpiRW16( BDC_GPIO0_INP_RD | (1<<bit) );
-      val = bdc->SpiRW16(0);
+      val = bdc->SpiRead16( BDC_GPIO0_INP_RD | (1<<bit) );
      
       if( !(val & (1<<bit)) ){
           printf("FAIL mismatch on bit %d, read 0x%02x\n",bit,val);
@@ -107,8 +105,8 @@ gpio_loop_test( Bdc *bdc )
    }
 
    // Make all pins in both ports inputs
-   bdc->SpiRW16( BDC_GPIO0_DIR_WR | 0 );
-   bdc->SpiRW16( BDC_GPIO1_DIR_WR | 0 );
+   bdc->SpiWrite16( BDC_GPIO0_DIR_WR | 0 );
+   bdc->SpiWrite16( BDC_GPIO1_DIR_WR | 0 );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +226,7 @@ main( int argc, char *argv[] )
             if( (idx+1) >= argc ){ usage(-1); }
             val = strtol( argv[idx+1], &end, 0 );
 
-            rval = bdc->SpiRW16( val );
+            rval = bdc->SpiWrite16( val );
             printf("BdcTst:w=0x%04hx r=0x%04hx (%hd)\n",val,rval,rval);
         }
 

@@ -142,7 +142,9 @@ class Bdc {
 
     volatile unsigned char  *PruGetSramPtr();
     volatile unsigned short *PruGetDramPtr();
-    int                      SpiRW16( int wval );
+    int                      SpiRead16(  int reg );
+    int                      SpiWrite16( int reg ); 
+    int                      SpiXfer16( int op ); 
 
 };
 
