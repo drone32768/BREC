@@ -31,7 +31,7 @@ $(TGT)/Ddc100.o	: Ddc100.cpp Ddc100.h pru_images.h | $(TGT)
 	g++ $(CPPFLAGS) -c -I../ -I$(PRU_INC) Ddc100.cpp -o $(TGT)/Ddc100.o
 
 
-$(TGT)/pru01.bin : pru01.p pruinc.h | $(TGT)
+$(TGT)/pru01.bin : pru01.p pruinc.h ../Fboard/pruinc.h | $(TGT)
 	${PASM} -V3 -b pru01.p
 	mv pru01.bin $(TGT)/pru01.bin
 

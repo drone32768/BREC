@@ -50,11 +50,11 @@
 #define SPI_CMD_RD_FIFO_STATUS 0xBD00   // 0x8000 | 0x3d00
 #define SPI_CMD_NOP            0x0000
 
-// spi read fifo (actual fifo)
-// #define SPI_CMD_RD_FIFO_DATA   0xBF00   // 0x8000 | 0x3f00
+// spi read fifo (actual fifo R63)
+#define SPI_CMD_RD_FIFO_DATA   0xBF00   // 0x8000 | 0x3f00
 
-// spi read fifo (testing)
-#define SPI_CMD_RD_FIFO_DATA   0x8300   // 0x8000 | 0x0300
+// spi read fifo (testing - counting reg R3)
+// #define SPI_CMD_RD_FIFO_DATA   0x8300   // 0x8000 | 0x0300
 
 // This is a function of the library and kernel module
 // TODO: should be able to query this ...

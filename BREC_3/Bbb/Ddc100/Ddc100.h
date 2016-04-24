@@ -60,6 +60,8 @@ private:
     ////////////////////////////////////////
     Bdc                     *mBdc;
  
+    int Get2k_Cpu( short *bf ); 
+    int Get2k_Pru( short *bf ); 
 
 public:
     Ddc100();

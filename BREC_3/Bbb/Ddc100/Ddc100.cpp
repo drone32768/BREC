@@ -172,11 +172,8 @@ Ddc100::GetFwVersion()
 {
     int ver;
 
-    mBdc->SpiRW16(  BDC_REG_RD | BDC_REG_R0 );
+    mBdc->SpiRW16(  BDC_REG_RD | BDC_REG_R1 );
     ver = mBdc->SpiRW16( 0 );
-
-    FlushSamples(); // Necessary to start streaming
-
     return(ver);
 }
 
@@ -201,8 +198,6 @@ Ddc100::SetLoFreqHz( double freqHz )
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R17 | pincLo );
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R18 | pincHi );
 
-    FlushSamples(); // Necessary to continue streaming
-
     actHz     = pinc * mFsHz / 65536;
     mLoFreqHz = actHz;
     printf("Ddc100:SetFreq= actual %f Hz\n",actHz);
@@ -214,37 +209,65 @@ Ddc100::SetLoFreqHz( double freqHz )
 int
 Ddc100::FlushSamples()
 {
-    // printf("Ddc100:FlushSamples Enter\n");
+    unsigned short cmd=PRU1_CMD_NONE;
+    unsigned short res;
 
-    // Stop the fpga acquisition
+    // Place the fifo in reset
+    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
 
-    // Flush the fpga fifos
-
-    // TODO: Wait for the DRAM to drain to a constant spot
-
-    // Start the fpga acquisition
-
-    // TODO: Tell the pru to go back to streaming
-    // TODO: should stop fifo, let the pru catchup, then release
-
+    // If we are streaming then we need to take additional steps
     if( 0!=mPtrPruSram ){
-       mPidx = ( GetSramWord( PRU1_LOFF_DRAM_OFF) / 2 ); // bytes to short index
+
+       // Save the currently active pru1 command
+       cmd = GetSramWord( PRU1_LOFF_CMD );
+
+       // Make sure pru1 has stopped writing data to dram
+       do{
+           res = GetSramWord( PRU1_LOFF_RES );
+           if( res!=PRU1_CMD_NONE ){
+               SetSramShort(PRU1_CMD_NONE, PRU1_LOFF_CMD );
+               us_sleep(10);
+           }
+       }while( res!=PRU1_CMD_NONE );
+      
+       // Update the cpu head index to current pru1 index
+       // (div by 2 to convert from byte offset to short index)
+       mPidx = ( GetSramWord( PRU1_LOFF_DRAM_OFF) / 2 ); 
+
     }
 
-    // Flush and restart the fifo
-    mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | 0x40 | (mFifoSrc&0xff) );
+    // Take the fifo out of reset
     mBdc->SpiRW16( BDC_REG_WR | BDC_REG_R16 | (mFifoSrc&0xff) );
+
+    // If the pru is active restore the pru1 active command
+    if( 0!=mPtrPruSram ){
+        SetSramShort(cmd, PRU1_LOFF_CMD );
+    }
 
     return(0);
 }
 
 //------------------------------------------------------------------------------
 int
-Ddc100::Get2kStream( short *bf )
+Ddc100::Get2kSamples( short *bf )
+{
+    if( 0!=mPtrPruSram ){
+        return( Get2k_Pru(bf) );
+    }
+    else{
+        return( Get2k_Cpu(bf) );
+    }
+}
+
+//------------------------------------------------------------------------------
+int
+Ddc100::Get2k_Pru( short *bf )
 {
     int dstIdx;
     int pruIdx;
     int p;
+
+    // TODO this should be converted to copy more than 16 bits at a time
 
     dstIdx = 0;
     p      = 0;
@@ -270,7 +293,7 @@ Ddc100::Get2kStream( short *bf )
 
 //------------------------------------------------------------------------------
 int
-Ddc100::Get2kSamples( short *bf )
+Ddc100::Get2k_Cpu( short *bf )
 {
     int          p;
     int          idx;

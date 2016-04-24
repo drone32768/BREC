@@ -100,7 +100,7 @@ void IqpTest (Ddc100 *ddc )
 
         // ddc->Get2kSamples( (short*)ubf );
 
-        ddc->Get2kStream( (short*)ubf );
+        ddc->Get2kSamples( (short*)ubf );
 
         nErrs=IqpTest_Check2kPattern(ubf,&key,reset,showErrs);
 
