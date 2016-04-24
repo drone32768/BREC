@@ -238,7 +238,7 @@ flash_write(
    flash_rdsr(page_bytes);
    if(verbose){ printf("RDSR = 0x%02x\n",page_bytes[0]); }
    offset = 0;
-   while( offset < pbyte_count ){
+   while( offset < (unsigned int)pbyte_count ){
        if(verbose){ printf("   ppage @ %d    \n",offset); }
 
        flash_wren();
@@ -255,7 +255,7 @@ flash_write(
 
    if(verbose){ printf("Begin verify...\n"); }
    offset = 0;
-   while( offset < pbyte_count ){
+   while( offset < (unsigned int)pbyte_count ){
        if(verbose){ printf("   vpage @ %d    \n",offset); }
        flash_read_page( offset, page_bytes );
        if( memcmp(page_bytes,pbytes+offset,256) ){
@@ -287,8 +287,7 @@ flash_read(
 )
 {
    unsigned int  offset;
-   unsigned char page_bytes[256];
-   int           cnt,idx,err;
+   int           err;
 
    if(verbose){ printf("Reading bytes %d \n",pbyte_count); }
 
@@ -296,7 +295,7 @@ flash_read(
    if( err ) return( err );
 
    offset = 0;
-   while( offset < pbyte_count ){
+   while( offset < (unsigned int)pbyte_count ){
        if(verbose){ printf("   rpage @ %d    \n",offset); }
        flash_read_page( offset, &(pbytes[offset]) );
        offset += 256;
@@ -317,8 +316,12 @@ ReadBitHeaders( FILE *fh, unsigned char *bf, int verbose )
 {
     unsigned short len;
     unsigned int   bytes;
+    size_t         rbytes;
 
-    fread(bf,1,13,fh);
+    rbytes = fread(bf,1,13,fh);
+    if( rbytes!=13 ){
+        return(0);
+    }
 
     if(verbose) printf("Bitstream Headers:\n");
     while( 1 ){
@@ -337,7 +340,7 @@ ReadBitHeaders( FILE *fh, unsigned char *bf, int verbose )
            bytes = fread(bf,1,2,fh);
            if( 2!=bytes ) return( bytes );
            len = ntohs( *( unsigned short *)bf );
-           if(verbose) printf("[0x%04x] ",len,len);
+           if(verbose) printf("[0x%04x] ",len);
         }
     
         bytes = fread(bf,1,len,fh);
@@ -490,7 +493,6 @@ main( int argc, char *argv[] )
             printf("writing file %s\n",argv[idx+1]);
 
             unsigned char *image;
-            FILE          *fh;
             int            rbytes;
             int            max_bytes = 1024*1024;
             int            err;

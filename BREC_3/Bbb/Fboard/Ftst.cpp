@@ -72,7 +72,6 @@ void usage( int exit_code )
 
 void pat01()
 {
-    int            idx;
     unsigned short sbf[128];
     unsigned short vAct,vExp;
     unsigned int   totCnt,errCnt,intCnt;
@@ -127,7 +126,7 @@ void pat01()
 
 void pat02()
 {
-    int            idx;
+    unsigned int   idx;
     unsigned short sbf[1024];
     unsigned short vAct,vExp;
     unsigned int   totCnt,errCnt,intCnt,xferCnt;
@@ -187,7 +186,7 @@ void pat02()
 
 void pat03()
 {
-    int            idx;
+    unsigned int   idx;
     unsigned short sbf[1024];
     unsigned short vAct,vExp;
     unsigned int   totCnt,errCnt,intCnt,xferCnt;

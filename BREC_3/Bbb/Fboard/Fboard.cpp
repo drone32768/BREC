@@ -99,12 +99,14 @@ static int
 fspi_select()
 {
     hss.Set( 0 );
+    return(0);
 }
 
 static int 
 fspi_deselect()
 {
     hss.Set( 1 );
+    return(0);
 }
 
 static int 
@@ -265,7 +267,7 @@ Fboard::PruStart()
     memset( (void*)mPtrPruSram, 0x0, 8192 );
 
     // Set specific required values
-    SetSramWord( 0, SRAM_OFF_CMD1 );
+    SetSramWord( 0, PRU0_LOFF_CMD1 );
 
     // Write the instructions
     prussdrv_pru_write_memory(PRUSS0_PRU0_IRAM,0,
@@ -370,11 +372,11 @@ Fboard::Show()
     printf("    brecFjtag DT  = %d\n",FindCapeByName( "brecFjtag" ) );
     printf("    brecFpru  DT  = %d\n",FindCapeByName( "brecFpru" ) );
     if( mUsePru ){
-        printf("    PRU0 dbg1       0x%08x\n",GetSramWord( SRAM_OFF_DBG1 ) );
-        printf("    PRU0 dbg2       0x%08x\n",GetSramWord( SRAM_OFF_DBG2 ) );
-        printf("    PRU0 cmd[cmd]   0x%08x\n",GetSramShort( SRAM_OFF_CMD1 ) );
-        printf("    PRU0 cmd[cnt]   0x%08x\n",GetSramShort( SRAM_OFF_CMD1+2 ));
-        printf("    PRU0 cmd1+4     0x%08x\n",GetSramWord( SRAM_OFF_CMD1+4 ) );
+        printf("    PRU0 dbg1       0x%08x\n",GetSramWord( PRU0_LOFF_DBG1 ) );
+        printf("    PRU0 dbg2       0x%08x\n",GetSramWord( PRU0_LOFF_DBG2 ) );
+        printf("    PRU0 cmd[cmd]   0x%08x\n",GetSramShort( PRU0_LOFF_CMD1 ) );
+        printf("    PRU0 cmd[cnt]   0x%08x\n",GetSramShort( PRU0_LOFF_CMD1+2 ));
+        printf("    PRU0 cmd1+4     0x%08x\n",GetSramWord( PRU0_LOFF_CMD1+4 ) );
     }
 }
 
@@ -400,17 +402,17 @@ Fboard::SpiXferStream8( unsigned char *bf, int bfCount )
 
       // Copy bytes in and issue byte count as command
       for(idx=0;idx<bfCount;idx++){
-          SetSramByte( bf[idx], SRAM_OFF_CMD1+4+idx );
+          SetSramByte( bf[idx], PRU0_LOFF_CMD1+4+idx );
       }
  
       // Issue the command
-      SetSramShort( bfCount,          SRAM_OFF_CMD1+2 );
-      SetSramShort( PRU0_CMD_8STREAM, SRAM_OFF_CMD1 );
+      SetSramShort( bfCount,          PRU0_LOFF_CMD1+2 );
+      SetSramShort( PRU0_CMD_8STREAM, PRU0_LOFF_CMD1 );
 
       // Wait for the command to complete
       cnt   = 0;
       limit = 1000; // wait for this many times nominal expected xfer time
-      while( 0!=GetSramShort(SRAM_OFF_CMD1) && (cnt<1000) ){
+      while( 0!=GetSramShort(PRU0_LOFF_CMD1) && (cnt<1000) ){
           us_sleep(1 * bfCount);  // assume nominal 1us/byte
           cnt++;
       }
@@ -420,7 +422,7 @@ Fboard::SpiXferStream8( unsigned char *bf, int bfCount )
 
       // Copy out the results
       for(idx=0;idx<bfCount;idx++){
-          bf[idx] = GetSramByte( SRAM_OFF_CMD1+4+idx );
+          bf[idx] = GetSramByte( PRU0_LOFF_CMD1+4+idx );
       }
 
    }
@@ -454,17 +456,17 @@ Fboard::SpiXferArray16( unsigned short *bf, int bfCount )
 
       // Copy data in
       for(idx=0;idx<bfCount;idx++){
-          SetSramShort( bf[idx], SRAM_OFF_CMD1+4+(2*idx) );
+          SetSramShort( bf[idx], PRU0_LOFF_CMD1+4+(2*idx) );
       }
  
       // Issue the command
-      SetSramShort( bfCount,          SRAM_OFF_CMD1+2 );
-      SetSramShort( PRU0_CMD_16ARRAY, SRAM_OFF_CMD1 );
+      SetSramShort( bfCount,          PRU0_LOFF_CMD1+2 );
+      SetSramShort( PRU0_CMD_16ARRAY, PRU0_LOFF_CMD1 );
 
       // Wait for the command to complete
       cnt   = 0;
       limit = 1000; // wait for this many times nominal expected xfer time
-      while( 0!=GetSramShort(SRAM_OFF_CMD1) && (cnt<1000) ){
+      while( 0!=GetSramShort(PRU0_LOFF_CMD1) && (cnt<1000) ){
           us_sleep(1 * bfCount);  // assume nominal 1us/byte
           cnt++;
       }
@@ -474,7 +476,7 @@ Fboard::SpiXferArray16( unsigned short *bf, int bfCount )
 
       // Copy out the results
       for(idx=0;idx<bfCount;idx++){
-          bf[idx] = GetSramShort( SRAM_OFF_CMD1+4+(2*idx) );
+          bf[idx] = GetSramShort( PRU0_LOFF_CMD1+4+(2*idx) );
       }
 
    }
@@ -508,17 +510,17 @@ Fboard::SpiXferArray16x2( unsigned short *bf, int bfCount )
 
       // Copy data in
       for(idx=0;idx<bfCount;idx++){
-          SetSramShort( bf[idx], SRAM_OFF_CMD1+4+(2*idx) );
+          SetSramShort( bf[idx], PRU0_LOFF_CMD1+4+(2*idx) );
       }
  
       // Issue the command
-      SetSramShort( bfCount,            SRAM_OFF_CMD1+2 );
-      SetSramShort( PRU0_CMD_16ARRAY2x, SRAM_OFF_CMD1 );
+      SetSramShort( bfCount,            PRU0_LOFF_CMD1+2 );
+      SetSramShort( PRU0_CMD_16ARRAY2x, PRU0_LOFF_CMD1 );
 
       // Wait for the command to complete
       cnt   = 0;
       limit = 1000; // wait for this many times nominal expected xfer time
-      while( 0!=GetSramShort(SRAM_OFF_CMD1) && (cnt<1000) ){
+      while( 0!=GetSramShort(PRU0_LOFF_CMD1) && (cnt<1000) ){
           us_sleep(1 * bfCount);  // assume nominal 1us/byte
           cnt++;
       }
@@ -528,7 +530,7 @@ Fboard::SpiXferArray16x2( unsigned short *bf, int bfCount )
 
       // Copy out the results
       for(idx=0;idx<bfCount;idx++){
-          bf[idx] = GetSramShort( SRAM_OFF_CMD1+4+(2*idx) );
+          bf[idx] = GetSramShort( PRU0_LOFF_CMD1+4+(2*idx) );
       }
 
    }

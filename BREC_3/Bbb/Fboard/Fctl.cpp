@@ -52,8 +52,6 @@ int
 main( int argc, char *argv[] )
 {
     int            idx;
-    int            val;
-    char          *end;
     Fboard         fbrd;
 
     printf("Fctl: Enter Main\n");

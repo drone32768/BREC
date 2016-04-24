@@ -49,17 +49,21 @@
 // There are two mailbox or command inputs.  One is directed for cpu
 // use, while the other is intended to be pru1.
 //
-// SRAM_OFF_CMD1 = 0x00000(pru0)   +  0x0008 (SRAM_OFF_CMD1)
-// SRAM_OFF_CMD2 = 0x10000(shared) +  0x0008 (SRAM_OFF_CMD2)
+// PRU0_LOFF_CMD1 = 0x00000(pru0)   +  0x0008 
+// PRU0_LOFF_CMD2 = 0x10000(shared) +  0x0008
+//
+// The count and values must be written first and then the command code.
+// When the operation is complete the command code is set to 0 by the pru
 //
 
-// sram offsets for cpu
-#define SRAM_OFF_DBG1       0x00000  // 4 bytes
-#define SRAM_OFF_DBG2       0x00004  // 4 bytes
-#define SRAM_OFF_CMD1       0x00008  // 4+512 bytes
-#define SRAM_OFF_CMD2       0x10008  // 4+512 bytes
+// Sram offsets for cpu
+#define PRU0_LOFF_DBG1       0x00000  // 4 bytes
+#define PRU0_LOFF_DBG2       0x00004  // 4 bytes
+#define PRU0_LOFF_CMD1       0x00008  // 4+512 bytes
+#define PRU0_LOFF_CMD2       0x10008  // 4+512 bytes
 
-// command codes in upper 16 bits of 32 bit int at SRAM_OFF_CMD1
+// Command codes in upper 16 bits of 32 bit int at PRU0_LOFF_CMD1
+// Zero indicates complete with command
 #define PRU0_CMD_8STREAM    1       
 #define PRU0_CMD_16ARRAY    2
 #define PRU0_CMD_16ARRAY2x  3

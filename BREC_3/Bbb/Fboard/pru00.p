@@ -40,9 +40,9 @@
 #include "pruconst.hp"
 #include "pruinc.h"
 
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 //
-// Bit defintions for later use
+// Internal definitions (bit defintions for later use)
 //
 #define MOSI_B   3               // bit pos of MOSI(0)
 #define MOSI_C   5               // bit pos of MOSI(1)
@@ -53,7 +53,10 @@
 #define SS_H     0x80            // OR  into r30 to set high
 #define SS_L     0x7f            // AND into r30 to set low
 
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+//
+// Entry point
+//
 MAIN:
     // C24 - Local memory
     // Configure the block index register for PRU0 by setting 
@@ -65,51 +68,61 @@ MAIN:
     ST32      r0, r1
 
 //-----------------------------------------------------------------------------
+//
+// Register use and default values
+//
 #define       rDbg1Ptr           r1
+    MOV       rDbg1Ptr,          (0x0000 + PRU0_LOFF_DBG1)
+
 #define       rDbg2Ptr           r2
+    MOV       rDbg2Ptr,          (0x0000 + PRU0_LOFF_DBG2)
+
 #define       rCmdPtr            r3
-
-#define       rCmdCode           r4
-#define       rCnt               r5
-#define       rDataPtr           r6
-
-#define       rArg0              r7
-#define       rSO                r8
-#define       rSI                r9
-#define       rBc                r10
-
-#define       rCmdPtr1           r11
-#define       rCmdPtr2           r12
-
-#define       rTmp1              r25
-#define       rTmp2              r26
-
-//  RESERVED                     r29 = return register
-
-    MOV       rDbg1Ptr,          (0x0000 + SRAM_OFF_DBG1)
-    MOV       rDbg2Ptr,          (0x0000 + SRAM_OFF_DBG2)
     MOV       rCmdPtr,           0x0
 
+#define       rCmdCode           r4
     MOV       rCmdCode,          0x0
+
+#define       rCnt               r5
     MOV       rCnt,              0x0
+
+#define       rDataPtr           r6
     MOV       rDataPtr,          0x0
 
+#define       rArg0              r7
     MOV       rArg0,             0x0
+
+#define       rSO                r8
     MOV       rSO,               0x0
+
+#define       rSI                r9
     MOV       rSI,               0x0
+
+#define       rBc                r10
     MOV       rBc,               0x0
 
-    MOV       rCmdPtr1,          (SRAM_OFF_CMD1) 
-    MOV       rCmdPtr2,          (SRAM_OFF_CMD2) 
+#define       rCmdPtr1           r11
+    MOV       rCmdPtr1,          (PRU0_LOFF_CMD1) 
 
+#define       rCmdPtr2           r12
+    MOV       rCmdPtr2,          (PRU0_LOFF_CMD2) 
+
+#define       rTmp1              r25
     MOV       rTmp1,             0x0
+
+#define       rTmp2              r26
     MOV       rTmp2,             0x0
+
+//  RESERVED                     r29 = return register
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main loop
 // ARG: rCm1Ptr = pointer to 32 bit command 
 // ARG: rDbg1Ptr= pointer to debug 1 word
 // ARG: rDbg2Ptr= pointer to debug 2 word 
+//
+// This loop services external requests for SPI commands.
+// See the interface description in pruinc.h
 //
 main_loop:
 
@@ -156,7 +169,7 @@ xfer_short2x:
     LSL       rArg0,rArg0,16      // place bits in upper most position
     MOV       rBc, 16             // set number of bits to shift
     AND       r30, r30, SS_L      // ss low
-    CALL      shiftbits2xb        // shift out/in a byte
+    CALL      shiftbits2x         // shift out/in a byte
     OR        r30, r30, SS_H      // ss high
     ST16      rArg0, rDataPtr     // save the received byte
     ADD       rDataPtr,rDataPtr,2 // inc the xfer byte pointer
@@ -228,6 +241,30 @@ xfer_byte:
     ST16      rTmp1, rCmdPtr      // clear command bytes
     JMP       main_loop           // return to main loop 
 
+////////////////////////////////////////////////////////////////////////////////
+/// Serial bit shifting ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+//      000000000011111111112222222222
+//      012345678901234567890123456789
+//             .    .     .     .
+// MOSI 0000000VVVVVVVVVVVVVVVVVVVVV000
+//             .    .     .     .
+// MISO ------------------S------------
+//             .    .     .     .
+//   ---+      .    .     .     .
+// SS   |      .    .     .     .
+//      |      .    .     .     .
+//      +------------------------------
+//             .    .     .     .
+//   ---+      .    +-----------+
+// SCLK |      .    |     .     |
+//      |      .    |     .     |
+//      +-----------+     .     +------
+//    SCLK    Set  SCLK   Get   SCLK
+//    LOW    MOSI  HIGH  MISO   LOW
+//
+
 //-----------------------------------------------------------------------------
 // Shift out and in up to 32 bits
 // ARG   : rArg0 = bits to shift out (starting at msb), shifted in bits on ret
@@ -275,12 +312,12 @@ clockbit:
 // ARG   : rBc   = number of bits
 // LOCAL : rSO
 // LOCAL : rSI
-shiftbits2xb:
+shiftbits2x:
 
     MOV       rSO, rArg0         // setup output word
     MOV       rSI, 0             // setup input word
 
-clockbit2xb:
+clockbit2x:
     LSR       rTmp1,rSO,28       // 02 get bit  (31->3)
     AND       rTmp1,rTmp1,8      // 03 mask bit
 
@@ -312,28 +349,8 @@ clockbit2xb:
 
     AND       r30, r30,SCLK_L    // 22 ** SCLK LOW
 
-    QBNE      clockbit2xb,rBc,0  // 01 if more bits, goto top of loop
+    QBNE      clockbit2x,rBc,0   // 01 if more bits, goto top of loop
 
     MOV       rArg0,rSI          // move serial input to return
     RET
 
-//-----------------------------------------------------------------------------
-//      000000000011111111112222222222
-//      012345678901234567890123456789
-//             .    .     .     .
-// MOSI 0000000VVVVVVVVVVVVVVVVVVVVV000
-//             .    .     .     .
-// MISO ------------------S------------
-//             .    .     .     .
-//   ---+      .    .     .     .
-// SS   |      .    .     .     .
-//      |      .    .     .     .
-//      +------------------------------
-//             .    .     .     .
-//   ---+      .    +-----------+
-// SCLK |      .    |     .     |
-//      |      .    |     .     |
-//      +-----------+     .     +------
-//    SCLK    Set  SCLK   Get   SCLK
-//    LOW    MOSI  HIGH  MISO   LOW
-//
