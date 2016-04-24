@@ -137,6 +137,7 @@ class Bdc {
 
     int                      Open();
     int                      GetFwVersion( );
+    int                      GetFwCompat( );
     GpioGroup               *GetPinGroup( int grp );
 
     volatile unsigned char  *PruGetSramPtr();

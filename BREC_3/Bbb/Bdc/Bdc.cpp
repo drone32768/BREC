@@ -58,7 +58,7 @@ int
 Bdc::Open()
 {
     int            ret;
-    unsigned short fwVer;
+    unsigned short fwVer,fwCom;
     int            pin,port;
 
     printf("Bdc:Open enter\n");
@@ -73,8 +73,12 @@ Bdc::Open()
     mFbrd.Show();
 
     // Check hw version
+    fwCom = GetFwCompat();
+    printf("Bdc::Open::fw compatibility = 0x%08x\n",fwCom);
+
     fwVer = GetFwVersion();
-    printf("Bdc::Open::fw ver = 0x%08x\n",fwVer);
+    printf("Bdc::Open::fw version       = 0x%08x\n",fwVer);
+
 
     // Setup the gpio port constructs
     BdcGpio *gpio;
@@ -93,6 +97,16 @@ Bdc::Open()
 //------------------------------------------------------------------------------
 int
 Bdc::GetFwVersion()
+{
+    int ver;
+    SpiRW16( BDC_REG_RD | BDC_REG_R1 );
+    ver = SpiRW16(0);
+    return(ver);
+}
+
+//------------------------------------------------------------------------------
+int
+Bdc::GetFwCompat()
 {
     int ver;
     SpiRW16( BDC_REG_RD | BDC_REG_R0 );
