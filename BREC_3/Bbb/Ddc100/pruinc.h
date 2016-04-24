@@ -34,29 +34,27 @@
 //
 
 // Sram offsets for pru.  This is from perspective of pru code
-#define SRAM_OFF_DRAM_PBASE    0x1000  // 4 bytes
-#define SRAM_OFF_DRAM_OFF      0x1004  // 4 bytes
-#define SRAM_OFF_DBG1          0x1008  // 4 bytes
-#define SRAM_OFF_DBG2          0x100C  // 4 bytes
-#define SRAM_OFF_DBG3          0x1010  // 4 bytes
-#define SRAM_OFF_CMD           0x1014  // 4 bytes
-#define SRAM_OFF_RES           0x1018  // 4 bytes
+#define PRU1_LOFF_DRAM_PBASE    0x1000  // 4 bytes
+#define PRU1_LOFF_DRAM_OFF      0x1004  // 4 bytes
+#define PRU1_LOFF_DBG1          0x1008  // 4 bytes
+#define PRU1_LOFF_DBG2          0x100C  // 4 bytes
+#define PRU1_LOFF_DBG3          0x1010  // 4 bytes
+#define PRU1_LOFF_CMD           0x1014  // 4 bytes
+#define PRU1_LOFF_RES           0x1018  // 4 bytes
 
 // pru1 commands
 #define PRU1_CMD_NONE          0
 #define PRU1_CMD_2KWORDS       1
 
 // spi command definitions
-#define SPI_CMD_RD_FIFO_STATUS 0xBd00   // 0x8000 | 0x3d00
+#define SPI_CMD_RD_FIFO_STATUS 0xBD00   // 0x8000 | 0x3d00
 #define SPI_CMD_NOP            0x0000
 
-// TODO temporarily point to counting register
-// #define SPI_CMD_RD_FIFO_DATA   0xBf00   // 0x8000 | 0x3f00
-#define SPI_CMD_RD_FIFO_DATA   0x8300   // 0x8000 | 0x0300
+// spi read fifo (actual fifo)
+// #define SPI_CMD_RD_FIFO_DATA   0xBF00   // 0x8000 | 0x3f00
 
-// TODO this is a copy from F board pruinc
-// Should that be refectored so it can be included directly?
-#define PRU0_CMD_16ARRAY       2
+// spi read fifo (testing)
+#define SPI_CMD_RD_FIFO_DATA   0x8300   // 0x8000 | 0x0300
 
 // This is a function of the library and kernel module
 // TODO: should be able to query this ...

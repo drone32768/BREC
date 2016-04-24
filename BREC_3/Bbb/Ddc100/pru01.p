@@ -37,6 +37,9 @@
 .origin 0
 .entrypoint MAIN1
 
+// Need the F board pru0 to get offsets for its command and command values
+#include "../Fboard/pruinc.h"
+
 #include "pruconst.hp"
 #include "pruinc.h"
 
@@ -65,10 +68,10 @@ MAIN1:
 
 ////////////////////////////////////////////////////////////////////////////////
 #define    rDbg1Ptr         r4
-    MOV    rDbg1Ptr,            (SRAM_OFF_DBG1)
+    MOV    rDbg1Ptr,            (PRU1_LOFF_DBG1)
 
 #define    rDbg2Ptr         r5
-    MOV    rDbg2Ptr,            (SRAM_OFF_DBG2)
+    MOV    rDbg2Ptr,            (PRU1_LOFF_DBG2)
 
 #define    rTmp1            r6
     MOV    rTmp1,               0x0
@@ -77,10 +80,10 @@ MAIN1:
     MOV    rTmp2,               0x0
 
 #define    rCmdPtr          r8
-    MOV    rCmdPtr,             (SRAM_OFF_CMD)
+    MOV    rCmdPtr,             (PRU1_LOFF_CMD)
 
 #define    rResPtr          r9
-    MOV    rResPtr,             (SRAM_OFF_RES)
+    MOV    rResPtr,             (PRU1_LOFF_RES)
 
 #define    rCmdCode         r10
     MOV    rCmdCode,            0x0
@@ -92,8 +95,7 @@ MAIN1:
     MOV    rCnt,                0x0
 
 #define    rP0CPcod         r13  
-//    MOV    rP0CPcod,            (0x2008) // Pru0CmdPtr code addr FIXME cpu
-      MOV    rP0CPcod,            (0x10008) // Pru0CmdPtr code addr FIXME pru1
+    MOV    rP0CPcod,            PRU0_LOFF_CMD2 // NOTE: from F board inc
 
 #define    rRes01           r14 
 
@@ -109,14 +111,14 @@ MAIN1:
     MOV    rDrmOffset,           0x0
 
 #define    rDrmBasePtr      r19
-    MOV    rDrmBasePtr   ,       SRAM_OFF_DRAM_PBASE
+    MOV    rDrmBasePtr,          PRU1_LOFF_DRAM_PBASE
     LD32   rDrmBasePtr, rDrmBasePtr
 
 #define    rDrmOffsetPtrPtr r20
-    MOV    rDrmOffsetPtrPtr,     SRAM_OFF_DRAM_OFF
+    MOV    rDrmOffsetPtrPtr,     PRU1_LOFF_DRAM_OFF
 
 #define    rDbg3Ptr         r21
-    MOV    rDbg3Ptr,            (SRAM_OFF_DBG3)
+    MOV    rDbg3Ptr,            (PRU1_LOFF_DBG3)
 
 ////////////////////////////////////////////////////////////////////////////////
 main_loop:

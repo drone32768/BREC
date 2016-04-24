@@ -228,7 +228,7 @@ Ddc100::FlushSamples()
     // TODO: should stop fifo, let the pru catchup, then release
 
     if( 0!=mPtrPruSram ){
-       mPidx = ( GetSramWord( SRAM_OFF_DRAM_OFF) / 2 ); // bytes to short index
+       mPidx = ( GetSramWord( PRU1_LOFF_DRAM_OFF) / 2 ); // bytes to short index
     }
 
     // Flush and restart the fifo
@@ -248,14 +248,14 @@ Ddc100::Get2kStream( short *bf )
 
     dstIdx = 0;
     p      = 0;
-    pruIdx = GetSramWord( SRAM_OFF_DRAM_OFF);
+    pruIdx = GetSramWord( PRU1_LOFF_DRAM_OFF);
     pruIdx = pruIdx/2; // PRU1 dram offset is in bytes, need in shorts
     while( dstIdx<2048 ){
 
         // If our index is the same as pru, wait and then re-eval
         while( mPidx == pruIdx ){
             us_sleep(100);
-            pruIdx = GetSramWord( SRAM_OFF_DRAM_OFF);
+            pruIdx = GetSramWord( PRU1_LOFF_DRAM_OFF);
             pruIdx = pruIdx/2; // byte offset to short offset
             p++;
         }
@@ -308,27 +308,27 @@ Ddc100::StartPru()
     mPtrPruSamples = mBdc->PruGetDramPtr();
 
     SetSramWord(  prussdrv_get_phys_addr( (void*)mPtrPruSamples ),
-                  SRAM_OFF_DRAM_PBASE 
+                  PRU1_LOFF_DRAM_PBASE 
                );
 
     SetSramWord(  0,
-                  SRAM_OFF_DRAM_OFF 
+                  PRU1_LOFF_DRAM_OFF 
                );
 
     SetSramWord(  0,
-                  SRAM_OFF_DBG1 
+                  PRU1_LOFF_DBG1 
                );
 
     SetSramWord(  0,
-                  SRAM_OFF_DBG2 
+                  PRU1_LOFF_DBG2 
                );
 
     SetSramWord(  0,
-                  SRAM_OFF_DBG3 
+                  PRU1_LOFF_DBG3 
                );
 
     SetSramShort( PRU1_CMD_NONE,
-                  SRAM_OFF_CMD 
+                  PRU1_LOFF_CMD 
                );
 
     prussdrv_pru_write_memory(PRUSS0_PRU1_IRAM,0,
@@ -337,7 +337,7 @@ Ddc100::StartPru()
     prussdrv_pru_enable(1);
 
     SetSramShort(  PRU1_CMD_2KWORDS,
-                   SRAM_OFF_CMD 
+                   PRU1_LOFF_CMD 
                );
 
     return( 0 );
@@ -408,16 +408,16 @@ Ddc100::Show(const char *title )
     }
 
     if( 0!=mPtrPruSram ){
-     printf("    PRU1 dbg1     0x%08x\n",GetSramWord(  SRAM_OFF_DBG1 ) );
-     printf("    PRU1 dbg2     0x%08x\n",GetSramWord(  SRAM_OFF_DBG2 ) );
-     printf("    PRU1 dbg3     0x%08x\n",GetSramWord(  SRAM_OFF_DBG3 ) );
-     printf("    PRU1 pbase    0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_PBASE) );
-     printf("    PRU1 dram off 0x%08x\n",GetSramWord(  SRAM_OFF_DRAM_OFF) );
-     printf("    PRU1 cmd      0x%08x\n",GetSramShort( SRAM_OFF_CMD ) );
-     printf("    PRU1 res      0x%08x\n",GetSramShort( SRAM_OFF_RES ) );
+     printf("    PRU1 dbg1     0x%08x\n",GetSramWord(  PRU1_LOFF_DBG1 ) );
+     printf("    PRU1 dbg2     0x%08x\n",GetSramWord(  PRU1_LOFF_DBG2 ) );
+     printf("    PRU1 dbg3     0x%08x\n",GetSramWord(  PRU1_LOFF_DBG3 ) );
+     printf("    PRU1 pbase    0x%08x\n",GetSramWord(  PRU1_LOFF_DRAM_PBASE) );
+     printf("    PRU1 dram off 0x%08x\n",GetSramWord(  PRU1_LOFF_DRAM_OFF) );
+     printf("    PRU1 cmd      0x%08x\n",GetSramShort( PRU1_LOFF_CMD ) );
+     printf("    PRU1 res      0x%08x\n",GetSramShort( PRU1_LOFF_RES ) );
 
      int idx,cnt;
-     idx = GetSramWord( SRAM_OFF_DRAM_OFF);
+     idx = GetSramWord( PRU1_LOFF_DRAM_OFF);
      idx = (idx + PRU_MAX_SHORT_SAMPLES - 16)%PRU_MAX_SHORT_SAMPLES;
      for(cnt=0;cnt<8;cnt++){
        printf("%d 0x%04x, ",idx,mPtrPruSamples[idx]);
@@ -426,13 +426,6 @@ Ddc100::Show(const char *title )
      }
      printf("\n");
 
-     /* FIXME - not needed
-     for(idx=8;idx<32;idx+=2){
-       printf("%d 0x%04x, ",idx,GetSramShort(idx));
-     }
-     printf("\n");
-     */
- 
     }else{
      printf("    PRU1 not started\n");
     }
