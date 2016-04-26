@@ -58,6 +58,7 @@ public:
     void   ProgramDevice();
     double SetFreqHz( double freqHz );
     double SetBwHz(   double bwHz );
+    double SetBbgDb(  double gainDb );
     uint32_t Show();
     
 #define MAX2112_DBG_WRITE 0x00000001

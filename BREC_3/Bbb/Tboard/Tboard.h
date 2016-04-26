@@ -54,7 +54,8 @@ public:
     void         Show();
 
     double       SetFreqHz( double freqHz );
-    double       SetGainDb( double gainDb );
+    double       SetRfGainDb( double gainDb );
+    double       SetBbGainDb( double gainDb );
     double       SetBwHz(   double bwHz );
     void         ShowTuner();
 

@@ -141,7 +141,7 @@ Tboard::DacGet( int *vvalue )
 
 ////////////////////////////////////////////////////////////////////////////////
 double
-Tboard::SetGainDb( double gainDb )
+Tboard::SetRfGainDb( double gainDb )
 {
    double volts;
    int    dac;
@@ -180,6 +180,13 @@ double
 Tboard::SetBwHz( double bwHz )
 {
    return( mTUNER.SetBwHz(bwHz) );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+double
+Tboard::SetBbGainDb( double gainDb )
+{
+   return( mTUNER.SetBbgDb(gainDb) );
 }
 
 ////////////////////////////////////////////////////////////////////////////////

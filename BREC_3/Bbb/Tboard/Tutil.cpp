@@ -132,7 +132,7 @@ main( int argc, char *argv[] )
 
             if( (idx+1) >= argc ){ usage(-1); }
             dbTgt = atof(argv[idx+1]);
-            dbAct = tbrd->SetGainDb( dbTgt  );
+            dbAct = tbrd->SetRfGainDb( dbTgt  );
             printf("dBTgt=%f, dBAct=%f\n",dbTgt,dbAct);
         }
 

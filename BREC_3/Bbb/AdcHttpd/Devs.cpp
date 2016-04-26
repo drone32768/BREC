@@ -136,7 +136,8 @@ Devs::TokParse(
        arOutStrSt << "mboard freq <Hz>       Set Mboard tuning\n";
        arOutStrSt << "mboard pwr  [0..3]     Set Mboard LO power level\n";
        arOutStrSt << "tboard freq <Hz>       Set Tboard tuning\n";
-       arOutStrSt << "tboard gain <dB>       Set Tboard RF gain\n";
+       arOutStrSt << "tboard rfgain <dB>     Set Tboard RF gain\n";
+       arOutStrSt << "tboard bbgain <dB>     Set Tboard base band gain\n";
        arOutStrSt << "tboard bw   <Hz>       Set Tboard IF filter bandwidth\n";
        consumed = 0; // special, allow other callbacks to add help
    }
@@ -175,9 +176,15 @@ Devs::TokParse(
           arOutStrSt << "freq(Hz)    = " << freqHz         << "\n";
           arOutStrSt << "ok\n";
        }
-       else if( 0==arInputTokens[1].compare("gain") ){
+       else if( 0==arInputTokens[1].compare("rfgain") ){
           gainDb = atof( arInputTokens[2].c_str() );  // stod C++11
-          gainDb = mTbrd->SetGainDb( gainDb );
+          gainDb = mTbrd->SetRfGainDb( gainDb );
+          arOutStrSt << "gain(dB)    = " << gainDb        << "\n";
+          arOutStrSt << "ok\n";
+       }
+       else if( 0==arInputTokens[1].compare("bbgain") ){
+          gainDb = atof( arInputTokens[2].c_str() );  // stod C++11
+          gainDb = mTbrd->SetBbGainDb( gainDb );
           arOutStrSt << "gain(dB)    = " << gainDb        << "\n";
           arOutStrSt << "ok\n";
        }

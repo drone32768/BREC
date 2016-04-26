@@ -271,6 +271,19 @@ MAX2112::SetBwHz( double bwHz )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+double
+MAX2112::SetBbgDb( double gainDb )
+{
+   if( gainDb < 0  ) gainDb =  0;
+   if( gainDb > 15 ) gainDb = 15;
+
+   mBbgDb = ((int)(gainDb)) & 0xf;
+
+   ProgramDevice();
+   return( mBbgDb );
+}
+
+////////////////////////////////////////////////////////////////////////////////
 uint32_t 
 MAX2112::WriteReg( 
    uint8_t  devAddr, 
