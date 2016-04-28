@@ -14,6 +14,7 @@ all	:
 	cd Tboard;     make all
 	cd Mboard;     make all
 	cd AdcHttpd;   make all
+	cd SdrSvr;     make all
 
 clean	:
 	cd Util;       make clean
@@ -29,6 +30,7 @@ clean	:
 	cd Tboard;     make clean
 	cd Mboard;     make clean
 	cd AdcHttpd;   make clean
+	cd SdrSvr;     make clean
 
 clean_all :
 	find . -name "arm" -exec rm -rf {} ";"

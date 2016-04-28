@@ -3,7 +3,7 @@ NOTE: This is experimentation software - use at your own risk.
 
 NOTE: Do not use this software on an open network. It is designed for 
 flexibility in a lab and experimentation environment.  Numerous strings
-are passed around as events and controll which are not fully veified or 
+are passed around as events and controll which are not fully verified or 
 secure.  Multiple debug/service/diagnostic ports are open.
 
 NOTE: In many instances, not all methods are fully implemented.  Only

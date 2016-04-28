@@ -55,7 +55,9 @@ int IqpTest_Check2kPattern(
         expt =  (*key);
         find =  ubf[idx];
 
-        // TODO - every 256 samples the 
+        // TODO - every 256 samples the pattern may reset
+        // This is setup to use the counting register
+       
         if( (idx%256)==0 ){ 
             expt = find;
         }
@@ -98,8 +100,6 @@ void IqpTest (Ddc100 *ddc )
 
     while( 1 ){
 
-        // ddc->Get2kSamples( (short*)ubf );
-
         ddc->Get2kSamples( (short*)ubf );
 
         nErrs=IqpTest_Check2kPattern(ubf,&key,reset,showErrs);
@@ -132,6 +132,46 @@ void IqpTest (Ddc100 *ddc )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+void Stream (Ddc100 *ddc )
+{
+    unsigned short ubf[4096];
+    int            cnt,wcnt,us;
+    struct timeval tv1,tv2;
+    int            errs;
+
+    printf("Starting iq pattern test\n");
+
+    cnt       = 0;
+    wcnt      = 0;
+    errs      = 0;
+
+    ddc->SetTpg( 0 );
+    ddc->SetSource( 5 );
+    ddc->FlushSamples();
+
+    gettimeofday( &tv1, NULL );
+    while( 1 ){
+
+        ddc->Get2kSamples( (short*)ubf );
+
+        cnt++;
+        wcnt+=2048;
+
+        if( 0==(cnt%300) ){
+           gettimeofday( &tv2, NULL );
+           us = tv_delta_useconds( &tv2, &tv1 );
+
+           printf("%8d 2k wrd checked,t=%8d uS,i=%d, %f MW/s, errs=%d\n",
+                         cnt,us,wcnt,(wcnt/(double)us),errs );
+           wcnt = 0;
+           gettimeofday( &tv1, NULL );
+        }
+
+    } // End of infinite processing loop
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void Histogram (Ddc100 *ddc )
 {
     short          bf[4096];
@@ -139,59 +179,6 @@ void Histogram (Ddc100 *ddc )
     ddc->SetSource( 0 );
     ddc->FlushSamples();
     ddc->Get2kSamples( bf );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-int ShowPhases( short *bf, int nPts )
-{
-    int   idx;
-    double max;
-    double iphase,qphase,dphase,tphase,mag;
-    int    nErrs;
-
-    // Find the maximum
-    nErrs = 0;
-    max   = -1;
-    for(idx=0;idx<nPts;idx++){
-       if( bf[idx] > max ) max = bf[idx];
-    }
-    printf("Max = %f\n",max);
-
-    printf("?,CSV,idx,I,Q,Iph,Qph,del-ph,ph,m^2\n");
-
-    // Loop through data calculating phases
-    for(idx=0;idx<nPts;idx+=2){
-       iphase = asin( (double)bf[idx]   / max );
-       qphase = acos( (double)bf[idx+1] / max );
-       dphase = iphase - qphase;
-       tphase = atan2( (double)bf[idx], (double)bf[idx+1] );
-       mag    = (double)bf[idx] * (double)bf[idx] 
-                + (double)bf[idx+1]*(double)bf[idx+1];
-
-       if( (dphase > -1.56) || (dphase < -1.58) ){
-          nErrs++;
-          printf("E,CSV,");
-       }
-       else{
-          printf(" ,CSV,");
-       }
-       printf("%3d,%5d,%5d,%10f,%10f,%10f,%10f, %f\n",idx,bf[idx],bf[idx+1],
-                          iphase,qphase,dphase,tphase,mag);
-    }
-
-    return( nErrs );
-}
-
-void QuadTest (Ddc100 *ddc )
-{
-    short          bf[4096];
-
-    ddc->SetLoFreqHz( 1 ); 
-    ddc->SetSource( 7 );
-
-    ddc->FlushSamples();
-    ddc->Get2kSamples( bf );
-    ShowPhases( bf, 2048 );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -269,6 +256,8 @@ void FilterScanTest (Ddc100 *ddc, int wide )
     double         f,fstart,fend,fstep;
     double         m2,m2max;
 
+    // TODO this should be updated for ddc
+
     ddc->SetTpg( 2 );
     ddc->SetSource( 7 );
 
@@ -311,7 +300,6 @@ void usage( int exit_code )
     printf("-flush        flush source fifo\n");
     printf("-prustart     start pru\n");
     printf("-iqp          execute IQ pattern test\n");
-    printf("-quad         execute quadrature data test\n");
     printf("-show         show device state\n");
     exit( exit_code );
 }
@@ -435,6 +423,7 @@ main( int argc, char *argv[] )
             ddc->StartPru();
         }
 
+
         else if( 0==strcmp(argv[idx], "-show") ){
             ddc->Show("DdcTst:\n");
         }
@@ -443,8 +432,8 @@ main( int argc, char *argv[] )
             IqpTest( ddc );
         }
 
-        else if( 0==strcmp(argv[idx], "-quad") ){
-            QuadTest(ddc);
+        else if( 0==strcmp(argv[idx], "-stream") ){
+            Stream( ddc );
         }
 
         else if( 0==strcmp(argv[idx], "-filter-scan-wide") ){
@@ -455,40 +444,6 @@ main( int argc, char *argv[] )
             FilterScanTest(ddc,0);
         }
  
-        ////////////////////////////////////////////////
-        // the following tests need to be revisited ...
-
-        else if( 0==strcmp(argv[idx], "-histo") ){
-            Histogram(ddc);
-        }
-
-        else if( 0==strcmp(argv[idx], "-ntest") ){
-            short bf[4096];
-            short lastGood;
-            int   idx, ns,goodCount;
-
-            goodCount = 0;
-            lastGood  = 0;
-            ns = 0;
-            while( 1 ){
-                ddc->FlushSamples();
-                ddc->Get2kSamples( bf );
-                for(idx=0;idx<2048;idx++){
-                   if( (bf[idx] > 2080) || (bf[idx]<2020) ){
-                   // if( (bf[idx] > 2200) || (bf[idx]<1700) ){
-                       printf("%d  %hd 0x%x (lg=%hd) gc=%d\n",
-                               ns,bf[idx],bf[idx],lastGood,goodCount);
-                       goodCount = 0;
-                   }
-                   else{
-                       lastGood = bf[idx];
-                       goodCount++;
-                   }
-                   ns++;
-                }
-            }
-        }
-
         // Move to next argument for parsing
         idx++;
     }

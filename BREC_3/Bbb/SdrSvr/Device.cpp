@@ -50,6 +50,10 @@
 // Public Methods
 ////////////////////////////////////////////////////////////////////////////////
 
+static    double if1Hz    = 1500.0e6;
+static    double if2Hz    = 2.0e6;
+static    double offsetHz = 70e3;
+
 static Bdc     *gBdc;
 static Ddc100  *gDdc;
 static Adf4351 *gSyn;
@@ -74,6 +78,8 @@ Device::Device()
 # endif
 
     if( force || FindCapeByName("brecFpru")>0  ){
+        double flt;
+
         printf("******** Devs::Open Starting F/Bdc/Ddc100 ****************\n");
 
         gBdc = new Bdc();
@@ -92,6 +98,28 @@ Device::Device()
         gDdc = new Ddc100();
         gDdc->Attach( gBdc );
         gDdc->Open();
+
+        gDdc->SetChannelMatch( 3, 1.0, -14, 1.0 );
+        gDdc->SetTpg( 0 );   
+        // gDdc->SetTpg( 2 );   
+
+        gDdc->SetSource( 5 );          // Set to 200kHz channel
+
+        flt = gTbrd->SetFreqHz( if1Hz );
+        printf("#####Tboard IF = %f Hz\n",flt);
+
+        flt = gTbrd->SetBwHz( 2*if2Hz );
+        printf("#####Tboard BW = %f Hz\n",flt);
+
+        printf("#####Tboard rf gain set med\n");
+        gTbrd->SetRfGainDb( 40 );
+
+        printf("#####Tboard bb gain set low\n");
+        gTbrd->SetBbGainDb( 0 );
+
+        flt =gDdc->SetLoFreqHz( if2Hz );
+        printf("#####DDC100 IF = %f Hz\n",flt);
+
         gDdc->StartPru();
 
         TunerSet( 92100000 );
@@ -108,17 +136,15 @@ Device::Device()
 //------------------------------------------------------------------------------
 int Device::TunerSet( long long freqHz )
 {
+    double flt;
     printf("Device::TunerSet( %f Hz )\n",(double)freqHz);
 
-    double if1Hz = 1500.0e6;
-    double if2Hz = 2.0e6;
-    double lo1Hz = freqHz + if1Hz - if2Hz;
+    double lo1Hz = freqHz + if1Hz - if2Hz - offsetHz;
 
     mDevLock.Lock();
-    gSyn->SetFrequency( lo1Hz );
-    gTbrd->SetFreqHz( if1Hz );
-    gTbrd->SetBwHz( 2*if2Hz );
-    gDdc->SetLoFreqHz( if2Hz );
+    flt = gSyn->SetFrequency( lo1Hz );
+    printf("#####Mboard IF = %f Hz\n",flt);
+    // gDdc->FlushSamples();
     mDevLock.Unlock();
 
     mPmTuneMHz = (double)freqHz / 1e6;
@@ -130,10 +156,10 @@ int Device::TunerSet( long long freqHz )
 int Device::GainSet( double gainDb )
 {
     mDevLock.Lock();
-    gTbrd->SetGainDb( gainDb );
+    gTbrd->SetRfGainDb( gainDb );
     mDevLock.Unlock();
 
-    printf("*** GainSet *** at %f Hz\n",gainDb);
+    printf("*** GainSet *** at %f dB\n",gainDb);
     mPmGainDb = gainDb;
     return(0);
 }
@@ -142,7 +168,7 @@ int Device::GainSet( double gainDb )
 void Device::Monitor()
 {
     mDevLock.Lock();
-    // if( !gSyn->GetLock() ) mPmLock = 0;
+    if( !gSyn->GetLock() ) mPmLock = 0;
     mDevLock.Unlock();
 }
 
@@ -225,9 +251,11 @@ void Device::GetSamples( short *sampPtr, int nComplexSamples )
 
         // Get 2k samples to internal buffer
         if( bfSamps<=0 ){
+
             mDevLock.Lock();
-            // mPmPause += mAdc->Get2kSamples( bf );
+            mPmPause += gDdc->Get2kSamples( bf );
             mDevLock.Unlock();
+
             eo      = bf;
             bfSamps = 2048;
         }
@@ -245,3 +273,4 @@ void Device::GetSamples( short *sampPtr, int nComplexSamples )
     }
 
 }
+
