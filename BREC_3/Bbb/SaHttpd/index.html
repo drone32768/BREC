@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html>
+
+<style>
+
+/*
+body {
+  color           : white;
+  background-color: black;
+}
+*/
+
+/* General buttons */
+button {
+  border-radius   : 10px;
+  width           : 85px;
+  height          : 35px;
+}
+
+button:hover {
+  color           : black;
+  background-color: white;
+}
+
+button.button-on{
+  background-color: green;
+}
+
+button.button-off{
+  background-color: grey;
+}
+
+/* Keypad */
+#bjkpKeypad {
+  background      : black;
+  border-radius   : 1em;
+}
+#bjkpKeypad .BJKP-button {
+  color           : white;
+  background-color: black;
+
+  text-align      : center;
+  width           : 4em;
+  height          : 3em;
+  border-radius   : 3px;
+  box-shadow      : 0 2px 10px rgba(0,0,0,0,0.8);
+}
+#bjkpKeypad .BJKP-button:hover{
+  color           : black;
+  background-color: green;
+}
+
+</style>
+
+<head>
+
+<!----------------------------------------------------------------------------->
+<body onresize="ResizeCanvas()" onload="BodyLoad()">
+
+<!---------------------------------------------------------------------------->
+<!-- Main canvas -->
+<div style="float:left;">
+ <table>
+  <tr>
+    <td align="center">
+      <div id="statusDiv"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+       <canvas id="mainCanvas"
+        width="600"
+        height="200"
+        style="border:1px solid #c3c3c3;"
+       >
+       Your browser does not support the HTML5 canvas tag.
+       </canvas>
+    </td>
+  </tr>
+ </table>
+</div>
+
+<!---------------------------------------------------------------------------->
+<!-- Primary control buttons -->
+<div style="float:left;">
+ <table>
+
+  <!-- Local control buttons -->
+  <tr>
+    <td align="center">
+      <button onclick="DispToggleEnvelope(this)">Envelope</button>
+    </td>
+    <td align="center">
+      <button onclick="DispTogglePeaks(this)">Peaks</button>
+    </td>
+    <td align="center">
+      <button onclick="DispToggleMarkers(this)">Markers</button>
+    </td>
+    <td align="center">
+      <button onclick="DispMstore( )">Mstore</button>
+    </td>
+    <td align="center">
+      <button onclick="DispToggleMshow( )">Mshow</button>
+    </td>
+
+    <td>
+      <button onclick="SetYmax()">Ymax</button>
+    </td>
+    <td>
+       <div align="center" id="yMaxValueDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetYmin()">Ymin</button>
+    </td>
+    <td>
+      <div align="center" id="yMinValueDiv"></div>
+    </td>
+
+  </tr>
+
+  <!-- Remote parameter control buttons -->
+  <tr>
+    <td>
+      <button onclick="ToggleStateVar( 'nPts' )"># Points</button>
+    </td>
+    <td>
+      <div align="center" id="nPtsDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetCenterHzByKeypad()">Center(Hz)</button>
+    </td>
+    <td>
+      <div align="center" id="centerHzDiv"></div>
+    </td>
+
+    <td>
+      <button onclick="SetSpanHzByKeypad()">Span(Hz)</button>
+    </td>
+    <td>
+      <div align="center" id="spanHzDiv"></div>
+    </td>
+
+  </tr>
+
+
+  <!-- Remote state control buttons -->
+  <tr>
+    <td align="center">
+      <button onclick="ToggleStateVar('run')"><div id="runDiv"></div></button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
+    </td>
+    <td align="center">
+      <button onclick="ToggleStateVar( 'savecfg' )">SaveCfg</button>
+    </td>
+  </tr>
+
+ </table>
+</div>
+
+<!---------------------------------------------------------------------------->
+<!-- Console -->
+<div id="bjcoCon" style="border-style:outset;float:left;"></div>
+
+<!-- Dialog to use -->
+<dialog id="bjkpKeypad">DefaultValue</dialog>
+
+</body>
+
+<!----------------------------------------------------------------------------->
+<!-- Include the graphing tool module -->
+<script src="BJGT.js"></script>
+
+<!-- Include the keypad module -->
+<script src="BJKP.js"></script>
+
+<!-- Include the console module -->
+<script src="BJCO.js"></script>
+
+<script>
+
+// This is the keypad
+var bkp1 = new BJKP.Keypad( document.getElementById("bjkpKeypad") );
+
+// This is the console
+var bco1 = new BJCO.Console( 
+               document.getElementById("bjcoCon") ,
+               80,   // output columns
+               11    // output rows
+           );
+
+// Register a line input callback function with console
+bco1.Register( 
+   function( aLineStr )
+   {
+      if( aLineStr=="~.clear" ){ // verify clear output
+        bco1.Clear();
+        bco1.Output("clear history ok\n");
+      }
+
+      else if( aLineStr=="~.help" ){ // misc
+        bco1.Output("help  - this command\n");
+        bco1.Output("clear - clears output history\n");
+      }
+
+      else {
+        // bco1.Output("raw:<"+aLineStr+">\n"); // verify trim/and crlf clear
+        CliCommand( aLineStr );
+      }
+   } // end of console registered function
+);
+
+// This method issues a cli command and updates the console text
+// with the response.
+function CliCommand( aLineStr )
+{
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
+
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+      {
+          bco1.Output( xmlhttp.responseText );
+      }
+   }
+ 
+   // need to produce: cli?v=cli_line
+   xmlhttp.open("GET",
+                 "cli?v=" + 
+                 aLineStr,
+                 true);
+   xmlhttp.send();
+}
+
+// Graph data default
+var xyXvec = [];
+var xyYvec = []
+var xyPts  = 2048;
+for(n=0;n<xyPts;n++){
+   xyXvec[n] = n;
+   xyYvec[n] = -30;
+}
+
+// This is the xy plot
+var bxy1 = new BJGT.XyDisplay( document.getElementById("mainCanvas") );
+bxy1.SetTitle("Title");
+bxy1.SetXlabel("Freq(Hz)");
+bxy1.SetYlabel("dBFS16");
+bxy1.SetXticks( 8 );
+bxy1.SetYticks( 10 );
+bxy1.SetXfmt( 'i' );
+bxy1.SetYfmt( 'i' );
+bxy1.SetLogicalLimits( -100e3,100e3, -120,0 );
+bxy1.Layout();
+bxy1.EnableMouse();
+bxy1.MarkersVisible( 1 );
+bxy1.SetXy( xyXvec, xyYvec );
+
+// Local Display controls
+var gYmin  = -120;
+var gYmax  = 0;
+
+// enumeration of current function
+var gFuncIdx = 0; 
+
+// current ymax saved by function index
+var gYmaxByFunc = [ 0,    32768, 4096 ];
+
+// current ymax saved by function index
+var gYminByFunc = [ -150, -32768, 0   ];
+
+// current y label saved by function index
+var gYlabelByFunc = [ "dBFS16", "Value", "Count"   ];
+
+// current x label saved by function index
+var gXlabelByFunc = [ "Hz", "Sample", "Bin"   ];
+
+// Counter on state updates
+var stateUpdateCount = 0;
+
+// Indicator of connected 
+var isActive = 0;
+
+// Indicator of running
+var isRunning = 0;
+
+// Contents of state returned from device
+var unitState;
+
+// Contents of data returned from device
+var unitData;
+
+// This method is to be invoked on initial loading
+function BodyLoad()
+{
+   console.log( "BodyLoad: enter");
+   ResizeCanvas();
+}
+
+// This method is to be invoked on a resize
+function ResizeCanvas()
+{
+   var c1;
+
+   console.log( "ResizeCanvas: enter");
+
+   c1 =  document.getElementById("mainCanvas");
+   c1.width  = window.innerWidth  * 0.95;
+   c1.height = window.innerHeight * 0.60;
+   bxy1.Layout();
+   bxy1.Draw();
+}
+
+// This method is given a state variable name and inverts the ON/OFF value.
+// The current value is taken from the most recently reported unit state
+// The new value is set as a single name/value state property at the device
+function ToggleStateVar( aVarStateName )
+{
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
+
+   var curValStr;
+   var newValStr;
+
+   curValStr= unitState[ aVarStateName ];
+   console.log(aVarStateName + " = " + curValStr);
+
+   if( curValStr.toLowerCase() == "on" ){
+      newValStr = "OFF";
+   }
+   else{
+      newValStr = "ON";
+   }
+
+   console.log(aVarStateName + " = " + newValStr);
+
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+      {
+            ;
+      }
+   }
+ 
+   // need to produce: setstate?v=name:value
+   xmlhttp.open("GET",
+                 "setstate?v=" + 
+                 aVarStateName + 
+                 ":" + 
+                 newValStr,
+                 true);
+   xmlhttp.send();
+}
+
+// This method is given a state variable name and a div name.  The
+// State variable is set at the device to the contents of the div name object
+//
+function SetStateVar( aVarStateName, aValue )
+{
+   var xmlhttp;
+   xmlhttp=new XMLHttpRequest();
+
+   xmlhttp.onreadystatechange=function() 
+   {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+      {
+            ;
+      }
+   }
+ 
+   // need to produce: setstate?v={ name:value }
+   xmlhttp.open("GET",
+                 "setstate?v=" + 
+                 aVarStateName + 
+                 ":" + 
+                 aValue,
+                 true);
+   xmlhttp.send();
+};
+
+// This method sets the center frequency using a keypad for input
+var gLastCenterHzInput="";
+function SetCenterHzByKeypad()
+{
+   bkp1.Show(
+     gLastCenterHzInput,
+     function( val ) {
+        gLastCenterHzInput = val;
+        SetStateVar( 'centerHz', val );
+     }
+   );
+};
+
+// This method sets the frequency span using a keypad for input
+var gLastSpanHzInput="";
+function SetSpanHzByKeypad()
+{
+   bkp1.Show(
+     gLastSpanHzInput,
+     function( val ) {
+        gLastSpanHzInput = val;
+        SetStateVar( 'spanHz', val );
+     }
+   );
+};
+
+// This method updates the top most status data including: 
+// isActve, isRunning and the statusDiv.
+// If the state has not been successfully updated since the last
+// summary update then the connection is assumed to be inactive/failed
+var lastStateUpdateCount = 0;
+function UpdateSummary()
+{
+    if( stateUpdateCount != lastStateUpdateCount ){
+       document.getElementById("statusDiv").innerHTML=
+                       "Connected";
+       isActive = 1;
+       if( unitState.run.toLowerCase() == "on" ){
+          isRunning= 1;
+       }
+       else {
+          isRunning= 0;
+       }
+    }
+    else{
+       document.getElementById("statusDiv").innerHTML=
+                       "<font color=red>DISCONNECTED</font>";
+       isActive = 0;
+       isRunning= 0;
+    }
+    lastStateUpdateCount = stateUpdateCount;
+}
+
+// This method issues a "getstate" GET request to the server, parses the
+// return JSON data and populates all of the known divs using the device
+// returned state.  If a good response has been received, parsed, and
+// updated then the global variable stateUpdateCount is incremented.
+function UpdateState()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         // Done and status is ok
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            // Display the raw input prior to parsing
+            // console.log( xmlhttp.responseText ); 
+
+            unitState = JSON.parse( xmlhttp.responseText );
+
+            document.getElementById("runDiv").innerHTML    =unitState.run;
+            document.getElementById("nPtsDiv").innerHTML   =unitState.nPts;
+            document.getElementById("centerHzDiv").innerHTML   =
+                                          unitState.centerHz.toLocaleString();
+            document.getElementById("spanHzDiv").innerHTML   =
+                                          unitState.spanHz.toLocaleString();
+            stateUpdateCount++;
+
+            bxy1.SetTitle(
+                          "AdcHttpd v2.1" + unitState.time +
+                          " Npt="     + unitState.nPts +
+                          " Ave="     + unitState.nAve +
+                          " Chn="     + unitState.chnl +
+                          " Tpg="     + unitState.tpg  +
+                          " Center="  + unitState.centerHz.toLocaleString() +
+                          " Hz"
+                         );
+
+         }
+      }
+      xmlhttp.open("GET","getstate",true);
+      xmlhttp.send();
+}
+
+// This method issues a "getdata" GET request to the server and parses the
+// response into unitData which can then be used by other methods.
+function UpdateData()
+{
+      var xmlhttp;
+      xmlhttp=new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange=function() 
+      {
+         if (xmlhttp.readyState==4 && xmlhttp.status==200) 
+         {
+            // Display the raw input prior to parsing
+            // console.log( xmlhttp.responseText ); 
+
+            unitData = JSON.parse( xmlhttp.responseText );
+         }
+      }
+      xmlhttp.open("GET","getdata",true);
+      xmlhttp.send();
+}
+
+// This method is to be invoked after the state is updated.
+// It pulls any recently received xy points from the state and
+// updates the display with them.
+function DrawPlot()
+{
+   // Copy over any newly available display points
+   for(sidx=0, didx=unitData.npi;sidx<unitData.npc;sidx++,didx++){
+      xyXvec[didx] = unitData.npx[sidx];
+      xyYvec[didx] = unitData.npy[sidx];
+   }
+
+   // Re-establish limits
+   bxy1.SetLogicalLimits( 
+                 unitData.lim[0],     unitData.lim[1], 
+                 gYmin,gYmax
+                        );
+
+   // Force the length to be current total
+   xyYvec.length = unitData.tpc;
+   xyXvec.length = unitData.tpc;
+
+   // Copy in the vectors to draw
+   bxy1.SetXy( xyXvec, xyYvec );
+
+   // Draw it
+   bxy1.Draw();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// This method is intended to be invoked periodically to update the display
+// and to query the device for its state.
+var pollCount = 0;
+function PollDevice()
+{
+    // Update the status display based on current state
+    if( 0==(pollCount%10) ){
+        UpdateSummary();
+    }
+
+    // Issue a state update request to the device
+    if( isActive ){
+        if( 0==(pollCount%5) ){
+           UpdateState();
+        }
+    }
+    else{
+        if( 0==(pollCount%10) ){
+           UpdateState();
+        }
+    }
+
+    // Update the plot based on recent state data
+    if( isActive && isRunning ){
+        UpdateData(); // Issue a data update request to the device
+        DrawPlot();   // Draw whatever data we have
+    }
+
+    // Keep track of the polling count
+    pollCount++;
+}
+
+/*
+   TODO rethink polling, display, connect rates
+   Action             DisCon  Con  NotRun Running   
+   update display     0       500  500    100
+   update state       0       500  500    500
+   update connection  500     500  500    500 
+
+*/
+
+// This sets the device polling rate.  The display is updated
+// at this rate as well as the device being queried at this rate
+setInterval(PollDevice,100);
+
+// This method toggles peak picking on and off
+var gPeaks = 0;
+function DispTogglePeaks()
+{
+   if( gPeaks>0 ) gPeaks = 0;
+   else           gPeaks = 9;
+
+   bxy1.PeakPick( gPeaks );
+}
+
+// This method toggles markers on and off
+function DispToggleMarkers( elem )
+{
+   bxy1.MarkersVisible( bxy1.MarkersIsVisible() ^ 1 );
+   bxy1.Draw(); 
+}
+
+// This method stores the current trace into a memory
+var gActiveMem = 0;
+function DispMstore()
+{
+   bxy1.TraceSave(gActiveMem);
+   bxy1.TraceVisible(gActiveMem,1);
+}
+
+// This method toggles the display of the existing memory
+function DispToggleMshow()
+{
+   bxy1.TraceVisible(gActiveMem,bxy1.TraceIsVisible(gActiveMem)^1);
+   bxy1.Draw(); 
+}
+
+// This method toggles the value and display of the envelope.
+function DispToggleEnvelope( elem )
+{
+   if( bxy1.EnvIsEnable() ){
+      bxy1.EnvVisible( 0 );
+      bxy1.EnvEnable(  0 );
+      bxy1.Draw(); // force clear of env
+   }
+   else{
+      bxy1.EnvEnable(  1 );
+      bxy1.EnvVisible( 1 );
+      // let the next draw show env
+   }
+}
+
+// This method uses a keypad to set the maximum Y axis value
+function SetYmax()
+{
+   bkp1.Show( 
+     document.getElementById("yMaxValueDiv").innerHTML,
+     function( val ) {
+        console.log("Keypad input = "+val);
+        document.getElementById("yMaxValueDiv").innerHTML = val;
+        gYmax = Number(val);
+        gYmaxByFunc[ gFuncIdx ] = gYmax;
+        console.log("gYmax="+gYmax);
+     }
+   );
+}
+
+// This method uses a keypad to set the maximum Y axis value
+function SetYmin()
+{
+   bkp1.Show( 
+     document.getElementById("yMinValueDiv").innerHTML,
+     function( val ) {
+        console.log("Keypad input = "+val);
+        document.getElementById("yMinValueDiv").innerHTML = val;
+        gYmin = Number(val);
+        gYminByFunc[ gFuncIdx ] = gYmin;
+        console.log("gYmin="+gYmin);
+     }
+   );
+}
+
+</script>
+</head>
+
+</html>
