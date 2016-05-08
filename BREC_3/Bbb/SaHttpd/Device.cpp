@@ -42,69 +42,30 @@
 
 #include "Device.h"
 
+#include "DevSim.h"
+#include "DevMtdf.h"
 
-////////////////////////////////////////////////////////////////////////////////
-/// Devices ////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 static Device *gpDevice = NULL;
 
-//------------------------------------------------------------------------------
 Device *GetDev()
 {
-    if( !gpDevice ){
-       gpDevice = new Device();
+    // Device is already created
+    if( gpDevice ) return( gpDevice );
+
+#   ifdef TGT_X86
+    gpDevice = (Device*)( new DevSim() );
+    return(gpDevice);
+
+#   else
+    if(  FindCapeByName("brecFpru")>0 ){
+        gpDevice = (Device*)( new DevMtdf() );
+        return( gpDevice );
     }
-    return( gpDevice );
-}
+#   endif
 
-//------------------------------------------------------------------------------
-Device::Device()
-{
-}
+    fprintf(stderr,"No recognized device tree\n");
+    exit(-1);
 
-//------------------------------------------------------------------------------
-int Device::Open()
-{
-    int force;
-
-    // This just opens the dev(s).  See HwModel:HwInit() for initial
-    // parameters
-
-# ifdef TGT_X86
-    force = 1;  // x86
-# else
-    force = 0;  // arm 
-# endif
-
-    if( force || FindCapeByName("brecFpru")>0  ){
-        printf("******** Device::Open Starting F/Bdc/Ddc100 ****************\n");
-
-        mBdc = new Bdc();
-        mBdc->Open();
-
-        mDdc = new Ddc100();
-        mDdc->Attach( mBdc );
-
-        mTbrd = new Tboard();
-        mTbrd->Attach( (void*)( mBdc->GetPinGroup(0) ), (void*)0 );
-
-        mMbrd = new Mboard();
-        mMbrd->Attach( (void*)( mBdc->GetPinGroup(1) ), (void*)0 );
-
-        mDdc->Open();
-
-        // Comment this line out to use CPU based SPI to samples
-        mDdc->StartPru();
-    }
-
-    else{
-        // Just terminate here since exceptions will result
-        fprintf(stderr,"No recognized device tree\n");
-        exit(-1);
-    }
-
-    printf("*********** Device::Open End *****************************\n");
-
-    return(0);
+    return(gpDevice);
 }
 

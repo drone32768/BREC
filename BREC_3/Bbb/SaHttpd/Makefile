@@ -34,14 +34,16 @@ DEV_OBJS= \
          ../Tboard/$(TGT)/mcp4725.o      \
          ../Tboard/$(TGT)/max2112.o      \
 
-LOCAL_OBJS= $(TGT)/Device.o              \
-            $(TGT)/InstModel.o           \
-            $(TGT)/Pse.o                 
+LOCAL_OBJS= $(TGT)/InstModel.o           \
+            $(TGT)/Pse.o                 \
+            $(TGT)/Device.o              \
+            $(TGT)/DevSim.o              \
+            $(TGT)/DevMtdf.o             
 
 all	:
 	make $(TGT)/SaHttpd
 
-$(TGT)/SaHttpd  : SaHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
+$(TGT)/SaHttpd  : SaHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT) 
 	g++ $(CPPFLAGS) SaHttpd.cpp \
               -I../           \
               -I$(PRU_INC)    \
@@ -56,15 +58,25 @@ $(TGT)/SaHttpd  : SaHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 $(TGT)/Device.o	: Device.cpp Device.h | $(TGT)
 	g++ -I../ $(CPPFLAGS) -c Device.cpp  -o $(TGT)/Device.o
 
+$(TGT)/DevSim.o	: DevSim.cpp DevSim.h | $(TGT)
+	g++ -I../ $(CPPFLAGS) -c DevSim.cpp  -o $(TGT)/DevSim.o
+
+$(TGT)/DevMtdf.o	: DevMtdf.cpp DevMtdf.h | $(TGT)
+	g++ -I../ $(CPPFLAGS) -c DevMtdf.cpp  -o $(TGT)/DevMtdf.o
+
 $(TGT)/Pse.o	: Pse.cpp Pse.h | $(TGT)
 	g++ -I../ $(CPPFLAGS) -c Pse.cpp  -o $(TGT)/Pse.o
 
 $(TGT)/InstModel.o	: InstModel.cpp InstModel.h | $(TGT)
 	g++ -I../ $(CPPFLAGS) -c InstModel.cpp  -o $(TGT)/InstModel.o
 
+Jslink	: ../../Js
+	ln -s ../../Js
+
 clean	:
 	rm -f $(TGT)/*
 	rm -rf $(TGT)
+	rm -f Js
 	rm -f *~
 	rm -f tmp
 

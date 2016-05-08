@@ -205,6 +205,7 @@ ahc_access_handler (void *cls,
    }
 
    if (0 == stat (fname, &buf)){
+     printf("Sending file <%s>\n",fname);
      file = fopen (fname, "rb");
    }
    else {

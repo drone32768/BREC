@@ -43,30 +43,15 @@
 #include "Tboard/Tboard.h"
 
 class Device {
-  private:
-
-    // For locking device access
-    SimpleMutex mMutex;
-
-    // Configuration specific
-    Bdc      *mBdc;
-    Ddc100   *mDdc;
-    Mboard   *mMbrd;
-    Tboard   *mTbrd;
-
   public:
-
-    Device();
-
-    int      Open();
-    int      Lock()                  { return( mMutex.Lock() ); }
-    int      Unlock()                { return( mMutex.Unlock() ); }
-    int      GetComplexSampleRate()  { return(mDdc->GetComplexSampleRate() ); }
-    int      FlushSamples()          { return(mDdc->FlushSamples());          }
-    int      Get2kSamples(short *dst){ return(mDdc->Get2kSamples(dst));       }
-
+    virtual int      Open() = 0;
+    virtual int      Lock() = 0;
+    virtual int      Unlock() = 0;
+    virtual int      GetComplexSampleRate() = 0;
+    virtual int      FlushSamples() = 0;
+    virtual int      Get2kSamples(short *dst) = 0;
+    virtual double   SetTuneHz( double freqHz ) = 0;
 };
 
 extern Device *GetDev();
-
 #endif

@@ -71,8 +71,10 @@ private:
     void           ShowState();
     int            ReadCfg();
     int            WriteCfg();
+
     void           ScanReset();
     void           ScanSvc();
+    void           ScanStep();
 
 public:
 

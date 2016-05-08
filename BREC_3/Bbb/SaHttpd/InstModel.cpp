@@ -385,7 +385,13 @@ void  InstModel::Main()
 ////////////////////////////////////////////////////////////////////////////////
 void InstModel::ScanReset()
 {
-    mScanReset = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void InstModel::ScanStep()
+{
+    // GetDev()->SetRfInputFreq( mNextFreqHz );
+    // Flush any samples
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -394,6 +400,22 @@ void InstModel::ScanSvc()
     if( mScanReset ){
         ScanReset();
     }
+
+    // Collect the samples for current step
+    // idx = 0;
+    // while( idx<mSampleCnt ){
+    //      GetDev()->Get2kSamples( mSamples+idx );
+    //    idx+=2048;
+    // }
+
+    // Step the scan
+    // ScanStep();
+
+
+    // Get the current spectral estimate
+    // mSiEstimator( mSamples, mSampleCnt, m2Data );
+
+    // Update the current results
 }
 
 
