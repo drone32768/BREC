@@ -60,8 +60,15 @@ private:
 
     double         mXmin,mXmax;  // x limits determined by processing
 
+    short         *mSampleBf;    // sample buffer
+    int            mMaxSamples;  // words 
+
     int            mScanReset;
     Pse            mPse;         // power spectrum estimator object
+
+    double         mNewCenterHz; // requested new center frequency
+    double         mNewSpanHz;   // requested new span frequency
+
     double         mCenterHz;    // center frequency
     double         mSpanHz;      // span frequency
 

@@ -71,11 +71,18 @@ int DevSim::FlushSamples()
 //------------------------------------------------------------------------------
 int DevSim::Get2kSamples( short *dst )
 {
+    int idx;
+    for( idx=0; idx<2048; idx++ ){
+        dst[idx] = random() % 4;
+    }
+
     return(0);
 }
 
 //------------------------------------------------------------------------------
 double DevSim::SetTuneHz( double freqHz )
 {
+    // printf("Tune %f MHz\n",freqHz/1e6);
+    // us_sleep( 100000 );
     return(freqHz);
 }

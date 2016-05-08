@@ -42,8 +42,9 @@ LOCAL_OBJS= $(TGT)/InstModel.o           \
 
 all	:
 	make $(TGT)/SaHttpd
+	make Js
 
-$(TGT)/SaHttpd  : SaHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT) 
+$(TGT)/SaHttpd  : SaHttpd.cpp $(LOCAL_OBJS) $(UTIL_OBJS) $(DEV_OBJS)  | $(TGT)
 	g++ $(CPPFLAGS) SaHttpd.cpp \
               -I../           \
               -I$(PRU_INC)    \
@@ -70,7 +71,7 @@ $(TGT)/Pse.o	: Pse.cpp Pse.h | $(TGT)
 $(TGT)/InstModel.o	: InstModel.cpp InstModel.h | $(TGT)
 	g++ -I../ $(CPPFLAGS) -c InstModel.cpp  -o $(TGT)/InstModel.o
 
-Jslink	: ../../Js
+Js	: ../../Js
 	ln -s ../../Js
 
 clean	:

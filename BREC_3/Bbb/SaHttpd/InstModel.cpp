@@ -64,6 +64,9 @@ InstModel::InstModel()
     mXvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
     mYvec       = (double*)malloc( mXyMaxLen*sizeof(double) );
 
+    mMaxSamples = 32768;
+    mSampleBf   = (short*)malloc( mMaxSamples*sizeof(short) );
+
     mXmin       = 1e6;
     mXmax       = 1e6;
     for( idx=0; idx<mXyCurLen; idx++){
@@ -173,11 +176,11 @@ InstModel::SetState( char *name, char *value )
     }
 
     else if( 0==strcmp(name,"centerHz") ){
-          mCenterHz = atof( value );
+          mNewCenterHz = atof( value );
     }
 
     else if( 0==strcmp(name,"spanHz") ){
-          mSpanHz = atof( value );
+          mNewSpanHz = atof( value );
     }
 
     else if( 0==strcmp(name,"swreset") && 0==strcmp(value,"ON") ){
@@ -383,39 +386,249 @@ void  InstModel::Main()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void InstModel::ScanReset()
+/*
+                                  Tune
+                                 mCurHz 
+                                   ^ 
+                                   |
+               ----.---------------+----------------.-- 
+              /    .               |                .  \
+             /     .               |                .   \
+            /      .               |                .    \
+           /       .               |                .     \
+          /        .               |                .      \
+         /         .               |                .       \
+        /          .               |                .        \
+  --O-----|----|---|---|---|--|--|---|---|---|--|---|---|---|----O-------
+    |              .                                .            |
+    |              .           mHzPerStep           .            |
+    |              .          mInBinsPerStep        .            |
+    |               <--|---|--|--|---|---|---|--|-->             |
+    |              .                                .            |
+    |              .                                .            |
+    |              .          mOutBinsPerStep       .            |
+    |              x------x--------x--------x-------x            |
+    |                     |        |                             |
+    |                     |        |                             |
+    |                     |<------>|                             |
+    |                    mOutHzPerBin                            |
+    |                                                            |
+    |                                                            |
+    |                      mSamplesPerStep AND                   |
+    |                         (fft size)   AND                   |
+    |<---------------------------------------------------------->|
+*/
+
+
+/**
+ * This structure collects all of the critical step parameters together
+ */
+struct StepParams
 {
+   int    mChId;           // channel to use
+   int    mSamplesPerStep; // samples collected at each step (and fft size)
+
+   int    mInBinsPerStep;  // fft bins available for measure at each step
+   double mHzPerStep;      // measured hz at each step
+
+   int    mTotalSteps;     // number of steps per scan 
+   double mHzStart;        // first step center frequency
+   int    mOutBinsPerStep; // output bins collected at each step
+   double mOutHzPerBin;    // Hz per output bin
+
+   int    mCurStep;        // current step in total steps
+   double mCurHz;          // current frequency center under measure
+
+};
+
+int
+StepCfg( 
+    int       cfg, 
+    int     & chId, 
+    int     & stepSamples,
+    int     & stepInBins,
+    double  & stepHz
+)
+{
+    switch( cfg ){
+        case 0:
+            chId        = 5;
+            stepSamples = 8192;
+            stepInBins  = 0.8*stepSamples;
+            stepHz      = 0.2e6 * stepInBins / stepSamples;
+            return( 1 );
+        case 1:
+            chId        = 4;
+            stepSamples = 4096;
+            stepInBins  = 0.8*stepSamples;
+            stepHz      = 4e6   * stepInBins / stepSamples;
+            return( 1 );
+        case 2:
+            chId        = 3;
+            stepSamples = 2048;
+            stepInBins  = 0.4*stepSamples;
+            stepHz      = 40e6  * stepInBins / stepSamples;
+            return( 0 );
+        default:
+            return( 0 );
+    }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-void InstModel::ScanStep()
-{
-    // GetDev()->SetRfInputFreq( mNextFreqHz );
-    // Flush any samples
-}
+static StepParams gSp;
 
 ////////////////////////////////////////////////////////////////////////////////
-void InstModel::ScanSvc()
+void
+InstModel::ScanReset()
 {
-    if( mScanReset ){
-        ScanReset();
+    int    stepLimit = 100;  // tunable
+    int    tgtPts    = 1024; // tunable
+
+    int    idx;
+    int    cont;
+
+    // Clamp to positive start
+    if( (mCenterHz - (mSpanHz/2)) < 0 ){
+        mSpanHz = mCenterHz*2;
     }
 
-    // Collect the samples for current step
-    // idx = 0;
-    // while( idx<mSampleCnt ){
-    //      GetDev()->Get2kSamples( mSamples+idx );
-    //    idx+=2048;
-    // }
+#define HzToMHz(f) ( (f)/1e6 )
 
-    // Step the scan
-    // ScanStep();
+    printf(
+"----------------------------- ScanReset ------------------------------------\n"
+    );
+    printf("S:mCenterHz      =%15f MHz , mSpanHz     =%15f MHz\n",
+             HzToMHz(mCenterHz), HzToMHz(mSpanHz) );
+
+    // Mark the scan as reset
+    mScanReset = 0;
+
+    // Loop over possible step configurations find the "best" one
+    cont      = 1;
+    idx       = 0;
+    gSp.mTotalSteps = 2*stepLimit;
+    while( cont && (gSp.mTotalSteps>stepLimit) ){
+
+        cont= StepCfg( idx,
+                       gSp.mChId,
+                       gSp.mSamplesPerStep,
+                       gSp.mInBinsPerStep,
+                       gSp.mHzPerStep );
+
+        gSp.mTotalSteps = mSpanHz / gSp.mHzPerStep;
+        idx++;
+
+    } // end of loop over step configurations
+
+    // At this point the following parameters have been set
+    printf("S:mChId          =%15d chl , mTotalSteps =%15d cnt\n",
+            gSp.mChId,gSp.mTotalSteps);
+    printf("S:mSamplesPerStep=%15d cnt , mHzPerStep  =%15f MHz\n",
+            gSp.mSamplesPerStep, HzToMHz(gSp.mHzPerStep) );
+    printf("S:mInBinsPerStep =%15d cnt,\n",
+            gSp.mInBinsPerStep);
 
 
-    // Get the current spectral estimate
-    // mSiEstimator( mSamples, mSampleCnt, m2Data );
+    // Calculate the final number of output bins and output bins per step
+    if( gSp.mTotalSteps > 0 ){
+        gSp.mOutBinsPerStep = tgtPts / gSp.mTotalSteps;
+        gSp.mOutHzPerBin    = gSp.mHzPerStep / gSp.mOutBinsPerStep;
+        mXyCurLen           = gSp.mOutBinsPerStep * gSp.mTotalSteps; 
+    }
+    else{
+        gSp.mOutBinsPerStep = gSp.mInBinsPerStep;
+        gSp.mOutHzPerBin    = gSp.mHzPerStep / gSp.mInBinsPerStep;
+        mXyCurLen           = gSp.mOutBinsPerStep;
+    }
 
-    // Update the current results
+    printf("S:mOutBinsPerStep=%15d cnt , mOutHzPerBin=%15f MHz\n",
+             gSp.mOutBinsPerStep,
+             gSp.mOutHzPerBin
+    );
+
+    // First step frequency is lower limit plus half a step size
+    gSp.mHzStart = mCenterHz - (mSpanHz/2) + gSp.mHzPerStep/2;
+
+    printf("S:mHzStart       =%15f cnt , mXyCurLen   =%15d MHz\n",
+             HzToMHz(gSp.mHzStart),
+             mXyCurLen
+    );
+
+    // Setup the stepping limits
+    gSp.mCurStep = 0;
+    gSp.mCurHz   = gSp.mHzStart;
+
+    // Construct the frequency bin locations
+    double fcHz,fbHz;
+    int    didx,sidx,bidx;
+
+    fcHz = gSp.mHzStart;
+    didx = 0;
+    sidx = 0;
+    do{
+       fbHz = fcHz -  (gSp.mOutBinsPerStep/2)*gSp.mOutHzPerBin;
+       for(bidx=0;bidx<gSp.mOutBinsPerStep;bidx++){
+           mXvec[didx] = fbHz;
+           mYvec[didx] = -160.0;
+           didx        = didx + 1;
+           fbHz        = fbHz + gSp.mOutHzPerBin;
+       }
+       fcHz = fcHz + gSp.mHzPerStep;
+       sidx = sidx + 1;
+    }
+    while( sidx < gSp.mTotalSteps );
+    printf("S:X[%d]           =%15f MHz , X[%4d]     =%15f MHz\n",
+                      0,(mXvec[0]/1e6),
+                      didx-1,(mXvec[didx-1] /1e6)
+    );
 }
 
+////////////////////////////////////////////////////////////////////////////////
+void
+InstModel::ScanSvc()
+{
+    ScanStep();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void
+InstModel::ScanStep()
+{
+    int    didx;
+    double nextHz;
+    int    nextStep;
+
+    // Figure out if we need to reset
+    if( (mNewCenterHz!=mCenterHz) || 
+        (mNewSpanHz  !=mSpanHz  ) ){
+        ScanReset();
+        mNewCenterHz=mCenterHz;
+        mNewSpanHz  =mSpanHz;
+    }
+
+    // Collect the required number of samples
+    didx = 0;
+    while( didx< gSp.mSamplesPerStep ){
+        GetDev()->Get2kSamples( mSampleBf + didx );
+        didx += 2048;
+    }
+
+    // Tune to the next step
+    if( gSp.mCurStep >= (gSp.mTotalSteps-1) ){
+        nextHz   = gSp.mHzStart;
+        nextStep = 0;
+    }
+    else{
+        nextHz   = gSp.mCurHz + gSp.mHzPerStep;
+        nextStep = gSp.mCurStep + 1;
+    }
+    GetDev()->SetTuneHz( nextHz );
+    GetDev()->FlushSamples();
+
+    printf("%4d Tune %15f MHz\n",nextStep,nextHz/1e6);
+    us_sleep( 10000 );
+
+    // Make the next step the current step
+    gSp.mCurHz   = nextHz;
+    gSp.mCurStep = nextStep;
+}
 
