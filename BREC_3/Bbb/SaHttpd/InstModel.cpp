@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
+#include <math.h>
 
 #include "InstModel.h"
 #include "Device.h"
@@ -55,7 +56,10 @@ InstModel::InstModel()
 
     mRun        = 0;
     mCenterHz   = 92e6;
-    mSpanHz     = 10e6;
+    mSpanHz     = 1e6;
+    mNewCenterHz= 92e6;
+    mNewSpanHz  = 10e6;
+
     mParamChange= 0;
     mCfgFname   = strdup( "local.cfg" );
 
@@ -285,6 +289,7 @@ InstModel::GetData( char *resultsStr, int resultsLen )
     char  *pos;
     int    len;
     int    idx;
+    double fval;
 
     int npc;
     static int npi = 0; // FIXME
@@ -323,7 +328,9 @@ InstModel::GetData( char *resultsStr, int resultsLen )
     len -= nBytes;
 
     for(idx=0;idx<npc;idx++){
-        nBytes = snprintf(pos, len, "%g%c",mXvec[npi+idx],
+        fval = mXvec[npi+idx];
+        if(!isnormal(fval)) fval=0.0;
+        nBytes = snprintf(pos, len, "%g%c",fval,
                                            (idx==(npc-1))?' ':',');
         pos += nBytes;
         len -= nBytes;
@@ -338,7 +345,9 @@ InstModel::GetData( char *resultsStr, int resultsLen )
     len -= nBytes;
 
     for(idx=0;idx<npc;idx++){
-        nBytes = snprintf(pos, len, "%g%c",mYvec[npi+idx],
+        fval = mYvec[npi+idx];
+        if(!isnormal(fval)) fval=0.0;
+        nBytes = snprintf(pos, len, "%g%c",fval,
                                            (idx==(npc-1))?' ':',');
         pos += nBytes;
         len -= nBytes;
@@ -535,12 +544,12 @@ InstModel::ScanReset()
         mXyCurLen           = gSp.mOutBinsPerStep * gSp.mTotalSteps; 
     }
     else{
-        gSp.mOutBinsPerStep = gSp.mInBinsPerStep;
+        gSp.mOutBinsPerStep = tgtPts;
         gSp.mOutHzPerBin    = gSp.mHzPerStep / gSp.mInBinsPerStep;
         mXyCurLen           = gSp.mOutBinsPerStep;
     }
 
-    printf("S:mOutBinsPerStep=%15d cnt , mOutHzPerBin=%15f MHz\n",
+    printf("S:mOutBinsPerStep=%15d cnt , mOutHzPerBin=%15f  Hz\n",
              gSp.mOutBinsPerStep,
              gSp.mOutHzPerBin
     );
@@ -580,6 +589,7 @@ InstModel::ScanReset()
                       0,(mXvec[0]/1e6),
                       didx-1,(mXvec[didx-1] /1e6)
     );
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -587,6 +597,16 @@ void
 InstModel::ScanSvc()
 {
     ScanStep();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void
+InstModel::ShowXy()
+{
+    int idx;
+    for( idx=0; idx<mXyCurLen; idx++){
+        printf("%d %f %f\n",idx,HzToMHz(mXvec[idx]),mYvec[idx]);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -600,14 +620,17 @@ InstModel::ScanStep()
     // Figure out if we need to reset
     if( (mNewCenterHz!=mCenterHz) || 
         (mNewSpanHz  !=mSpanHz  ) ){
+
+        mCenterHz = mNewCenterHz;
+        mSpanHz   = mNewSpanHz;
+
         ScanReset();
-        mNewCenterHz=mCenterHz;
-        mNewSpanHz  =mSpanHz;
     }
 
     // Collect the required number of samples
     didx = 0;
-    while( didx< gSp.mSamplesPerStep ){
+    while( didx< (2*gSp.mSamplesPerStep) ){
+        // Since these are really words we get 2x since a sample is complex
         GetDev()->Get2kSamples( mSampleBf + didx );
         didx += 2048;
     }
@@ -616,6 +639,9 @@ InstModel::ScanStep()
     if( gSp.mCurStep >= (gSp.mTotalSteps-1) ){
         nextHz   = gSp.mHzStart;
         nextStep = 0;
+
+//TODO ShowXy();
+
     }
     else{
         nextHz   = gSp.mCurHz + gSp.mHzPerStep;
@@ -624,11 +650,29 @@ InstModel::ScanStep()
     GetDev()->SetTuneHz( nextHz );
     GetDev()->FlushSamples();
 
-    printf("%4d Tune %15f MHz\n",nextStep,nextHz/1e6);
+//    printf("%4d Tune %15f MHz\n",nextStep,nextHz/1e6);
     us_sleep( 10000 );
 
+    // Get the estimate   
+    mPse.GetEstimate( 
+              mSampleBf,           // Samples
+              gSp.mSamplesPerStep, // Number of complex input samples 
+              gSp.mInBinsPerStep,  // Number of bins to evaluate
+              gSp.mOutBinsPerStep, // Number of output bins
+              mYvec + (gSp.mCurStep*gSp.mOutBinsPerStep)
+    );
+              
+//didx = gSp.mCurStep*gSp.mOutBinsPerStep;
+//printf("(%d,%f,%f) ",didx,mXvec[didx],mYvec[didx]);
+
     // Make the next step the current step
+    // NOTE: last thing we do
     gSp.mCurHz   = nextHz;
     gSp.mCurStep = nextStep;
 }
 
+/*
+TODO:
+1) Check GetEstimate
+2) Redo X using actual center frequenc
+*/

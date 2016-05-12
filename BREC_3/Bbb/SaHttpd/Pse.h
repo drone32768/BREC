@@ -69,18 +69,18 @@ class Pse {
    double   mCoherentGain; // Current coherent gain
 
 public:
-   Pse();
 
-   void ProcessCoherentInterval(
-      int     aNave,
-      int     aFftSize,
-      double *aXvec,
-      double *aYvec
-    );
 
     void   PerformSetup(   int winType,   int fftSize );
-    short* PerformFft(     int isComplex, int fftSize, short *src, int nave );
-    void   PerformOutputX( int isComplex, int fftSize, double *aXvec,int csps );
-    void   PerformOutputY( int isComplex, int fftSize, double *aYvec,int aNave);
+    short* PerformFft(     int isComplex, int fftSize, short *src );
+
+    Pse();
+    void   GetEstimate(
+              short *samples,
+              int    nComplexSamples,
+              int    inBins,
+              int    outBins,
+              double *output
+           );
 };
 #endif /* __PSE__ */

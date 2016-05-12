@@ -97,6 +97,8 @@ public:
     int    GetState( char *resultsStr, int resultsLen );
     int    GetData( char *resultsStr, int resultsLen );
     int    SetCfg( const char *fname );
+
+    void   ShowXy();
 };
 
 #endif // __INSTMODEL_H__

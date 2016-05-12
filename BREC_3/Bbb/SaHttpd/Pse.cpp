@@ -49,7 +49,6 @@ Pse::Pse()
     mMaxFft     = 32768;
     mMaxSamp    = 8*mMaxFft;
     mInput      = (short*)malloc(  2 * mMaxSamp * sizeof(short)  );
-    mFftSum     = (double*)malloc( 2 * mMaxFft  * sizeof(double) );
     mWin        = (double*)malloc(     mMaxFft  * sizeof(double) );
     mCurFftSize = -1;   // invalid, ensure setup executes
     mCurWinType = -1;   // invalid, ensure setup executes
@@ -65,12 +64,6 @@ Pse::PerformSetup( int winType, int fftSize )
     if( mLog&PSE_LOG_SETUP ){
        printf("Pse:PerformSetup: Clear history win=%d, fft=%d\n",
                               winType,fftSize);
-    }
-
-    // No matter what, zero the running fft sum
-    for(idx=0;idx<fftSize;idx++){
-       mFftSum[ 2*idx    ] = 0.0;
-       mFftSum[ 2*idx +1 ] = 0.0;
     }
 
     // if the window type and fft size are the same we are done
@@ -131,7 +124,7 @@ Pse::PerformSetup( int winType, int fftSize )
 }
 
 short * 
-Pse::PerformFft( int complexInput, int fftSize, short *inputData, int nave )
+Pse::PerformFft( int complexInput, int fftSize, short *inputData )
 {
     int    idx;
     short *newHead;
@@ -166,173 +159,71 @@ Pse::PerformFft( int complexInput, int fftSize, short *inputData, int nave )
     // Perform the fft
     fftw_execute( mFftwPlan );
 
-
-    // Add the result into running coherent average
-    for(idx=0;idx<fftSize;idx++){
-        mFftSum[ 2*idx    ] += (mFftwOutput[idx][0] );
-        mFftSum[ 2*idx + 1] += (mFftwOutput[idx][1] );
-    }
- 
     return( newHead );
 }
 
 void
-Pse::PerformOutputX( int isComplex, int fftSize, double *aXvec, int csps )
+Pse::GetEstimate(
+    short *inputData,
+    int    nComplexSamples,
+    int    inBins,
+    int    outBins,
+    double *output
+)
 {
-    int    idx;
-    double last;
-    int    nPts;
+    int    didx,sidx,pidx,sbin;
+    double normalize;
+    double magSqr,pwr;
+    double bsum;
 
-    nPts = isComplex? (fftSize)  :(fftSize/2);
- 
-    if( isComplex ){
-        aXvec[0] = - (csps/2.0);
-        last     = + (csps/2.0);
-    }
-    else{
-        aXvec[0] = 0.0;
-        last     = csps;
-    }
+    // Setup
+    PerformSetup( 1 /* 0=no win, 1=win */, nComplexSamples );
 
-    if( mLog&PSE_LOG_OUTX ){
-        printf("Pse:PerformOutputX: pts=%d,csps=%d,cmplx=%d\n",
-               nPts,csps,isComplex);
-    }
+    // Calculate fft
+    PerformFft(   1 /*complex=true*/,nComplexSamples,inputData );
 
-    for(idx=1;idx<nPts;idx++){
-        aXvec[idx] = aXvec[0] + ((double)idx * (double)csps)/(double)nPts;
-    }
-    aXvec[idx-1] = last; // Force the last bin to end of extent
+    // Capture the number of input bins per output bin (bins summed)
+    bsum = (double)inBins / (double)outBins;
 
-}
-
-void
-Pse::PerformOutputY( int isComplex, int fftSize, double *aYvec, int aNave )
-{
-    double magSqr,normalize;
-    int    nPts;
-    int    didx,sidx;
-
-
-    // Update Y values
-    normalize =   -6                           // Half pwr in neg bins
-                  + 20*log10( 32768 )          // Ref 16 signed bit
-                  + 20*log10( mCoherentGain )  // Remove Windowing
-                  + 20*log10( fftSize )        // Remove  1/N^2 from dft
-                  + 20*log10( aNave )          // Remove Averaging 
+    // Calculate the normalization factor
+    // NOTE: this must be done after setup so gain is correct
+    normalize =   0.0
+                  + 20*log10( 32768 )            // Ref 16 signed bit
+                  + 20*log10( mCoherentGain )    // Remove Windowing
+                  + 20*log10( nComplexSamples )  // Remove  1/N^2 from dft
+                  + 20*log10( bsum )             // Remove bin integration
                 ;
 
-    // Loop over output creating dBFS16
-    nPts = isComplex? (fftSize)  :(fftSize/2);
-    sidx = isComplex? (fftSize/2):0;
+    // Copy out values
     didx = 0;
-    if( mLog&PSE_LOG_OUTY ){
-        printf("Pse:PerformOutputY: fft=%d,cmplx=%d,norm=%f\n",
-                     fftSize,isComplex,normalize);
-    }
-    while( didx < nPts ){
+    sbin = (nComplexSamples/2) - (inBins/2);
+    sidx = sbin;
+    while( didx < outBins ){
 
-       magSqr = (mFftSum[2*sidx]     * mFftSum[2*sidx]    )
-                +
-                (mFftSum[2*sidx + 1] * mFftSum[2*sidx + 1]);
+        pwr = 0.0;
+        pidx= sbin + (int)( ((double)(didx+1) * bsum)+0.5);
+        while( sidx < pidx ){
+            magSqr = (mFftwOutput[sidx][0] * mFftwOutput[sidx][0]    ) +
+                     (mFftwOutput[sidx][1] * mFftwOutput[sidx][1]);
+            pwr    = pwr + magSqr;
+            sidx++;
+        }
 
-       aYvec[didx] = 10*log10(magSqr) - normalize;
+        if( pwr < 1.0 ){
+            pwr = 1.0;
+        }
 
-       didx++;
-       sidx = (sidx+1)%fftSize;
+        // Move forward source and destination indecies
+        output[ didx ]  = 10*log10(pwr) - normalize;
+
+/* TODO
+if( didx==0 ){
+printf("pse: %5d %f %d %d %g %g %g)\n",
+          didx,bsum,sidx,pidx,pwr,output[didx],normalize);
+}
+*/
+
+        // Move to the next destination bin
+        didx++;
     }
 }
-
-void 
-Pse::ProcessCoherentInterval( 
-      int     aNave,
-      int     aPts,
-      double *aXvec,
-      double *aYvec
-    )
-{
-    short *dst;
-    short *src;
-    int    cnt,lim;
-    int    csps;
-    int    isComplex;
- 
-    int    fftSize;
-
-    // Get sample rate
-    csps = GetDev()->GetComplexSampleRate();
-
-    // Get format
-    isComplex = 1;
-
-    // Based on the desire number of points and the
-    // format of the input data figure out the fft size
-    fftSize = isComplex? aPts : (2 * aPts);
-
-    if( mLog&PSE_LOG_PCOHI ){
-        printf("Pse:nav=%d,pts=%d,fft=%d,cmplx=%d,csps=%d\n",
-                aNave,aPts,fftSize,isComplex,csps);
-    }
-
-    // Sanity check args to prevent downstream ambiguous errors
-    if( (fftSize*aNave) >= mMaxSamp ){
-        fprintf(stderr,"Pse::fft x ave > max samples\n");
-        return;
-    }
-    if( fftSize <=0 ){
-        fprintf(stderr,"Pse::fft <= 0\n");
-        return;
-    }
-    if( aNave <=0 ){
-        fprintf(stderr,"Pse::ave <= 0\n");
-        return;
-    }
-
-    // Get exclusive access to hw
-    GetDev()->Lock();
-
-    // Capture the coherent number of required samples
-    // The adc interface is really 2k sample words so
-    // in complex cases we are really only getting 1k complex
-    // samples each time.
-    dst = mInput;
-    cnt = 0;
-    lim = fftSize * aNave;
-    lim = lim * (isComplex?2:1);
-    GetDev()->FlushSamples();
-    while( cnt<lim ) {
-       GetDev()->Get2kSamples( dst ); 
-       dst += 2048;
-       cnt += 2048;
-    }
-
-    // Give up exclusive access to Hw
-    GetDev()->Unlock();
-
-    if( mLog&PSE_LOG_PCOHI ){
-        printf("Pse::ProcessCoherentInterval: %d words, %d samples, %d coll\n",
-                     lim, fftSize*aNave,cnt);
-    }
-
-    // Setup for fft's
-    PerformSetup( 1 /* 0=no win, 1=win */, fftSize );
-
-    // Loop over number of averages
-    src = mInput;
-    cnt = 0;
-    while( cnt < aNave ){
-       if( mLog&PSE_LOG_PCOHI ){
-           printf("Pse::ProcessCoherentInterval:fft[%d] %d\n",cnt,fftSize);
-       }
-       src = PerformFft( isComplex, fftSize, src, aNave );
-       cnt = cnt + 1;
-    }
-
-    // Format and output the X values
-    PerformOutputX( isComplex, fftSize, aXvec, csps );
-
-    // Format and output the Y values
-    PerformOutputY( isComplex, fftSize, aYvec, aNave );
-
-}
-
