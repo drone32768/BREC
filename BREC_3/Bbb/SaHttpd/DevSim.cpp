@@ -36,6 +36,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include <string>
 #include <iostream>
@@ -69,11 +70,62 @@ int DevSim::FlushSamples()
 }
 
 //------------------------------------------------------------------------------
+int    gChId   = 0;
+double gFsHz   = 1;
+double gTuneHz = 1;
+double gToneHz = 750.1e6;
+short  gToneAmp= 1024;
+
+//------------------------------------------------------------------------------
 int DevSim::Get2kSamples( short *dst )
 {
-    int idx;
+    int    idx,n0;
+    double dfHz,phi;
+
+    // Start with noise in all cases
     for( idx=0; idx<2048; idx++ ){
-        dst[idx] = random() % 4;
+        dst[idx] = random() % 256;
+    }
+
+    dfHz = gTuneHz - gToneHz;
+
+    // If the test tone is outside of the channel bw then done
+    if( fabs(dfHz) > (gFsHz/2) ){
+        return(0);
+    }
+
+printf("gFsHz=%f, gTuneHz=%f, gToneHz=%f\n",gFsHz,gTuneHz,gToneHz);
+
+    // Add the test tone
+    for( idx=0, n0=0; idx<1024; idx+=2, n0++ ){
+        phi = 2.0 * M_PI * n0 * dfHz / gFsHz;
+        dst[idx]   += (short)( gToneAmp * sin( phi ) );
+        dst[idx+1] += (short)( gToneAmp * cos( phi ) );
+    }
+
+    return(0);
+}
+
+//------------------------------------------------------------------------------
+int DevSim::SetChannel( int chId )
+{
+    printf("%s:%d: Chnl %d\n",__FILE__,__LINE__,chId);
+
+    gChId = chId;
+    switch( chId ){
+        case 5:{
+            gFsHz = 0.2e6;
+            break;
+        }
+        case 4:{
+            gFsHz = 4.0e6;
+            break;
+        }
+        case 3:
+        default :{
+            gFsHz = 40.0e6;
+            break;
+        }
     }
 
     return(0);
@@ -82,7 +134,8 @@ int DevSim::Get2kSamples( short *dst )
 //------------------------------------------------------------------------------
 double DevSim::SetTuneHz( double freqHz )
 {
-    // printf("Tune %f MHz\n",freqHz/1e6);
-    // us_sleep( 100000 );
+    // printf("%s:%d: Tune %f MHz\n",__FILE__,__LINE__,freqHz/1e6);
+    us_sleep( 10000 );
+    gTuneHz = freqHz;
     return(freqHz);
 }

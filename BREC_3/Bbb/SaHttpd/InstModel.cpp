@@ -55,10 +55,10 @@ InstModel::InstModel()
     mLog        = 0x0; // 0xffffffff;
 
     mRun        = 0;
-    mCenterHz   = 92e6;
+    mCenterHz   = 750e6;
     mSpanHz     = 1e6;
-    mNewCenterHz= 92e6;
-    mNewSpanHz  = 10e6;
+    mNewCenterHz= 750e6;
+    mNewSpanHz  = 1500e6;
 
     mParamChange= 0;
     mCfgFname   = strdup( "local.cfg" );
@@ -290,13 +290,24 @@ InstModel::GetData( char *resultsStr, int resultsLen )
     int    len;
     int    idx;
     double fval;
+    int    npc;
 
-    int npc;
-    static int npi = 0; // FIXME
+    // NOTE: this index is status to maintain history
+    // between outputs.  It could be moved to a class member var
+    static int npi = 0; 
 
+    // Since the number of points retrieved per GET request may not
+    // be an integer multiple of the total number of points we need
+    // to setup for that here
 #   define MAX_NPTS_PER_GET 512
-    npc = MAX_NPTS_PER_GET;
-    npi = (npi+npc)%mXyCurLen;
+    if( (mXyCurLen - npi) >= MAX_NPTS_PER_GET ){
+        npc = MAX_NPTS_PER_GET;
+    }
+    else{
+        npc = mXyCurLen-npi;
+    }
+
+    // printf("\nnpi=%d npc=%d, mXyCurLen=%d\n",npi,npc,mXyCurLen);
 
     // Setup the output position and residual length
     pos = resultsStr;
@@ -360,6 +371,12 @@ InstModel::GetData( char *resultsStr, int resultsLen )
     nBytes = snprintf(pos, len, "}"); // End of main obj
     pos += nBytes;
     len -= nBytes;
+
+    // Setup the index for next round of outputs
+    npi = (npi+npc);
+    if( npi>=mXyCurLen ){
+       npi = 0;
+    }
 
     return(0);
 }
@@ -590,6 +607,8 @@ InstModel::ScanReset()
                       didx-1,(mXvec[didx-1] /1e6)
     );
 
+    GetDev()->SetChannel( gSp.mChId );
+    GetDev()->SetTuneHz( gSp.mCurHz );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -639,19 +658,16 @@ InstModel::ScanStep()
     if( gSp.mCurStep >= (gSp.mTotalSteps-1) ){
         nextHz   = gSp.mHzStart;
         nextStep = 0;
-
-//TODO ShowXy();
-
     }
     else{
         nextHz   = gSp.mCurHz + gSp.mHzPerStep;
         nextStep = gSp.mCurStep + 1;
     }
-    GetDev()->SetTuneHz( nextHz );
-    GetDev()->FlushSamples();
 
-//    printf("%4d Tune %15f MHz\n",nextStep,nextHz/1e6);
-    us_sleep( 10000 );
+    if( gSp.mCurHz!=nextHz ){
+       GetDev()->SetTuneHz( nextHz );
+    }
+    GetDev()->FlushSamples();
 
     // Get the estimate   
     mPse.GetEstimate( 
@@ -662,8 +678,8 @@ InstModel::ScanStep()
               mYvec + (gSp.mCurStep*gSp.mOutBinsPerStep)
     );
               
-//didx = gSp.mCurStep*gSp.mOutBinsPerStep;
-//printf("(%d,%f,%f) ",didx,mXvec[didx],mYvec[didx]);
+    //didx = gSp.mCurStep*gSp.mOutBinsPerStep;
+    //printf("(%d,%f,%f) ",didx,mXvec[didx],mYvec[didx]);
 
     // Make the next step the current step
     // NOTE: last thing we do

@@ -93,6 +93,12 @@ int DevMtdf::Get2kSamples( short *dst )
 }
 
 //------------------------------------------------------------------------------
+int DevMtdf::SetChannel( int chId )
+{
+    return(0);
+}
+
+//------------------------------------------------------------------------------
 double DevMtdf::SetTuneHz( double freqHz )
 {
     return(freqHz);

@@ -75,6 +75,7 @@ class DevMtdf : public Device {
     int      FlushSamples();
     int      Get2kSamples( short *dst );
     double   SetTuneHz( double freqHz );
+    int      SetChannel( int chId );
 };
 
 #endif
