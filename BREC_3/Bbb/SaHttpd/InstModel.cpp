@@ -44,6 +44,64 @@
 #include "Device.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+/*
+                                  Tune
+                                 mCurHz 
+                                   ^ 
+                                   |
+               ----.---------------+----------------.-- 
+              /    .               |                .  \
+             /     .               |                .   \
+            /      .               |                .    \
+           /       .               |                .     \
+          /        .               |                .      \
+         /         .               |                .       \
+        /          .               |                .        \
+  --O-----|----|---|---|---|--|--|---|---|---|--|---|---|---|----O-------
+    |              .                                .            |
+    |              .           mHzPerStep           .            |
+    |              .          mInBinsPerStep        .            |
+    |               <--|---|--|--|---|---|---|--|-->             |
+    |              .                                .            |
+    |              .                                .            |
+    |              .          mOutBinsPerStep       .            |
+    |              x------x--------x--------x-------x            |
+    |                     |        |                             |
+    |                     |        |                             |
+    |                     |<------>|                             |
+    |                    mOutHzPerBin                            |
+    |                                                            |
+    |                                                            |
+    |                      mSamplesPerStep AND                   |
+    |                         (fft size)   AND                   |
+    |<---------------------------------------------------------->|
+*/
+
+
+/**
+ * This structure collects all of the critical step parameters together
+ */
+struct StepParams
+{
+   int    mChId;           // channel to use
+   int    mSamplesPerStep; // samples collected at each step (and fft size)
+
+   int    mInBinsPerStep;  // fft bins available for measure at each step
+   double mHzPerStep;      // measured hz at each step
+
+   int    mTotalSteps;     // number of steps per scan 
+   double mHzStart;        // first step center frequency
+   int    mOutBinsPerStep; // output bins collected at each step
+   double mOutHzPerBin;    // Hz per output bin
+
+   int    mCurStep;        // current step in total steps
+   double mCurHz;          // current frequency center under measure
+
+};
+// TODO - revisit global instance
+static StepParams gSp;
+
+////////////////////////////////////////////////////////////////////////////////
 /**
  * Constructor for hardware model.  It initializes all of the internal
  * values.  The object must be started after it is created.
@@ -92,7 +150,31 @@ InstModel::SetCfg( const char *fname )
 ////////////////////////////////////////////////////////////////////////////////
 int  InstModel::ReadCfg()
 {
+#   define CFG_LINEBF_BYTES 512
+    char     lineBf[CFG_LINEBF_BYTES];
+    FILE    *fp;
+    char    *name,*value;
+
     printf("InstModel::ReadCfg:Reading configuration file\n");
+
+    fp = fopen(mCfgFname,"r");
+    if( !fp ) return(-1);
+   
+    while( fgets(lineBf,(CFG_LINEBF_BYTES-1),fp) ){
+       if( '#'==lineBf[0] ) continue;
+       name = strtok(lineBf," \t");
+       value= strtok(NULL," \t");
+       if( !name || !value ) continue;
+
+       if( 0==strcmp(name,"mCenterHz") ){
+           mNewCenterHz = atof( value );
+       }
+       else if( 0==strcmp(name,"mSpanHz") ){
+           mNewSpanHz = atof( value );
+       }
+    }
+
+    fclose(fp);
     printf("InstModel::ReadCfg:Configuration file read complete\n");
 
     return( 0 );
@@ -102,7 +184,17 @@ int  InstModel::ReadCfg()
 int
 InstModel::WriteCfg()
 {
+    FILE *fp;
     printf("InstModel:WriteCfg:Enter\n");
+
+    fp=fopen(mCfgFname,"w");
+    if( !fp ) return(-1);
+
+    fprintf(fp,"mCenterHz %f\n",mCenterHz);
+    fprintf(fp,"mSpanHz   %f\n",mSpanHz);
+
+    fclose(fp);
+
     printf("InstModel:WriteCfg:Exit\n");
     return(0);
 }
@@ -257,12 +349,14 @@ InstModel::GetState( char *resultsStr, int resultsLen )
                     "\"run\"      : \"%s\","
                     "\"time\"     : \"%s\","
                     "\"nPts\"     : \"%d\","
+                    "\"chnl\"     : \"%d\","
                     "\"centerHz\" : %d,"
                     "\"spanHz\"   : %d "
                     ,
                     mRun?"ON":"OFF",            // run
                     timeStr,                    // time
                     mXyCurLen,                  // nPts
+                    gSp.mChId,                  // chnl id (debug)
                     (int)mCenterHz,             // centerHz
                     (int)mSpanHz                // spanHz
     );
@@ -329,7 +423,7 @@ InstModel::GetData( char *resultsStr, int resultsLen )
 
     mXmin = mXvec[0];
     mXmax = mXvec[mXyCurLen-1]; 
-    nBytes = snprintf(pos, len, "\"lim\":[%g,%g],",
+    nBytes = snprintf(pos, len, "\"lim\":[%f,%f],",
                                     mXmin,mXmax);
     pos += nBytes;
     len -= nBytes;
@@ -341,7 +435,7 @@ InstModel::GetData( char *resultsStr, int resultsLen )
     for(idx=0;idx<npc;idx++){
         fval = mXvec[npi+idx];
         if(!isnormal(fval)) fval=0.0;
-        nBytes = snprintf(pos, len, "%g%c",fval,
+        nBytes = snprintf(pos, len, "%f%c",fval,
                                            (idx==(npc-1))?' ':',');
         pos += nBytes;
         len -= nBytes;
@@ -362,6 +456,13 @@ InstModel::GetData( char *resultsStr, int resultsLen )
                                            (idx==(npc-1))?' ':',');
         pos += nBytes;
         len -= nBytes;
+    }
+
+    // Show points as transfered
+    if( 0 ){
+        for(idx=0;idx<npc;idx++){
+           printf("%f %g\n",mXvec[npi+idx],mYvec[npi+idx]);
+        }
     }
 
     nBytes = snprintf(pos, len, "]"); // End of npy
@@ -411,62 +512,6 @@ void  InstModel::Main()
     } // End of main processing loop 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/*
-                                  Tune
-                                 mCurHz 
-                                   ^ 
-                                   |
-               ----.---------------+----------------.-- 
-              /    .               |                .  \
-             /     .               |                .   \
-            /      .               |                .    \
-           /       .               |                .     \
-          /        .               |                .      \
-         /         .               |                .       \
-        /          .               |                .        \
-  --O-----|----|---|---|---|--|--|---|---|---|--|---|---|---|----O-------
-    |              .                                .            |
-    |              .           mHzPerStep           .            |
-    |              .          mInBinsPerStep        .            |
-    |               <--|---|--|--|---|---|---|--|-->             |
-    |              .                                .            |
-    |              .                                .            |
-    |              .          mOutBinsPerStep       .            |
-    |              x------x--------x--------x-------x            |
-    |                     |        |                             |
-    |                     |        |                             |
-    |                     |<------>|                             |
-    |                    mOutHzPerBin                            |
-    |                                                            |
-    |                                                            |
-    |                      mSamplesPerStep AND                   |
-    |                         (fft size)   AND                   |
-    |<---------------------------------------------------------->|
-*/
-
-
-/**
- * This structure collects all of the critical step parameters together
- */
-struct StepParams
-{
-   int    mChId;           // channel to use
-   int    mSamplesPerStep; // samples collected at each step (and fft size)
-
-   int    mInBinsPerStep;  // fft bins available for measure at each step
-   double mHzPerStep;      // measured hz at each step
-
-   int    mTotalSteps;     // number of steps per scan 
-   double mHzStart;        // first step center frequency
-   int    mOutBinsPerStep; // output bins collected at each step
-   double mOutHzPerBin;    // Hz per output bin
-
-   int    mCurStep;        // current step in total steps
-   double mCurHz;          // current frequency center under measure
-
-};
-
 int
 StepCfg( 
     int       cfg, 
@@ -500,7 +545,6 @@ StepCfg(
     }
 }
 
-static StepParams gSp;
 
 ////////////////////////////////////////////////////////////////////////////////
 void
@@ -677,6 +721,13 @@ InstModel::ScanStep()
               gSp.mOutBinsPerStep, // Number of output bins
               mYvec + (gSp.mCurStep*gSp.mOutBinsPerStep)
     );
+
+    // Place visual marker in each start bin of step
+    if( 1 ){
+        int idx;
+        idx =  (gSp.mCurStep*gSp.mOutBinsPerStep);
+        mYvec[ idx ] = -160;
+    }
               
     //didx = gSp.mCurStep*gSp.mOutBinsPerStep;
     //printf("(%d,%f,%f) ",didx,mXvec[didx],mYvec[didx]);

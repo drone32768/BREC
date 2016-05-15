@@ -72,15 +72,18 @@ int DevSim::FlushSamples()
 //------------------------------------------------------------------------------
 int    gChId   = 0;
 double gFsHz   = 1;
+double gPbHz   = 1;
 double gTuneHz = 1;
 double gToneHz = 750.1e6;
-short  gToneAmp= 1024;
+short  gToneAmp= 16384;
 
 //------------------------------------------------------------------------------
 int DevSim::Get2kSamples( short *dst )
 {
     int    idx,n0;
-    double dfHz,phi;
+    double dfHz;
+    static double phi = 0.0;
+    double pi2;
 
     // Start with noise in all cases
     for( idx=0; idx<2048; idx++ ){
@@ -89,18 +92,24 @@ int DevSim::Get2kSamples( short *dst )
 
     dfHz = gTuneHz - gToneHz;
 
-    // If the test tone is outside of the channel bw then done
-    if( fabs(dfHz) > (gFsHz/2) ){
+    // If the test tone is outside of the channel passband then done
+    if( fabs(dfHz) > (gPbHz/2) ){
         return(0);
     }
 
-printf("gFsHz=%f, gTuneHz=%f, gToneHz=%f\n",gFsHz,gTuneHz,gToneHz);
+printf("gTuneHz=%10f MHz, gToneHz=%10f  MHz\n",
+            gTuneHz/1e6,gToneHz/1e6);
+
+printf("gChId  =%10d      gFsHz  =%10f MHz, gPbHz=%5f MHz\n",
+            gChId,gFsHz/1e6,gPbHz/1e6);
 
     // Add the test tone
+    pi2 = M_PI * 2.0;
     for( idx=0, n0=0; idx<1024; idx+=2, n0++ ){
-        phi = 2.0 * M_PI * n0 * dfHz / gFsHz;
+        phi = pi2 * n0 * dfHz / gFsHz;
         dst[idx]   += (short)( gToneAmp * sin( phi ) );
         dst[idx+1] += (short)( gToneAmp * cos( phi ) );
+        if( phi > pi2 ) phi = phi - pi2;
     }
 
     return(0);
@@ -115,15 +124,18 @@ int DevSim::SetChannel( int chId )
     switch( chId ){
         case 5:{
             gFsHz = 0.2e6;
+            gPbHz = gFsHz;
             break;
         }
         case 4:{
             gFsHz = 4.0e6;
+            gPbHz = gFsHz;
             break;
         }
         case 3:
         default :{
             gFsHz = 40.0e6;
+            gPbHz = gFsHz/2;
             break;
         }
     }

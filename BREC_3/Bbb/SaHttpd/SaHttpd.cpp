@@ -257,7 +257,7 @@ main (int argc, char **argv)
  
    // Default arguments
    port     = 8080;
-   cfgFname = "syn.cfg";
+   cfgFname = "sa.cfg";
 
    // Parse arguments
    idx = 1;
