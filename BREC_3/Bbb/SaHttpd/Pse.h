@@ -36,6 +36,11 @@
 #include <fftw3.h>
 
 /*
+This class is for providing the spectral estimate of a signal.
+It is configured for a specific fft size and a desired window.  It
+can be given a number of samples, a number of input bins across the 
+input and a number of output bins to product.
+
 The key input is number of desired output points
 
 Output     Format   FftSize    NshortIn
@@ -70,11 +75,9 @@ class Pse {
 
 public:
 
-
+    Pse();
     void   PerformSetup(   int winType,   int fftSize );
     short* PerformFft(     int isComplex, int fftSize, short *src );
-
-    Pse();
     void   GetEstimate(
               short *samples,
               int    nComplexSamples,

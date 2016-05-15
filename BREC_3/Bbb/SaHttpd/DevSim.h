@@ -40,6 +40,9 @@
 
 #include "Device.h"
 
+/**
+ * This is a simulated device for SaHttpd for testing purposes
+ */
 class DevSim : public Device {
   private:
 

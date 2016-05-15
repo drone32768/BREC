@@ -42,6 +42,9 @@
 #include "Mboard/Mboard.h"
 #include "Tboard/Tboard.h"
 
+/**
+ * This class defines the interface to a device used by the server
+ */
 class Device {
   public:
     virtual int      Open() = 0;

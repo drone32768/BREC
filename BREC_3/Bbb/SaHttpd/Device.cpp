@@ -1,7 +1,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2015, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -45,18 +45,23 @@
 #include "DevSim.h"
 #include "DevMtdf.h"
 
+// This is a pointer to the singleton device
 static Device *gpDevice = NULL;
 
+// This method returns the device for use 
 Device *GetDev()
 {
     // Device is already created
     if( gpDevice ) return( gpDevice );
 
+    // If this is an X86 use a simulation device
 #   ifdef TGT_X86
     gpDevice = (Device*)( new DevSim() );
     return(gpDevice);
-
 #   else
+
+    // Non x86 device and a F board pru cape is present then 
+    // use a MTDF device
     if(  FindCapeByName("brecFpru")>0 ){
         gpDevice = (Device*)( new DevMtdf() );
         return( gpDevice );

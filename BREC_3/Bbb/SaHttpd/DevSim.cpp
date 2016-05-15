@@ -1,7 +1,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2015, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -60,22 +60,28 @@ int DevSim::Open()
 //------------------------------------------------------------------------------
 int DevSim::GetComplexSampleRate()
 {
+    // No action required
     return(0);
 }
 
 //------------------------------------------------------------------------------
 int DevSim::FlushSamples()
 {
+    // No action required
     return(0);
 }
 
 //------------------------------------------------------------------------------
+/**
+ * The following global variables are used for test signal generation
+ * They could be member variables.
+ */
 int    gChId   = 0;
 double gFsHz   = 1;
 double gPbHz   = 1;
 double gTuneHz = 1;
 double gToneHz = 750.1e6;
-short  gToneAmp= 16384;
+double gToneAmp= 16384;
 
 //------------------------------------------------------------------------------
 int DevSim::Get2kSamples( short *dst )
@@ -83,11 +89,12 @@ int DevSim::Get2kSamples( short *dst )
     int    idx,n0;
     double dfHz;
     static double phi = 0.0;
+    double dphi;
     double pi2;
 
     // Start with noise in all cases
     for( idx=0; idx<2048; idx++ ){
-        dst[idx] = random() % 256;
+        dst[idx] = (random() % 256) * ( (random()&1)?1:-1 );
     }
 
     dfHz = gTuneHz - gToneHz;
@@ -97,18 +104,21 @@ int DevSim::Get2kSamples( short *dst )
         return(0);
     }
 
-printf("gTuneHz=%10f MHz, gToneHz=%10f  MHz\n",
-            gTuneHz/1e6,gToneHz/1e6);
+    if(0){
+        printf("gTuneHz=%10f MHz, gToneHz=%10f MHz, dfHz=%10f\n",
+            gTuneHz/1e6,gToneHz/1e6,dfHz/1e6);
 
-printf("gChId  =%10d      gFsHz  =%10f MHz, gPbHz=%5f MHz\n",
+        printf("gChId  =%10d      gFsHz  =%10f MHz, gPbHz=%5f MHz\n",
             gChId,gFsHz/1e6,gPbHz/1e6);
+    }
 
     // Add the test tone
     pi2 = M_PI * 2.0;
+    dphi= pi2*dfHz/gFsHz;
     for( idx=0, n0=0; idx<1024; idx+=2, n0++ ){
-        phi = pi2 * n0 * dfHz / gFsHz;
-        dst[idx]   += (short)( gToneAmp * sin( phi ) );
-        dst[idx+1] += (short)( gToneAmp * cos( phi ) );
+        phi += dphi;
+        dst[idx]   += (short)( gToneAmp * cos( phi ) );
+        dst[idx+1] += (short)( gToneAmp * sin( phi ) );
         if( phi > pi2 ) phi = phi - pi2;
     }
 
@@ -135,7 +145,7 @@ int DevSim::SetChannel( int chId )
         case 3:
         default :{
             gFsHz = 40.0e6;
-            gPbHz = gFsHz/2;
+            gPbHz = gFsHz; // gFsHz/2;
             break;
         }
     }

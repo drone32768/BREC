@@ -47,6 +47,10 @@
 #include "Mboard/Mboard.h"
 #include "Tboard/Tboard.h"
 
+/**
+ * This is the mtdf (M board, T board, D board F board) device for use
+ * by SaHttpd
+ */
 class DevMtdf : public Device {
   private:
 

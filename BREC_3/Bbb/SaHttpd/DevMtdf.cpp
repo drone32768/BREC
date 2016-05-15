@@ -45,6 +45,7 @@
 //------------------------------------------------------------------------------
 DevMtdf::DevMtdf()
 {
+    // No constructor actions required
 }
 
 //------------------------------------------------------------------------------
@@ -52,18 +53,23 @@ int DevMtdf::Open()
 {
     printf("******** DevMtdf::Open Starting F/Bdc/Ddc100 ****************\n");
 
+    // Create a bdc device and open it
     mBdc = new Bdc();
     mBdc->Open();
 
+    // Create a ddc device and attach to bdc
     mDdc = new Ddc100();
     mDdc->Attach( mBdc );
 
+    // Create a Tboard and attach to port 0
     mTbrd = new Tboard();
     mTbrd->Attach( (void*)( mBdc->GetPinGroup(0) ), (void*)0 );
 
+    // Create an Mboard and attach to port 1
     mMbrd = new Mboard();
     mMbrd->Attach( (void*)( mBdc->GetPinGroup(1) ), (void*)0 );
 
+    // Open ddc
     mDdc->Open();
 
     // Comment this line out to use CPU based SPI to samples
@@ -77,30 +83,32 @@ int DevMtdf::Open()
 //------------------------------------------------------------------------------
 int DevMtdf::GetComplexSampleRate()
 {
+    // TODO
     return(0);
 }
 
 //------------------------------------------------------------------------------
 int DevMtdf::FlushSamples()
 {
-    return(0);
+    return( mDdc->FlushSamples() );
 }
 
 //------------------------------------------------------------------------------
 int DevMtdf::Get2kSamples( short *dst )
 {
-    return(0);
+    return( mDdc->Get2kSamples(dst) );
 }
 
 //------------------------------------------------------------------------------
 int DevMtdf::SetChannel( int chId )
 {
-    return(0);
+    return( mDdc->SetSource(chId) );
 }
 
 //------------------------------------------------------------------------------
 double DevMtdf::SetTuneHz( double freqHz )
 {
+    // TODO
     return(freqHz);
 }
 

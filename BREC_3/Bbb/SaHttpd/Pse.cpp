@@ -1,7 +1,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2015, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -171,7 +171,8 @@ Pse::GetEstimate(
     double *output
 )
 {
-    int    didx,sidx,pidx,sbin;
+    int    didx,sidx,pidx;
+    int    scnt,pcnt;
     double normalize;
     double magSqr,pwr;
     double bsum;
@@ -191,37 +192,26 @@ Pse::GetEstimate(
                   + 20*log10( 32768 )            // Ref 16 signed bit
                   + 20*log10( mCoherentGain )    // Remove Windowing
                   + 20*log10( nComplexSamples )  // Remove  1/N^2 from dft
-                  + 20*log10( bsum )             // Remove bin integration
                 ;
 
     // Copy out values
     didx = 0;
-    sbin = (nComplexSamples/2) - (inBins/2);
-    sidx = sbin;
+    sidx = nComplexSamples - (inBins/2);
+    scnt = 0;
     while( didx < outBins ){
 
         pwr = 0.0;
-        pidx= sbin + (int)( ((double)(didx+1) * bsum)+0.5);
-        while( sidx < pidx ){
+        pcnt= (int)( ((double)(didx+1) * bsum)+0.5);
+        while( scnt < pcnt ){
             magSqr = (mFftwOutput[sidx][0] * mFftwOutput[sidx][0]    ) +
                      (mFftwOutput[sidx][1] * mFftwOutput[sidx][1]);
             pwr    = pwr + magSqr;
-            sidx++;
-        }
-
-        if( pwr < 1.0 ){
-            pwr = 1.0;
+            sidx   = (sidx+1)%(nComplexSamples);
+            scnt++;
         }
 
         // Move forward source and destination indecies
         output[ didx ]  = 10*log10(pwr) - normalize;
-
-/* TODO
-if( didx==0 ){
-printf("pse: %5d %f %d %d %g %g %g)\n",
-          didx,bsum,sidx,pidx,pwr,output[didx],normalize);
-}
-*/
 
         // Move to the next destination bin
         didx++;

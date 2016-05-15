@@ -551,7 +551,7 @@ void
 InstModel::ScanReset()
 {
     int    stepLimit = 100;  // tunable
-    int    tgtPts    = 1024; // tunable
+    int    tgtPts    = 2048; // 1024; // tunable
 
     int    idx;
     int    cont;
