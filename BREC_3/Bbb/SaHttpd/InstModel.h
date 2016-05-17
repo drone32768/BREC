@@ -71,6 +71,8 @@ private:
 
     double         mCenterHz;    // center frequency
     double         mSpanHz;      // span frequency
+   
+    int            mStepMarker;  // Flag to add markers to step
 
     // Internal support routines
     int            HwInit();

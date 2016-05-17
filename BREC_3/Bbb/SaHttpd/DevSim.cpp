@@ -86,7 +86,7 @@ double gToneAmp= 16384;
 //------------------------------------------------------------------------------
 int DevSim::Get2kSamples( short *dst )
 {
-    int    idx,n0;
+    int    idx;
     double dfHz;
     static double phi = 0.0;
     double dphi;
@@ -115,7 +115,7 @@ int DevSim::Get2kSamples( short *dst )
     // Add the test tone
     pi2 = M_PI * 2.0;
     dphi= pi2*dfHz/gFsHz;
-    for( idx=0, n0=0; idx<1024; idx+=2, n0++ ){
+    for( idx=0; idx<2048; idx+=2 ){
         phi += dphi;
         dst[idx]   += (short)( gToneAmp * cos( phi ) );
         dst[idx+1] += (short)( gToneAmp * sin( phi ) );

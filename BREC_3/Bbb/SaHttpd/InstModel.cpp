@@ -136,6 +136,7 @@ InstModel::InstModel()
        mYvec[ idx ] = -40 + idx%10; 
     }
 
+    mStepMarker = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -236,6 +237,16 @@ void InstModel::HwStop()
 void InstModel::RcvEvent( char *evtStr )
 {
    printf("InstModel::RcvEvent rcv <%s>\n",evtStr);
+
+   if( 0==strcmp("step-marker-on",evtStr) ){
+       mStepMarker = 1;
+   }
+   else if( 0==strcmp("step-marker-off",evtStr) ){
+       mStepMarker = 0;
+   }
+   else{
+      // Nothing to do for unrecognized/unapplicable command
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -551,7 +562,7 @@ void
 InstModel::ScanReset()
 {
     int    stepLimit = 100;  // tunable
-    int    tgtPts    = 2048; // 1024; // tunable
+    int    tgtPts    = 1024; // tunable
 
     int    idx;
     int    cont;
@@ -584,7 +595,7 @@ InstModel::ScanReset()
                        gSp.mInBinsPerStep,
                        gSp.mHzPerStep );
 
-        gSp.mTotalSteps = mSpanHz / gSp.mHzPerStep;
+        gSp.mTotalSteps = 1 + (mSpanHz / gSp.mHzPerStep);
         idx++;
 
     } // end of loop over step configurations
@@ -599,16 +610,15 @@ InstModel::ScanReset()
 
 
     // Calculate the final number of output bins and output bins per step
-    if( gSp.mTotalSteps > 0 ){
+    if( gSp.mTotalSteps > 1 ){
         gSp.mOutBinsPerStep = tgtPts / gSp.mTotalSteps;
-        gSp.mOutHzPerBin    = gSp.mHzPerStep / gSp.mOutBinsPerStep;
-        mXyCurLen           = gSp.mOutBinsPerStep * gSp.mTotalSteps; 
     }
     else{
-        gSp.mOutBinsPerStep = tgtPts;
-        gSp.mOutHzPerBin    = gSp.mHzPerStep / gSp.mInBinsPerStep;
-        mXyCurLen           = gSp.mOutBinsPerStep;
+        // gSp.mOutBinsPerStep = tgtPts;
+        gSp.mOutBinsPerStep = gSp.mInBinsPerStep;
     }
+    gSp.mOutHzPerBin    = gSp.mHzPerStep / gSp.mOutBinsPerStep;
+    mXyCurLen           = gSp.mOutBinsPerStep * gSp.mTotalSteps; 
 
     printf("S:mOutBinsPerStep=%15d cnt , mOutHzPerBin=%15f  Hz\n",
              gSp.mOutBinsPerStep,
@@ -723,23 +733,14 @@ InstModel::ScanStep()
     );
 
     // Place visual marker in each start bin of step
-    if( 1 ){
+    if( mStepMarker ){
         int idx;
         idx =  (gSp.mCurStep*gSp.mOutBinsPerStep);
         mYvec[ idx ] = -160;
     }
               
-    //didx = gSp.mCurStep*gSp.mOutBinsPerStep;
-    //printf("(%d,%f,%f) ",didx,mXvec[didx],mYvec[didx]);
-
     // Make the next step the current step
     // NOTE: last thing we do
     gSp.mCurHz   = nextHz;
     gSp.mCurStep = nextStep;
 }
-
-/*
-TODO:
-1) Check GetEstimate
-2) Redo X using actual center frequenc
-*/

@@ -151,7 +151,7 @@ Pse::PerformFft( int complexInput, int fftSize, short *inputData )
 
     if( mLog&PSE_LOG_FFT_IN ){
         for(idx=1;idx<fftSize;idx++){
-            printf("Pse:mInOut(in)[%d] %g %g\n",
+            printf("Pse:mInOut(in)[%d], %g, %g\n",
                 idx,mFftwOutput[idx][0],mFftwOutput[idx][1] );
         }
     }
@@ -198,10 +198,12 @@ Pse::GetEstimate(
     didx = 0;
     sidx = nComplexSamples - (inBins/2);
     scnt = 0;
+//printf("sidx=%d outBins=%d\n",sidx,outBins);
     while( didx < outBins ){
 
         pwr = 0.0;
         pcnt= (int)( ((double)(didx+1) * bsum)+0.5);
+//printf("didx=%d pcnt=%d sidx=%d ",didx,pcnt,sidx);
         while( scnt < pcnt ){
             magSqr = (mFftwOutput[sidx][0] * mFftwOutput[sidx][0]    ) +
                      (mFftwOutput[sidx][1] * mFftwOutput[sidx][1]);
@@ -212,6 +214,7 @@ Pse::GetEstimate(
 
         // Move forward source and destination indecies
         output[ didx ]  = 10*log10(pwr) - normalize;
+//printf("out=%f\n",output[didx]);
 
         // Move to the next destination bin
         didx++;

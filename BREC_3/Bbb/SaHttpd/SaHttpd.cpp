@@ -182,9 +182,10 @@ ahc_access_handler (void *cls,
 
       printf("ahc_access_handler:cli v=\'%s\'\n",vstr);
 
-      gInstModel->SndEvent(vstr);
+      // Announce the command to all registered objects
+      GetEvrSingleton()->Inject(NULL,vstr);
 
-      sprintf(rstr,"ok");
+      sprintf(rstr,"ok\n");
       response = MHD_create_response_from_buffer (strlen (rstr),
  						  (void *) rstr,
  						  MHD_RESPMEM_MUST_COPY);
@@ -298,6 +299,9 @@ main (int argc, char **argv)
    gInstModel = new InstModel();
    gInstModel->SetCfg( cfgFname );
    gInstModel->Start();
+
+   // Register the instrument model with global event dispatcher
+   GetEvrSingleton()->Register( gInstModel );
 
    // Create and start the http server
    d = MHD_start_daemon (
