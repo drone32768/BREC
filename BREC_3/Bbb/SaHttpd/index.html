@@ -3,41 +3,74 @@
 
 <style>
 
-/*
+/* For body other than canvas */
 body {
+  color           : white;
+  background-color: grey;
+}
+
+/* For graphing canvas */
+canvas {
   color           : white;
   background-color: black;
 }
-*/
 
-/* General buttons */
-button {
+/* General g1x */
+.g1x {
+  color           : black;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
   border-radius   : 10px;
   width           : 85px;
   height          : 35px;
+  border          : 1px solid #ccc;
+  margin-bottom   : 5px;
+  margin-right    : 5px;
+  float           : left;
 }
 
+/* General g2x */
+.g2x {
+  color           : black;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  border-radius   : 10px;
+  width           : 175px;
+  height          : 35px;
+  border          : 1px solid #ccc;
+  margin-bottom   : 5px;
+  margin-right    : 5px;
+  float           : left;
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border-top: none;
+}
+
+/* Use a div of this class to go to next row and float left */
+.StartNewRow {
+   clear : left;
+}
+
+/* General buttons */
 button:hover {
   color           : black;
-  background-color: white;
-}
-
-button.button-on{
   background-color: green;
-}
-
-button.button-off{
-  background-color: grey;
 }
 
 /* Keypad */
 #bjkpKeypad {
-  background      : black;
+  background      : white;
   border-radius   : 1em;
 }
 #bjkpKeypad .BJKP-button {
-  color           : white;
-  background-color: black;
+  color           : black;
+  background-color: grey;
 
   text-align      : center;
   width           : 4em;
@@ -81,92 +114,118 @@ button.button-off{
 </div>
 
 <!---------------------------------------------------------------------------->
-<!-- Primary control buttons -->
-<div style="float:left;">
- <table>
+<!-- Primary control -->
+<div id="MainMenu">
 
-  <!-- Local control buttons -->
-  <tr>
-    <td align="center">
-      <button onclick="DispToggleEnvelope(this)">Envelope</button>
-    </td>
-    <td align="center">
-      <button onclick="DispTogglePeaks(this)">Peaks</button>
-    </td>
-    <td align="center">
-      <button onclick="DispToggleMarkers(this)">Markers</button>
-    </td>
-    <td align="center">
-      <button onclick="DispMstore( )">Mstore</button>
-    </td>
-    <td align="center">
-      <button onclick="DispToggleMshow( )">Mshow</button>
-    </td>
+  <!-- Top row button control -->
+  <button class="g1x" onclick="ToggleStateVar('run')">
+      <div id="runDiv">OFF</div>
+  </button>
+  <button class="g1x" onclick="OpenTab(event,'Device')">Device</button>
+  <button class="g1x" onclick="OpenTab(event,'Analysis')">Analysis</button>
+  <button class="g1x" onclick="OpenTab(event,'Memory')">Memory</button>
+  <button class="g1x" onclick="OpenTab(event,'Markers')">Markers</button>
+  <button class="g1x" onclick="OpenTab(event,'System')">System</button>
+  <button class="g1x" onclick="OpenTab(event,'Scale')">Scale</button>
+  <button class="g1x" onclick="OpenTab(event,'Console')">Console</button>
+  <div class="StartNewRow"></div>
 
-    <td>
-      <button onclick="SetYmax()">Ymax</button>
-    </td>
-    <td>
-       <div align="center" id="yMaxValueDiv"></div>
-    </td>
+  <!-- Device submenu -->
+  <div id="Device" class="tabcontent">
+    <button class="g1x">ByCenter</button>
+    <button class="g1x" onclick="SetSpanHzByKeypad()">Span(Hz)</button>
+    <div    class="g2x" id="spanHzDiv"></div>
+    <button class="g1x" onclick="SetCenterHzByKeypad()">Center(Hz)</button>
+    <div    class="g2x"id="centerHzDiv"></div>
+    <div class="StartNewRow"></div>
 
-    <td>
-      <button onclick="SetYmin()">Ymin</button>
-    </td>
-    <td>
-      <div align="center" id="yMinValueDiv"></div>
-    </td>
+    <button class="g1x">ByStart</button>
+    <button class="g1x" onclick="SetStartHzByKeypad()">Start(Hz)</button>
+    <div    class="g2x">1,000,000</div>
+    <button class="g1x" onclick="SetStopHzByKeypad()">Stop(Hz)</button>
+    <div    class="g2x">1,500,000</div>
+    <div class="StartNewRow"></div>
 
-  </tr>
+    <button class="g1x" onclick="SetRefDbmByKeypad()">Ref(dBm)</button>
+    <div    class="g2x" id="refDbmDiv"></div>
+    <div class="StartNewRow"></div>
+    <button class="g1x" onclick="ToggleStateVar('tgtPts')">Pts</button>
+    <div    class="g2x" id="nPtsDiv"></div>
+  </div>
 
-  <!-- Remote parameter control buttons -->
-  <tr>
-    <td>
-      <button onclick="ToggleStateVar( 'nPts' )"># Points</button>
-    </td>
-    <td>
-      <div align="center" id="nPtsDiv"></div>
-    </td>
+  
+  <div id="Analysis" class="tabcontent">
+    <button class="g1x" onclick="DispToggleEnvelope(this)">Envelope</button>
+    <div class="StartNewRow"></div>
+    <button class="g1x" onclick="DispTogglePeaks(this)">Peaks</button>
+    <button class="g1x">Mask %</button>
+    <div    class="g2x">10</div>
+    <div class="StartNewRow"></div>
+    <button class="g1x">Median</button>
+  </div>
 
-    <td>
-      <button onclick="SetCenterHzByKeypad()">Center(Hz)</button>
-    </td>
-    <td>
-      <div align="center" id="centerHzDiv"></div>
-    </td>
+  <div id="Memory" class="tabcontent">
+    <div    class="g1x">Mem0</div>
+    <button class="g1x" onclick="DispMstore(0)" >Store</button>
+    <button class="g1x" onclick="DispMshow(0,1)">Show</button>
+    <button class="g1x" onclick="DispMshow(0,0)">Hide</button>
+    <div class="StartNewRow"></div>
+    <div    class="g1x">Mem1</div>
+    <button class="g1x" onclick="DispMstore(1)" >Store</button>
+    <button class="g1x" onclick="DispMshow(1,1)">Show</button>
+    <button class="g1x" onclick="DispMshow(1,0)">Hide</button>
+    <div class="StartNewRow"></div>
+    <div    class="g1x">Mem2</div>
+    <button class="g1x" onclick="DispMstore(2)" >Store</button>
+    <button class="g1x" onclick="DispMshow(2,1)">Show</button>
+    <button class="g1x" onclick="DispMshow(2,0)">Hide</button>
+    <div class="StartNewRow"></div>
+    <div    class="g1x">Mem3</div>
+    <button class="g1x" onclick="DispMstore(3)" >Store</button>
+    <button class="g1x" onclick="DispMshow(3,1)">Show</button>
+    <button class="g1x" onclick="DispMshow(3,0)">Hide</button>
+  </div>
 
-    <td>
-      <button onclick="SetSpanHzByKeypad()">Span(Hz)</button>
-    </td>
-    <td>
-      <div align="center" id="spanHzDiv"></div>
-    </td>
+  <div id="Markers" class="tabcontent">
+    <div    class="g1x">Marker0</div>
+    <button class="g1x">Focus</button>
+    <button class="g1x">Auto</button>
+    <button class="g1x">Set</button>
+    <button class="g1x">SetX</button>
+    <div    class="g2x">1,500,000</div>
+    <button class="g1x">SetY</button>
+    <div    class="g2x">1,500,000</div>
+    <div class="StartNewRow"></div>
 
-  </tr>
+    <div    class="g1x">Marker1</div>
+    <button class="g1x">Focus</button>
+    <button class="g1x">Auto</button>
+    <button class="g1x">Set</button>
+    <button class="g1x">SetX</button>
+    <div    class="g2x">1,500,000</div>
+  </div>
 
+  <div id="System" class="tabcontent">
+    <button class="g1x">SwReset</button>
+    <button class="g1x">HwReset</button>
+    <button class="g1x">SaveCfg</button>
+  </div>
 
-  <!-- Remote state control buttons -->
-  <tr>
-    <td align="center">
-      <button onclick="ToggleStateVar('run')"><div id="runDiv"></div></button>
-    </td>
-    <td align="center">
-      <button onclick="ToggleStateVar( 'swreset' )">SwReset</button>
-    </td>
-    <td align="center">
-      <button onclick="ToggleStateVar( 'hwreset' )">HwReset</button>
-    </td>
-    <td align="center">
-      <button onclick="ToggleStateVar( 'savecfg' )">SaveCfg</button>
-    </td>
-  </tr>
+  <div id="Scale" class="tabcontent">
+    <button class="g1x" onclick="SetYmax()">Ymax</button>
+    <div    class="g2x" id="yMaxValueDiv"></div>
+    <div class="StartNewRow"></div>
+    <button class="g1x" onclick="SetYmin()">Ymin</button>
+    <div    class="g2x" id="yMinValueDiv"></div>
+  </div>
 
- </table>
+  <div id="Console" class="tabcontent">
+    <div id="bjcoCon" style="border-style:outset;float:left;"></div>
+  </div>
+
 </div>
 
 <!---------------------------------------------------------------------------->
-<!-- Console -->
-<div id="bjcoCon" style="border-style:outset;float:left;"></div>
 
 <!-- Dialog to use -->
 <dialog id="bjkpKeypad">DefaultValue</dialog>
@@ -184,6 +243,23 @@ button.button-off{
 <script src="Js/Bjco/BJCO.js"></script>
 
 <script>
+
+// This controls the main console tabbed buttons
+function OpenTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+
+    console.log("OpenTab:menu = " + tabName);
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    document.getElementById(tabName).style.display = "block";
+};
+
+function ToggleStateVar( aVarStateName )
+{
+   document.getElementById("runDiv").innerHtml = "ON";
+};
 
 // This is the keypad
 var bkp1 = new BJKP.Keypad( document.getElementById("bjkpKeypad") );
@@ -411,6 +487,19 @@ function SetSpanHzByKeypad()
    );
 };
 
+// This method sets the reference dBm using a keypad for input
+var gLastRefDbmInput="";
+function SetRefDbmByKeypad()
+{
+   bkp1.Show(
+     gLastRefDbmInput,
+     function( val ) {
+        gLastRefDbmInput = val;
+        SetStateVar( 'refDbm', val );
+     }
+   );
+};
+
 // This method updates the top most status data including: 
 // isActve, isRunning and the statusDiv.
 // If the state has not been successfully updated since the last
@@ -470,7 +559,8 @@ function UpdateState()
                           " Npt="     + unitState.nPts +
                           " Ave="     + unitState.nAve +
                           " Chn="     + unitState.chnl +
-                          " Span="    + unitState.spanHz  +
+                          " Span="    + unitState.spanHz.toLocaleString()  +
+                          " Hz"       +
                           " Center="  + unitState.centerHz.toLocaleString() +
                           " Hz"
                          );
@@ -594,17 +684,16 @@ function DispToggleMarkers( elem )
 }
 
 // This method stores the current trace into a memory
-var gActiveMem = 0;
-function DispMstore()
+function DispMstore( mn )
 {
-   bxy1.TraceSave(gActiveMem);
-   bxy1.TraceVisible(gActiveMem,1);
+   bxy1.TraceSave(mn);
+   bxy1.TraceVisible(mn,1);
 }
 
 // This method toggles the display of the existing memory
-function DispToggleMshow()
+function DispMshow( mn, show)
 {
-   bxy1.TraceVisible(gActiveMem,bxy1.TraceIsVisible(gActiveMem)^1);
+   bxy1.TraceVisible(mn,show);
    bxy1.Draw(); 
 }
 

@@ -210,6 +210,7 @@ ahc_access_handler (void *cls,
      file = fopen (fname, "rb");
    }
    else {
+     printf("unable to open %s\n",fname);
      file = NULL;
    }
 
