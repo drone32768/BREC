@@ -692,7 +692,7 @@ BJGT.Reticle.prototype.Draw = function()
 // XyDisplay is the main exported object and provides a reasonbly high
 // performance graphing and display interface for 2D data.
 //
-// When parameters other than the xy data have changed Layout() must invoked
+// When parameters other than the xy data have changed Layout() must be invoked
 // prior to drawing.
 //
 BJGT.XyDisplay = function( aCanvas )
@@ -738,6 +738,10 @@ BJGT.XyDisplay = function( aCanvas )
    // Establish a peak picker
    this.mPeakPicker = new BJGT.Peak();
    this.mPicCount   = 0;
+
+   // Save off computed colors for later use
+   this.mTextColor  = window.getComputedStyle( this.mCanvas, null ).
+                               getPropertyValue("color");
 };
 
 BJGT.XyDisplay.prototype.Layout = function()
@@ -790,20 +794,10 @@ BJGT.XyDisplay.prototype.Draw = function()
 {
    var idx;
 
-   // TODO fix colors
+   // TODO make colors CSS configurable
 
    // Clear the canvas
    this.mCtx.clearRect(0, 0, this.mCanvas.width, this.mCanvas.height);
-
-   // Draw the reticle
-   this.mCtx.strokeStyle = "grey";
-   this.mReticle.Draw();
-
-   // Draw the title and labels
-   this.mCtx.fillStyle   = "black";
-   this.mLabelTitle.Draw();
-   this.mLabelY.Draw();
-   this.mLabelX.Draw();
 
    // Draw any visible histories
    for(idx=0;idx<this.mXyTrace.length;idx++){
@@ -835,6 +829,16 @@ BJGT.XyDisplay.prototype.Draw = function()
    // Draw the core data
    this.mCtx.strokeStyle = "blue";
    this.mXyData.Draw();
+
+   // Draw the reticle
+   this.mCtx.strokeStyle = "grey";
+   this.mReticle.Draw();
+
+   // Draw the title and labels
+   this.mCtx.fillStyle   = this.mTextColor;
+   this.mLabelTitle.Draw();
+   this.mLabelY.Draw();
+   this.mLabelX.Draw();
 
    // Draw the markers
    this.mCtx.strokeStyle = "red";
