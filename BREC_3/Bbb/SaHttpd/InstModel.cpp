@@ -113,8 +113,14 @@ InstModel::InstModel()
     mLog        = 0x0; // 0xffffffff;
 
     mRun        = 0;
+
+    mTgtPts     = 2048;
+    mRefDbm     = 10;
     mCenterHz   = 750e6;
     mSpanHz     = 1e6;
+
+    mNewTgtPts  = 1024;
+    mNewRefDbm  = 0;
     mNewCenterHz= 750e6;
     mNewSpanHz  = 1500e6;
 
@@ -172,6 +178,12 @@ int  InstModel::ReadCfg()
        }
        else if( 0==strcmp(name,"mSpanHz") ){
            mNewSpanHz = atof( value );
+       }
+       else if( 0==strcmp(name,"mRefDbm") ){
+           mNewRefDbm = atof( value );
+       }
+       else if( 0==strcmp(name,"mTgtPts") ){
+           mNewTgtPts = atof( value );
        }
     }
 
@@ -274,12 +286,12 @@ InstModel::SetState( char *name, char *value )
           }
     }
 
-    else if( 0==strcmp(name,"nPts") ){
+    else if( 0==strcmp(name,"tgtPts") ){
           int nPts;
-          nPts = mXyCurLen;
+          nPts = mTgtPts;
           nPts = nPts * 2;
-          if( nPts>4096 ) nPts = 256;
-          mXyCurLen = nPts;
+          if( nPts>4096 ) nPts = 512;
+          mNewTgtPts = nPts;
     }
 
     else if( 0==strcmp(name,"centerHz") ){
@@ -288,6 +300,10 @@ InstModel::SetState( char *name, char *value )
 
     else if( 0==strcmp(name,"spanHz") ){
           mNewSpanHz = atof( value );
+    }
+
+    else if( 0==strcmp(name,"refDbm") ){
+          mNewRefDbm = atof( value );
     }
 
     else if( 0==strcmp(name,"swreset") && 0==strcmp(value,"ON") ){
@@ -361,6 +377,8 @@ InstModel::GetState( char *resultsStr, int resultsLen )
                     "\"time\"     : \"%s\","
                     "\"nPts\"     : \"%d\","
                     "\"chnl\"     : \"%d\","
+                    "\"tgtPts\"   : \"%d\","
+                    "\"refDbm\"   : \"%d\","
                     "\"centerHz\" : %d,"
                     "\"spanHz\"   : %d "
                     ,
@@ -368,6 +386,8 @@ InstModel::GetState( char *resultsStr, int resultsLen )
                     timeStr,                    // time
                     mXyCurLen,                  // nPts
                     gSp.mChId,                  // chnl id (debug)
+                    (int)mTgtPts,               // target pts / scan
+                    (int)mRefDbm,               // reference dbm
                     (int)mCenterHz,             // centerHz
                     (int)mSpanHz                // spanHz
     );
@@ -562,7 +582,7 @@ void
 InstModel::ScanReset()
 {
     int    stepLimit = 100;  // tunable
-    int    tgtPts    = 1024; // tunable
+    int    tgtPts    = mTgtPts; // 1024; // tunable
 
     int    idx;
     int    cont;
@@ -692,10 +712,14 @@ InstModel::ScanStep()
 
     // Figure out if we need to reset
     if( (mNewCenterHz!=mCenterHz) || 
-        (mNewSpanHz  !=mSpanHz  ) ){
+        (mNewSpanHz  !=mSpanHz  ) ||
+        (mNewTgtPts  !=mTgtPts  ) ||
+        (mNewRefDbm  !=mRefDbm  ) ){
 
         mCenterHz = mNewCenterHz;
         mSpanHz   = mNewSpanHz;
+        mRefDbm   = mNewRefDbm;
+        mTgtPts   = mNewTgtPts;
 
         ScanReset();
     }

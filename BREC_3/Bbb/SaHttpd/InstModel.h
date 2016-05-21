@@ -68,9 +68,13 @@ private:
 
     double         mNewCenterHz; // requested new center frequency
     double         mNewSpanHz;   // requested new span frequency
+    double         mNewRefDbm;   // requested reference in dbm
+    double         mNewTgtPts;   // requested ouptputs per scan
 
     double         mCenterHz;    // center frequency
     double         mSpanHz;      // span frequency
+    double         mRefDbm;      // reference
+    double         mTgtPts;      // target output points
    
     int            mStepMarker;  // Flag to add markers to step
 
