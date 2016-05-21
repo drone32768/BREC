@@ -2,7 +2,7 @@
 //
 // This source code is available under the "Simplified BSD license".
 //
-// Copyright (c) 2013, J. Kleiner
+// Copyright (c) 2016, J. Kleiner
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 
@@ -305,6 +305,16 @@ BJGT.XyData.prototype.SetLength = function ( len )
 // Layout must only be invoked if the size of the canvas changes.
 // Width and Height are only valid after layout
 //
+// The marker table can be displayed in absolute or relative mode.  In 
+// absolute, all x,y values are the absolute values of the marker.  In 
+// relative mode, the table values displayed are relative to marker 0 and
+// marker 0 is displayed as absolute.
+//
+// A marker can be in 3 states: pin, focus, auto.  Pin means a value has
+// been set and should be retained, focus means it can accept a location
+// from a pick or other focused user operation, and auto means it is available
+// for autonomous use by other software
+//
 BJGT.Markers = function ( aCanvas, a2Dtran )
 {
    var idx;
@@ -317,6 +327,15 @@ BJGT.Markers = function ( aCanvas, a2Dtran )
    this.mMarker     = [];
    this.mWidth      = 10;
    this.mHeight     = 10;
+   this.mRel        = 0;
+ 
+   // State constants
+   this.STATE_AUTO  = 1; // available for analysis purposes
+   this.STATE_FOCUS = 2; // available for clicks
+   this.STATE_PIN   = 3; // has been set and should be retained
+
+   this.mTblHdr = new BJGT.Label( this.mCanvas );
+   this.mTblHdr.SetLabel("NA");
 
    for(idx = 0; idx < this.mMaxMarkers; idx++ ) {
       this.mMarker[idx] = {};
@@ -331,7 +350,22 @@ BJGT.Markers = function ( aCanvas, a2Dtran )
 
       this.mMarker[idx].mYvLbl = new BJGT.Label( this.mCanvas );
       this.mMarker[idx].mYvLbl.SetLabel("012345678901");
+
+      this.mMarker[idx].mState = this.STATE_AUTO; 
    }
+
+   // Make sure at lease one marker has focus
+   this.mMarker[ this.mMaxMarkers -1 ].mState = this.STATE_FOCUS;
+};
+
+BJGT.Markers.prototype.SetShowRel = function( isrel )
+{
+   this.mRel = isrel;
+};
+
+BJGT.Markers.prototype.GetShowRel = function( )
+{
+   return( this.mRel );
 };
 
 BJGT.Markers.prototype.SetVisible = function( isv )
@@ -344,11 +378,44 @@ BJGT.Markers.prototype.GetVisible = function( )
    return( this.Visible );
 };
 
-BJGT.Markers.prototype.SetMarker = function( aIdx, aX, aY )
+BJGT.Markers.prototype.PinMarker = function( aIdx )
 {
-   this.mMarker[aIdx].mX = aX;
-   this.mMarker[aIdx].mY = aY;
-};
+   this.mMarker[aIdx].mState = this.STATE_PIN;
+}
+
+BJGT.Markers.prototype.FocusMarker = function( aIdx )
+{
+   this.mMarker[aIdx].mState = this.STATE_FOCUS;
+}
+
+BJGT.Markers.prototype.AutoMarker = function( aIdx )
+{
+   this.mMarker[aIdx].mState = this.STATE_AUTO;
+}
+
+BJGT.Markers.prototype.GetNextFocusMarker = function( aIdx )
+{
+   var idx;
+
+   for(idx = aIdx; idx < this.mMaxMarkers; idx++ ) {
+      if( this.mMarker[idx].mState == this.STATE_FOCUS ){
+          return( idx );
+      }
+   }
+   return( this.mMaxMarkers - 1 ); // always return valid index
+}
+
+BJGT.Markers.prototype.GetNextAutoMarker = function( aIdx )
+{
+   var idx;
+
+   for(idx = aIdx; idx < this.mMaxMarkers; idx++ ) {
+      if( this.mMarker[idx].mState == this.STATE_AUTO ){
+          return( idx );
+      }
+   }
+   return( this.mMaxMarkers - 1 ); // always return valid index
+}
 
 BJGT.Markers.prototype.Layout = function()
 {
@@ -361,9 +428,10 @@ BJGT.Markers.prototype.Layout = function()
    yd     = this.mMarker[0].mXvLbl.Height() + 1;
    ystart = 0;
 
+   this.mTblHdr.SetAnchor(3, this.mCanvas.width-1 - xc,y0);
+   y0+=yd;
+
    for(idx=0;idx<this.mMaxMarkers;idx++){
-      // this.mMarker[idx].mLabel.SetAnchor(3, this.mCanvas.width-1, y0 );
-      // y0+=yd;
 
       this.mMarker[idx].mIdLbl.SetAnchor(3, this.mCanvas.width-1 - xc, y0 );
       y0+=yd;
@@ -389,7 +457,7 @@ BJGT.Markers.prototype.Height = function() {
    return( this.mHeight );
 };
 
-BJGT.Markers.prototype.SetMarker = function( aIdx, aX, aY )
+BJGT.Markers.prototype.PlaceMarker = function( aIdx, aX, aY )
 {
    this.mMarker[aIdx].mX = aX;
    this.mMarker[aIdx].mY = aY;
@@ -400,6 +468,7 @@ BJGT.Markers.prototype.Draw = function()
    var idx;
    var px,py;
    var delp;
+   var xv,yv;
 
    if( !this.Visible ) { 
       return;
@@ -407,16 +476,33 @@ BJGT.Markers.prototype.Draw = function()
 
    // TODO: formatting of table is not always correct based on neg expo
 
-   // Draw the table
+   // Draw the table header
+   if( this.mRel ){
+      this.mTblHdr.SetLabel("Rel");
+   }
+   else{
+      this.mTblHdr.SetLabel("Abs");
+   }
+   this.mTblHdr.Draw();
+
+   // Draw the table values
    for(idx=0;idx<this.mMaxMarkers;idx++){
+      if( !this.mRel || 0==idx ){ // 0 is always abs
+          xv = this.mMarker[idx].mX;
+          yv = this.mMarker[idx].mY;
+      }
+      else{
+          xv = this.mMarker[idx].mX - this.mMarker[0].mX;
+          yv = this.mMarker[idx].mY - this.mMarker[0].mY;
+      }
  
       this.mMarker[idx].mIdLbl.SetLabel( idx );
       this.mMarker[idx].mIdLbl.Draw();
 
-      this.mMarker[idx].mXvLbl.SetLabel(this.mMarker[idx].mX.toExponential(5));
+      this.mMarker[idx].mXvLbl.SetLabel(xv.toExponential(5));
       this.mMarker[idx].mXvLbl.Draw();
 
-      this.mMarker[idx].mYvLbl.SetLabel(this.mMarker[idx].mY.toExponential(5));
+      this.mMarker[idx].mYvLbl.SetLabel(yv.toExponential(5));
       this.mMarker[idx].mYvLbl.Draw();
    }
 
@@ -451,6 +537,7 @@ BJGT.Peak = function( )
 BJGT.Peak.prototype.AssignMarkers = function(xvec,yvec,aMarkers, aMarkerCount )
 {
    var idx;
+   var markerIdx;
    var lmax;
    var loIdx,hiIdx,miIdx,dIdx;
    var peakCount;
@@ -465,6 +552,9 @@ BJGT.Peak.prototype.AssignMarkers = function(xvec,yvec,aMarkers, aMarkerCount )
    // Establish peak mask as fraction of x points
    dIdx = Math.round( 0.05 * xvec.length );
 
+   // Start looking for auto markers at 0
+   markerIdx = 0;
+
    // Loop over looking for peaks
    for(peakCount=0;peakCount<aMarkerCount;peakCount++){
 
@@ -478,8 +568,10 @@ BJGT.Peak.prototype.AssignMarkers = function(xvec,yvec,aMarkers, aMarkerCount )
           }
        }
 
-       // Set the marker
-       aMarkers.SetMarker( peakCount, xvec[miIdx], yvec[miIdx] );
+       // Place the next auto marker at this peak
+       markerIdx = aMarkers.GetNextAutoMarker(markerIdx);
+       aMarkers.PlaceMarker( markerIdx, xvec[miIdx], yvec[miIdx] );
+       markerIdx++;
 
        // Establish low end of mask update
        loIdx = miIdx - dIdx;
@@ -855,14 +947,21 @@ BJGT.XyDisplay.prototype.EnableMouse = function()
    this.mCanvas.addEventListener(
        'click', 
         function( evt ){
-            // this is the DOM object that initiated the event
+            // NOTE: this is the DOM object that initiated the event
+            var midx;
             var lx,ly;
 
             var rect = thisBxy.mCanvas.getBoundingClientRect();
 
             lx=thisBxy.m2Dtran.XPtoL( evt.clientX - rect.left );
             ly=thisBxy.m2Dtran.YPtoL( evt.clientY - rect.top );
-            thisBxy.SetMarker(9,lx,ly); // Mouse always uses marker 9
+
+            // Find the first marker in focus and place it at click point
+            midx = thisBxy.mMarkers.GetNextFocusMarker(0);
+            thisBxy.mMarkers.PlaceMarker(midx,lx,ly);
+
+            // thisBxy.PlaceMarker(9,lx,ly); // Mouse always uses marker 9
+
             thisBxy.Draw();
         },
         false );
@@ -888,6 +987,11 @@ BJGT.XyDisplay.prototype.MarkersVisible = function( isv )
    this.mMarkers.SetVisible( isv );
 };
 
+BJGT.XyDisplay.prototype.MarkersRelative = function( isrel )
+{
+   this.mMarkers.SetShowRel( isrel );
+};
+
 BJGT.XyDisplay.prototype.MarkersIsVisible = function( )
 {
    return( this.mMarkers.GetVisible() );
@@ -895,7 +999,23 @@ BJGT.XyDisplay.prototype.MarkersIsVisible = function( )
 
 BJGT.XyDisplay.prototype.SetMarker = function( aIdx, aX, aY )
 {
-   this.mMarkers.SetMarker( aIdx, aX, aY );
+   this.mMarkers.PinMarker( aIdx )
+   this.mMarkers.PlaceMarker( aIdx, aX, aY );
+};
+
+BJGT.XyDisplay.prototype.PinMarker = function( aIdx )
+{
+   this.mMarkers.PinMarker( aIdx )
+}
+
+BJGT.XyDisplay.prototype.FocusMarker = function( aIdx )
+{
+   this.mMarkers.FocusMarker( aIdx );
+};
+
+BJGT.XyDisplay.prototype.AutoMarker = function( aIdx )
+{
+   this.mMarkers.AutoMarker( aIdx );
 };
 
 BJGT.XyDisplay.prototype.SetLogicalLimits = function (aXmin,aXmax,aYmin,aYmax)
@@ -921,6 +1041,11 @@ BJGT.XyDisplay.prototype.SetXy = function ( xvec, yvec )
 BJGT.XyDisplay.prototype.PeakPick = function ( aCnt )
 {
     this.mPicCount = aCnt;
+};
+
+BJGT.XyDisplay.prototype.MedianPick = function ( aCnt )
+{
+    this.mMedCount = aCnt;
 };
 
 BJGT.XyDisplay.prototype.TraceSave = function ( aBfn )
