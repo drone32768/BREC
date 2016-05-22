@@ -130,8 +130,9 @@ button:hover {
   <button class="g1x" onclick="OpenTab(event,'Analysis')">Analysis</button>
   <button class="g1x" onclick="OpenTab(event,'Markers')">Markers</button>
   <button class="g1x" onclick="OpenTab(event,'Scale')">Scale</button>
-  <button class="g1x" onclick="OpenTab(event,'Console')">Console</button>
   <button class="g1x" onclick="OpenTab(event,'System')">System</button>
+  <button class="g1x" onclick="OpenTab(event,'Console')">Console</button>
+  <button class="g1x" onclick="OpenTab(event,'About')">About</button>
   <div class="StartNewRow"></div>
 
   <!-- Device submenu -->
@@ -142,14 +143,12 @@ button:hover {
     <button class="g1x" onclick="KpGetCenterHz()">Center(Hz)</button>
     <div    class="g2x"id="centerHzDiv"></div>
     <div class="StartNewRow"></div>
-
     <button class="g1x" onclick="SetSweepByStart()">ByStart</button>
     <button class="g1x" onclick="KpGetStartHz()">Start(Hz)</button>
     <div    class="g2x" id="startHzDiv"></div>
     <button class="g1x" onclick="KpGetStopHz()">Stop(Hz)</button>
     <div    class="g2x" id="stopHzDiv"></div>
     <div class="StartNewRow"></div>
-
     <button class="g1x" onclick="KpSetRefDbm()">Ref(dBm)</button>
     <div    class="g2x" id="refDbmDiv"></div>
     <div class="StartNewRow"></div>
@@ -183,26 +182,21 @@ button:hover {
   
   <div id="Analysis" class="tabcontent">
     <button class="g1x" onclick="DispToggleEnvelope(this)">Envelope</button>
-    <div class="StartNewRow"></div>
     <button class="g1x" onclick="DispTogglePeaks(this)">Peaks</button>
-    <button class="g1x">Mask %</button>
-    <div    class="g2x">10</div>
-    <div class="StartNewRow"></div>
     <button class="g1x">Median</button>
   </div>
 
   <div id="Markers" class="tabcontent">
     <button class="g1x" onclick="DispToggleRelMarkers(this)">Rel/Abs</button>
     <div class="StartNewRow"></div>
-
     <div    class="g1x">Marker0</div>
     <button class="g1x" onclick="DispFocusMarker(0)">Focus</button>
     <button class="g1x" onclick="DispPinMarker(0)">Pin</button>
     <button class="g1x" onclick="DispAutoMarker(0)">Auto</button>
     <button class="g1x" onclick="DispSetMarker(0)">Set</button>
-    <button class="g1x">X</button>
+    <button class="g1x" onclick="KpGetMarkerXy(0,0)">X</button>
     <div    class="g2x" id="m0xDiv"></div>
-    <button class="g1x">Y</button>
+    <button class="g1x" onclick="KpGetMarkerXy(0,1)">Y</button>
     <div    class="g2x" id="m0yDiv"></div>
     <div class="StartNewRow"></div>
 
@@ -211,17 +205,11 @@ button:hover {
     <button class="g1x" onclick="DispPinMarker(1)">Pin</button>
     <button class="g1x" onclick="DispAutoMarker(1)">Auto</button>
     <button class="g1x" onclick="DispSetMarker(1)">Set</button>
-    <button class="g1x">X</button>
+    <button class="g1x" onclick="KpGetMarkerXy(1,0)">X</button>
     <div    class="g2x" id="m1xDiv"></div>
-    <button class="g1x">Y</button>
+    <button class="g1x" onclick="KpGetMarkerXy(1,1)">Y</button>
     <div    class="g2x" id="m1yDiv"></div>
     <div class="StartNewRow"></div>
-  </div>
-
-  <div id="System" class="tabcontent">
-    <button class="g1x">SwReset</button>
-    <button class="g1x">HwReset</button>
-    <button class="g1x">SaveCfg</button>
   </div>
 
   <div id="Scale" class="tabcontent">
@@ -232,8 +220,19 @@ button:hover {
     <div    class="g2x" id="yMinValueDiv"></div>
   </div>
 
+  <div id="System" class="tabcontent">
+    <button class="g1x" onclick="ToggleStateVar('swreset')">SwReset</button>
+    <button class="g1x" onclick="ToggleStateVar('hwreset')">HwReset</button>
+    <button class="g1x" onclick="ToggleStateVar('savecfg')">SaveCfg</button>
+  </div>
+
   <div id="Console" class="tabcontent">
     <div id="bjcoCon" style="border-style:outset;float:left;"></div>
+  </div>
+
+  <div id="About" class="tabcontent">
+    SaHttpd, jkleine 160522<p>
+    <a href="help.html" target="_blank">Help</a>
   </div>
 
 </div>
@@ -358,6 +357,12 @@ localData.gLastCenterHzInput ="750e6";
 localData.gLastStartHzInput  ="400e6";
 localData.gLastStopHzInput   ="800e6";
 localData.gLastRefDbmInput   ="-10";
+localData.gLastXy            = { 
+                                  "0" : { "0" : "1e6", "1" : "-10" } , 
+                                  "1" : { "0" : "1e7", "1" : "-20" } 
+                               };
+localData.gRel               = 0;
+localData.gAnalysisPeaks     = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Misc Methods ///////////////////////////////////////////////////////////////
@@ -759,6 +764,19 @@ function KpSetRefDbm()
    );
 };
 
+// This method uses a keypad to set the specified marke r
+function KpGetMarkerXy( mid, which )
+{
+   console.log("KpGetMarkerXy "+mid+" "+which);
+   bkp1.Show(
+     localData.gLastXy[mid][which],
+     function( val ) {
+        localData.gLastXy[mid][which] = val;
+        PaintLocalDivs();
+     }
+   );
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Display manipulation ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -812,26 +830,32 @@ function DispAutoMarker( mid )
 // This method sets the specified marker to the current configured xy value
 function DispSetMarker( mid )
 {
+   var x = parseFloat(localData.gLastXy[mid][0]);
+   var y = parseFloat(localData.gLastXy[mid][1]);
    bxy1.SetMarker( mid, x, y );
 }
 
 // This method toggles the value and display of the envelope.
-var gRel = 0;
 function DispToggleRelMarkers( elem )
 {
-   gRel = gRel ^ 1;
-   bxy1.MarkersRelative( gRel ) ;
+   localData.gRel = localData.gRel ^ 1;
+   bxy1.MarkersRelative( localData.gRel ) ;
 }
 
 // This method toggles peak picking on and off
-var gPeaks = 0;
 function DispTogglePeaks()
 {
-   if( gPeaks>0 ) gPeaks = 0;
-   else           gPeaks = 9;
-
-   bxy1.PeakPick( gPeaks );
+   if( localData.gAnalysisPeaks ){
+      bxy1.PeakPick( 0 );
+      localData.gAnalysisPeaks = 0;
+   }
+   else{
+      bxy1.PeakPick( 9 );
+      localData.gAnalysisPeaks = 1;
+   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 // This method uses a keypad to set the maximum Y axis value
 function DispSetYmax()
@@ -876,6 +900,10 @@ function PaintLocalDivs()
                localData.gLastStartHzInput;
    document.getElementById("stopHzDiv").innerHTML = 
                localData.gLastStopHzInput;
+   document.getElementById("m0xDiv").innerHTML = localData.gLastXy[0][0];
+   document.getElementById("m0yDiv").innerHTML = localData.gLastXy[0][1];
+   document.getElementById("m1xDiv").innerHTML = localData.gLastXy[1][0];
+   document.getElementById("m1yDiv").innerHTML = localData.gLastXy[1][1];
 }
 
 function PaintUnitDivs()
