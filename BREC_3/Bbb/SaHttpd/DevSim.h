@@ -59,6 +59,7 @@ class DevSim : public Device {
     int      FlushSamples();
     int      Get2kSamples( short *dst );
     double   SetTuneHz( double freqHz );
+    double   SetRefDbm( double refDbm );
     int      SetChannel( int chId );
 };
 

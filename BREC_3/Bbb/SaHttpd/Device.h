@@ -54,6 +54,7 @@ class Device {
     virtual int      FlushSamples() = 0;
     virtual int      Get2kSamples(short *dst) = 0;
     virtual double   SetTuneHz( double freqHz ) = 0;
+    virtual double   SetRefDbm( double refDbm ) = 0;
     virtual int      SetChannel( int chId ) = 0;
 };
 

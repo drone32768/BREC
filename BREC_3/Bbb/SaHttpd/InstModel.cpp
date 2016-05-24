@@ -722,6 +722,7 @@ InstModel::ScanStep()
         mTgtPts   = mNewTgtPts;
 
         ScanReset();
+        GetDev()->SetRefDbm( mRefDbm );
     }
 
     // Collect the required number of samples

@@ -9,7 +9,7 @@
 /* For body other than canvas */
 body {
   color           : white;
-  background-color: grey;
+  background-color: #abab87; // grey;
 }
 
 /* For graphing canvas */
@@ -31,6 +31,10 @@ canvas {
   margin-bottom   : 5px;
   margin-right    : 5px;
   float           : left;
+}
+
+.g1x.active {
+  background-color: #4b4b34; // black;
 }
 
 /* General g2x */
@@ -125,25 +129,25 @@ button:hover {
   <button class="g1x" onclick="ToggleStateVar('run')">
       <div id="runDiv">OFF</div>
   </button>
-  <button class="g1x" onclick="OpenTab(event,'Device')">Device</button>
-  <button class="g1x" onclick="OpenTab(event,'Memory')">Memory</button>
-  <button class="g1x" onclick="OpenTab(event,'Analysis')">Analysis</button>
-  <button class="g1x" onclick="OpenTab(event,'Markers')">Markers</button>
-  <button class="g1x" onclick="OpenTab(event,'Scale')">Scale</button>
-  <button class="g1x" onclick="OpenTab(event,'System')">System</button>
-  <button class="g1x" onclick="OpenTab(event,'Console')">Console</button>
-  <button class="g1x" onclick="OpenTab(event,'About')">About</button>
+  <button class="g1x tab" onclick="OpenTab(this,'Device')">Device</button>
+  <button class="g1x tab" onclick="OpenTab(this,'Memory')">Memory</button>
+  <button class="g1x tab" onclick="OpenTab(this,'Analysis')">Analysis</button>
+  <button class="g1x tab" onclick="OpenTab(this,'Markers')">Markers</button>
+  <button class="g1x tab" onclick="OpenTab(this,'Scale')">Scale</button>
+  <button class="g1x tab" onclick="OpenTab(this,'System')">System</button>
+  <button class="g1x tab" onclick="OpenTab(this,'Console')">Console</button>
+  <button class="g1x tab" onclick="OpenTab(this,'About')">About</button>
   <div class="StartNewRow"></div>
 
   <!-- Device submenu -->
   <div id="Device" class="tabcontent">
-    <button class="g1x" onclick="SetSweepByCenter()">ByCenter</button>
+    <button class="g1x" onclick="SetSweepByCenter()">Set</button>
     <button class="g1x" onclick="KpGetSpanHz()">Span(Hz)</button>
     <div    class="g2x" id="spanHzDiv"></div>
     <button class="g1x" onclick="KpGetCenterHz()">Center(Hz)</button>
     <div    class="g2x"id="centerHzDiv"></div>
     <div class="StartNewRow"></div>
-    <button class="g1x" onclick="SetSweepByStart()">ByStart</button>
+    <button class="g1x" onclick="SetSweepByStart()">Set</button>
     <button class="g1x" onclick="KpGetStartHz()">Start(Hz)</button>
     <div    class="g2x" id="startHzDiv"></div>
     <button class="g1x" onclick="KpGetStopHz()">Stop(Hz)</button>
@@ -179,7 +183,6 @@ button:hover {
     <button class="g1x" onclick="DispMshow(3,0)">Hide</button>
   </div>
 
-  
   <div id="Analysis" class="tabcontent">
     <button class="g1x" onclick="DispToggleEnvelope(this)">Envelope</button>
     <button class="g1x" onclick="DispTogglePeaks(this)">Peaks</button>
@@ -368,10 +371,21 @@ localData.gAnalysisPeaks     = 0;
 /// Misc Methods ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 // This controls the main console tabbed buttons
-function OpenTab(evt, tabName) {
+function OpenTab(elem, tabName) {
     var i, tabcontent, tablinks;
+    var tabs;
 
     console.log("OpenTab:menu = " + tabName);
+
+    // Change current selected button to active
+    tabs = document.getElementsByClassName("tab");
+    for (i = 0; i < tabs.length; i++) {
+       // console.log( tabs[i] );
+       tabs[i].classList.remove( 'active' );
+    }
+    elem.classList.add('active');
+
+    // Change all of the content associated with the button to show
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";

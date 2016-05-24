@@ -161,3 +161,13 @@ double DevSim::SetTuneHz( double freqHz )
     gTuneHz = freqHz;
     return(freqHz);
 }
+
+//------------------------------------------------------------------------------
+double DevSim::SetRefDbm( double refDbm )
+{
+    // TODO - simulate this
+
+    printf("DevSim::SetRefDbm %f\n",refDbm);
+    return( refDbm );
+}
+

@@ -67,6 +67,11 @@ class DevMtdf : public Device {
     Mboard   *mMbrd;
     Tboard   *mTbrd;
 
+    // Internal
+    double    mIf1Hz;
+    double    mIf2Hz;
+    double    mOffHz;
+
   public:
 
     DevMtdf();
@@ -79,6 +84,7 @@ class DevMtdf : public Device {
     int      FlushSamples();
     int      Get2kSamples( short *dst );
     double   SetTuneHz( double freqHz );
+    double   SetRefDbm( double refDbm );
     int      SetChannel( int chId );
 };
 

@@ -46,6 +46,10 @@
 DevMtdf::DevMtdf()
 {
     // No constructor actions required
+ 
+    mIf1Hz = 1500.0e6;
+    mIf2Hz = 2.0e6;
+    mOffHz = 70e3;
 }
 
 //------------------------------------------------------------------------------
@@ -69,8 +73,15 @@ int DevMtdf::Open()
     mMbrd = new Mboard();
     mMbrd->Attach( (void*)( mBdc->GetPinGroup(1) ), (void*)0 );
 
+    mMbrd->GetAdf4351( 0 )->SetAuxEnable(0);
+    mMbrd->GetAdf4351( 0 )->SetMainPower(0);
+
     // Open ddc
     mDdc->Open();
+
+    // Configure the ddc
+    mDdc->SetChannelMatch( 3, 1.0, -14, 1.0 ); // TODO - change how done
+    mDdc->SetTpg( 0 );
 
     // Comment this line out to use CPU based SPI to samples
     mDdc->StartPru();
@@ -83,8 +94,7 @@ int DevMtdf::Open()
 //------------------------------------------------------------------------------
 int DevMtdf::GetComplexSampleRate()
 {
-    // TODO
-    return(0);
+    return( mDdc->GetComplexSampleRate() );
 }
 
 //------------------------------------------------------------------------------
@@ -102,13 +112,68 @@ int DevMtdf::Get2kSamples( short *dst )
 //------------------------------------------------------------------------------
 int DevMtdf::SetChannel( int chId )
 {
-    return( mDdc->SetSource(chId) );
+    double flt;
+
+    mIf1Hz = 1500.0e6;
+    mOffHz = 70e3;
+
+    switch( chId ){
+        case 3:
+           mIf2Hz  = 100e3;
+           break;
+        case 4:
+           mIf2Hz  = 2e6;
+           break;
+        case 5:
+           mIf2Hz  = 10e6;
+           break;
+        default:
+           break;
+    }
+
+    mDdc->SetSource(chId);
+
+    flt = mTbrd->SetFreqHz( mIf1Hz );
+    printf("#####Tboard IF = %f Hz\n",flt);
+
+    flt = mTbrd->SetBwHz( 2*mIf2Hz );
+    printf("#####Tboard BW = %f Hz\n",flt);
+
+    printf("#####Tboard bb gain set low\n");
+    mTbrd->SetBbGainDb( 0 );
+
+    flt =mDdc->SetLoFreqHz( mIf2Hz );
+    printf("#####DDC100 IF = %f Hz\n",flt);
+
+    return(0);
+}
+
+//------------------------------------------------------------------------------
+double DevMtdf::SetRefDbm( double refDbm )
+{
+    // TODO - this is incorrect but sufficient for short term testing
+
+    if( refDbm > 0 )   { refDbm = 0;   }
+    if( refDbm < -70 ) { refDbm = -70; }
+
+    printf("#####Tboard rf gain set %f\n", -refDbm);
+    mTbrd->SetRfGainDb( -refDbm );
+
+    return( refDbm );
 }
 
 //------------------------------------------------------------------------------
 double DevMtdf::SetTuneHz( double freqHz )
 {
-    // TODO
+    double flt;
+    double lo1Hz = freqHz + mIf1Hz - mIf2Hz - mOffHz;
+
+    flt =  mMbrd->GetAdf4351( 0 )->SetFrequency( lo1Hz );
+    printf("#####Mboard IF = %f Hz / %f Hz\n",flt,lo1Hz);
+
+    // TODO - incorporate first lo freq correction at ddc to get precise tune
+
+    printf("*** TunerSet *** at %f Hz\n",(double)freqHz);
     return(freqHz);
 }
 
