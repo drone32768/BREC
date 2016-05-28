@@ -179,14 +179,22 @@ double DevMtdf::SetTuneHz( double freqHz )
     double flt;
     double lo1Hz = freqHz + mIf1Hz - mIf2Hz - mOffHz;
 
-    gStepStopWatch.Stop();
-    printf("Step uS       = %ld\n",gStepStopWatch.GetuS());
-    printf("   Tune uS = %ld\n",gTuneStopWatch.GetuS());
+    gStepStopWatch.StopWithHistory();
+    if( gTuneCount > 100 ){
+        gTuneCount = 0;
+        printf("Step uS = %ld, (tune uS %d)\n",
+                   gStepStopWatch.MedianuS(),
+                   gTuneStopWatch.MedianuS()
+          );
+    }
+    gTuneCount++;
     gStepStopWatch.Start();
 
     gTuneStopWatch.Start();
+    mDdc->PausePru( 1 ); 
     flt =  mMbrd->GetAdf4351( 0 )->SetFrequency( lo1Hz );
-    gTuneStopWatch.Stop();
+    mDdc->PausePru( 0 ); 
+    gTuneStopWatch.StopWithHistory();
 
     // printf("#####Mboard IF = %f Hz / %f Hz\n",flt,lo1Hz);
     // TODO - incorporate first lo freq correction at ddc to get precise tune
