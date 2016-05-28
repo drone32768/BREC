@@ -247,6 +247,18 @@ Ddc100::FlushSamples()
 }
 
 //------------------------------------------------------------------------------
+void
+Ddc100::PausePru( int pause )
+{
+    if( pause ){
+        SetSramShort(  PRU1_LOFF_CMD, PRU1_LOFF_CMD );
+    }
+    else{
+        SetSramShort(  PRU1_CMD_2KWORDS, PRU1_LOFF_CMD );
+    }
+}
+
+//------------------------------------------------------------------------------
 int
 Ddc100::Get2kSamples( short *bf )
 {

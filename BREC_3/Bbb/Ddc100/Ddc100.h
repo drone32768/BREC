@@ -75,7 +75,8 @@ public:
     int SetComplexSampleRate( int complexSamplesPerSecond );
     int GetComplexSampleRate();
     int IsComplexFmt();
-    int StartPru();
+    int  StartPru();
+    void PausePru( int pause );
 
     int  Get2kStream( short *bf ); 
     int SetGain( int gn );
