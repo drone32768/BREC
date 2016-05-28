@@ -66,8 +66,7 @@ $(TGT)/DevMtdf.o	: DevMtdf.cpp DevMtdf.h | $(TGT)
 	g++ -I../ $(CPPFLAGS) -c DevMtdf.cpp  -o $(TGT)/DevMtdf.o
 
 $(TGT)/Pse.o	: Pse.cpp Pse.h | $(TGT)
-#	g++ -I../ $(CPPFLAGS) -c Pse.cpp  -o $(TGT)/Pse.o
-	g++ -I../ -g -c Pse.cpp  -o $(TGT)/Pse.o
+	g++ -I../ $(CPPFLAGS) -c Pse.cpp  -o $(TGT)/Pse.o
 
 $(TGT)/InstModel.o	: InstModel.cpp InstModel.h | $(TGT)
 	g++ -I../ $(CPPFLAGS) -c InstModel.cpp  -o $(TGT)/InstModel.o
