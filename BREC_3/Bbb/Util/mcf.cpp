@@ -209,7 +209,7 @@ void StopWatch::Stop()
 unsigned long StopWatch::GetuS()
 {
     unsigned long us;
-    us  = (tv2.tv_sec  - tv1.tv_sec) * 1000;
+    us  = (tv2.tv_sec  - tv1.tv_sec) * 100000;
     us += (tv2.tv_usec - tv1.tv_usec);
     return( us );
 }
