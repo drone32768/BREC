@@ -136,12 +136,8 @@ Pse::PerformFft( int complexInput, int fftSize, short *inputData )
     // Prepare the input samples
     if( complexInput ){
        for(idx=0;idx<fftSize;idx++){
-/* TODO - programmable iq swap
-          mFftwOutput[idx][0] = inputData[2*idx + 1] * mWin[idx];
-          mFftwOutput[idx][1] = inputData[2*idx    ] * mWin[idx];
-*/
-          mFftwOutput[idx][1] = inputData[2*idx + 1] * mWin[idx];
           mFftwOutput[idx][0] = inputData[2*idx    ] * mWin[idx];
+          mFftwOutput[idx][1] = inputData[2*idx + 1] * mWin[idx];
        }
        newHead = inputData + 2*fftSize;
     }

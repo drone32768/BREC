@@ -555,19 +555,19 @@ StepCfg(
     switch( cfg ){
         case 0:
             chId        = 5;
-            stepSamples = 8192;
+            stepSamples = 4096; // 8192;
             stepInBins  = 0.8*stepSamples;
             stepHz      = 0.2e6 * stepInBins / stepSamples;
             return( 1 );
         case 1:
             chId        = 4;
-            stepSamples = 4096;
+            stepSamples = 1024; // 4096;
             stepInBins  = 0.8*stepSamples;
             stepHz      = 4e6   * stepInBins / stepSamples;
             return( 1 );
         case 2:
             chId        = 3;
-            stepSamples = 2048;
+            stepSamples = 512; // 2048;
             stepInBins  = 0.4*stepSamples;
             stepHz      = 40e6  * stepInBins / stepSamples;
             return( 0 );

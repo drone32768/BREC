@@ -117,8 +117,8 @@ int DevSim::Get2kSamples( short *dst )
     dphi= pi2*dfHz/gFsHz;
     for( idx=0; idx<2048; idx+=2 ){
         phi += dphi;
-        dst[idx]   += (short)( gToneAmp * cos( phi ) );
-        dst[idx+1] += (short)( gToneAmp * sin( phi ) );
+        dst[idx]   += (short)( gToneAmp * sin( phi ) );
+        dst[idx+1] += (short)( gToneAmp * cos( phi ) );
         if( phi > pi2 ) phi = phi - pi2;
     }
 
