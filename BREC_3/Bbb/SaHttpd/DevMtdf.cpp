@@ -76,6 +76,8 @@ int DevMtdf::Open()
     mMbrd->GetAdf4351( 0 )->SetAuxEnable(0);
     mMbrd->GetAdf4351( 0 )->SetMainPower(0);
 
+    mMbrd->GetAdf4351( 0 )->SetLog( 0x0000 ); // Disable all adf4351 loggin
+
     // Open ddc
     mDdc->Open();
 
@@ -119,13 +121,16 @@ int DevMtdf::SetChannel( int chId )
 
     switch( chId ){
         case 3:
-           mIf2Hz  = 100e3;
+           mIf2Hz  = 10e6;
            break;
         case 4:
            mIf2Hz  = 2e6;
            break;
         case 5:
-           mIf2Hz  = 10e6;
+           // This is correct. Even though the bandwidth is 100e3
+           // we use this IF since the lowest the LPF can go is
+           // approx 3.8MHz
+           mIf2Hz  = 2e6;
            break;
         default:
            break;
@@ -163,17 +168,30 @@ double DevMtdf::SetRefDbm( double refDbm )
 }
 
 //------------------------------------------------------------------------------
+StopWatch gTuneStopWatch;
+int       gTuneCount = 0;
+
+StopWatch gStepStopWatch;
+int       gStepCount = 0;
+
 double DevMtdf::SetTuneHz( double freqHz )
 {
     double flt;
     double lo1Hz = freqHz + mIf1Hz - mIf2Hz - mOffHz;
 
+    gStepStopWatch.Stop();
+    printf("Step uS       = %ld\n",gStepStopWatch.GetuS());
+    printf("   Tune uS = %ld\n",gTuneStopWatch.GetuS());
+    gStepStopWatch.Start();
+
+    gTuneStopWatch.Start();
     flt =  mMbrd->GetAdf4351( 0 )->SetFrequency( lo1Hz );
-    printf("#####Mboard IF = %f Hz / %f Hz\n",flt,lo1Hz);
+    gTuneStopWatch.Stop();
 
+    // printf("#####Mboard IF = %f Hz / %f Hz\n",flt,lo1Hz);
     // TODO - incorporate first lo freq correction at ddc to get precise tune
+    // printf("*** TunerSet *** at %f Hz\n",(double)freqHz);
 
-    printf("*** TunerSet *** at %f Hz\n",(double)freqHz);
     return(freqHz);
 }
 
