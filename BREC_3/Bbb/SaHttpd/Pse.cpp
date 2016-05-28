@@ -171,7 +171,7 @@ Pse::GetEstimate(
     double *output
 )
 {
-    int    didx,sidx,pidx;
+    int    didx,sidx;
     int    scnt,pcnt;
     double normalize;
     double magSqr,pwr;
