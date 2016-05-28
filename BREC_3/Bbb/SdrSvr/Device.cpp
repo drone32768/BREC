@@ -111,19 +111,18 @@ Device::Device()
         flt = gTbrd->SetBwHz( 2*if2Hz );
         printf("#####Tboard BW = %f Hz\n",flt);
 
-        printf("#####Tboard rf gain set med\n");
-        gTbrd->SetRfGainDb( 40 );
-
         printf("#####Tboard bb gain set low\n");
         gTbrd->SetBbGainDb( 0 );
 
         flt =gDdc->SetLoFreqHz( if2Hz );
         printf("#####DDC100 IF = %f Hz\n",flt);
 
+        printf("#####Tboard rf gain set med\n");
+        gTbrd->SetRfGainDb( 40 );
+
         gDdc->StartPru();
 
         TunerSet( 92100000 );
-        GainSet( 0 );
     }
 
     else{
@@ -212,6 +211,15 @@ void Device::RcvEvent( char *evtStr )
        gainDb = strtof( argStr, NULL );
 
        GainSet( gainDb );
+    }    
+
+    if( 0==strcmp("device.if-gain-db",cmdStr) ){
+       double gainDb;
+      
+       argStr = strtok_r(NULL, " ", &tokr);
+       gainDb = strtof( argStr, NULL );
+
+       gTbrd->SetBbGainDb( gainDb );
     }    
 }
 
